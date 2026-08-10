@@ -85,3 +85,27 @@ lag; 3D page followed in a second push. Ronald's feedback on 3D: the city render
 basis (right vector = up×f instead of f×up); fixed to a proper right-handed lookAt
 basis so N is up / E is right, matching the 2D map. Pitch clamped to ≈6°–89° so the
 camera can orbit from street-grazing to top-down but never under the plane.
+
+**Publishing saga, resolved:** update-by-bundle kept failing in Ronald's WSL because
+his repos lived on /mnt/c (Windows mount) — DrvFS permissions + GitHub Desktop's CRLF
+checkouts made git see every file as permanently modified. Fix that worked, in the
+GitHub-Desktop clone: `git config core.fileMode false` + `core.autocrlf input` +
+`git reset --hard`, then pull the self-contained full-history bundle and push
+(cb32ca8..fff0189 on GitHub). Camera fix confirmed live on main via raw fetch.
+Canonical working copy is now `Documents/GitHub/gospel-of-john-city`; future sessions
+should connect the GitHub repo so Claude pushes directly.
+
+- `15f59e7` — 3D camera fix (merged to GitHub in fff0189)
+- `13247d9` — logged the publishing resolution
+
+### Walkable streets (same day, Ronald's feedback)
+
+Ronald: add a **pace** control to Walk the Way; make the road a real walked road with
+a **hard boundary** so buildings never clip the camera; and give buildings **doorways
+opening onto the road with entry walkways**, so a viewer can "enter" a passage.
+Implemented: a road-clearance phase in the layout (buildings pushed to ≥ radius +
+13.5 units off the frozen Way centerline; identical code in app.js and app3d.js so
+2D and 3D remain the same city; wall hull and ward centroids recomputed after),
+arched doorways on each building's road-facing side, paved entry walkways road-edge →
+door (drawn as alley stubs in 2D), a 0.25×–5× pace slider in the walk bar, and an
+"Enter ⏎" action that opens the interior (detail panel) of the passage being passed.

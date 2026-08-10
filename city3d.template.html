@@ -69,10 +69,13 @@
   #walkbar {
     position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; z-index: 20;
     display: none; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; padding: 10px 16px; box-shadow: var(--shadow); width: min(640px, 92vw);
+    border-radius: 12px; padding: 10px 16px; box-shadow: var(--shadow); width: min(780px, 94vw);
   }
   #walkbar.show { display: flex; }
   #walkbar input[type=range] { flex: 1; }
+  #walkbar .pace { display: flex; align-items: center; gap: 6px; flex: none; }
+  #walkbar .pace input[type=range] { width: 74px; flex: none; }
+  #walkbar .pace span { font-size: 11px; color: var(--muted); min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
   #walkbar .verse { font-size: 12px; color: var(--ink-2); min-width: 170px; text-align: left; }
   #walkbar .verse b { display: block; font-size: 13px; color: var(--ink-1); }
   #walkbar button { border: 1px solid var(--border); background: var(--page); color: var(--ink-1); border-radius: 8px; font: inherit; padding: 5px 11px; cursor: pointer; }
@@ -104,7 +107,12 @@
   <div id="walkbar">
     <button id="playbtn" title="Play / pause">▶</button>
     <input type="range" id="walkpos" min="0" max="1000" value="0">
+    <div class="pace" title="Walking pace">
+      <span id="paceval">1×</span>
+      <input type="range" id="pacectl" min="0.25" max="5" step="0.25" value="1">
+    </div>
     <div class="verse" id="walkinfo"><b>West Gate</b>John 1:1 — “In the beginning…”</div>
+    <button id="enterbtn" title="Step inside the passage you're passing (Enter)">Enter ⏎</button>
   </div>
   <div id="tooltip"></div>
   <div id="panel">
