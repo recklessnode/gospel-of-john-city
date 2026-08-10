@@ -193,3 +193,4 @@ stepped pools, courtyard houses, crenellated wall, harbour quay + boats, stelae)
 
 **Commits:** *(IDs appended as made — each ID lands in the following commit)*
 - `47be0b4` — near-plane clipping fix + harbour coast/quay
+- `9ff43d2` — M1: Three.js city, parity check, QA harness, docs
