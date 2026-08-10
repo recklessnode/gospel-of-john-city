@@ -85,3 +85,14 @@ lag; 3D page followed in a second push. Ronald's feedback on 3D: the city render
 basis (right vector = up×f instead of f×up); fixed to a proper right-handed lookAt
 basis so N is up / E is right, matching the 2D map. Pitch clamped to ≈6°–89° so the
 camera can orbit from street-grazing to top-down but never under the plane.
+
+**Publishing saga, resolved:** update-by-bundle kept failing in Ronald's WSL because
+his repos lived on /mnt/c (Windows mount) — DrvFS permissions + GitHub Desktop's CRLF
+checkouts made git see every file as permanently modified. Fix that worked, in the
+GitHub-Desktop clone: `git config core.fileMode false` + `core.autocrlf input` +
+`git reset --hard`, then pull the self-contained full-history bundle and push
+(cb32ca8..fff0189 on GitHub). Camera fix confirmed live on main via raw fetch.
+Canonical working copy is now `Documents/GitHub/gospel-of-john-city`; future sessions
+should connect the GitHub repo so Claude pushes directly.
+
+- `15f59e7` — 3D camera fix (merged to GitHub in fff0189)
