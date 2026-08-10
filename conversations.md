@@ -72,3 +72,16 @@ sessions can't create repos (proxy is repo-scoped); one-time `publish.sh` in WSL
 after which the repo can be connected to future sessions for direct pushes.
 
 - `d497d07` — city3d.html: 3D orbit + Walk-the-Way
+- `2d1e3bb` — logged d497d07
+- `4d29284` — publish.sh made idempotent (identity + existing-repo push), after
+  Ronald's second run hit "Name already exists" / "empty ident name"
+
+### Published! (same day)
+
+Ronald published: repo `recklessnode/gospel-of-john-city`, live at
+https://recklessnode.github.io/gospel-of-john-city/. First deploy had a propagation
+lag; 3D page followed in a second push. Ronald's feedback on 3D: the city rendered
+**mirrored** ("upside down") vs the 2D map — root cause was a left-handed camera
+basis (right vector = up×f instead of f×up); fixed to a proper right-handed lookAt
+basis so N is up / E is right, matching the 2D map. Pitch clamped to ≈6°–89° so the
+camera can orbit from street-grazing to top-down but never under the plane.

@@ -217,8 +217,9 @@ function viewMatrix() {
     fx = ahead.x - ex; fy = 9 - ey; fz = ahead.y - ez;
   }
   const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
-  // right = f x up(0,1,0)
-  let rx = fz, ry = 0, rz = -fx;
+  // right = f × worldUp(0,1,0) = (-fz, 0, fx) — right-handed basis, so the
+  // plan renders with the same orientation as the 2D map (N up, E right).
+  let rx = -fz, ry = 0, rz = fx;
   const rl = Math.hypot(rx, ry, rz) || 1; rx /= rl; rz /= rl;
   // up = r x f
   const ux = ry * fz - rz * fy, uy = rz * fx - rx * fz, uz = rx * fy - ry * fx;
@@ -586,7 +587,9 @@ canvas.addEventListener("pointermove", ev => {
       cam.target[2] -= (dx * V.rz - dy * V.fz / Math.max(0.35, Math.cos(cam.pitch))) * s;
     } else {
       cam.yaw += dx * 0.0055;
-      cam.pitch = Math.max(0.10, Math.min(1.45, cam.pitch + dy * 0.004));
+      // pitch clamp: from street-grazing (≈6°) up to near-top-down (≈89°) —
+      // the camera can never dip under the ground plane or flip the map over
+      cam.pitch = Math.max(0.10, Math.min(1.55, cam.pitch + dy * 0.004));
     }
   } else {
     cam.walkT = Math.max(0, Math.min(1, cam.walkT - dy * 0.0004));
