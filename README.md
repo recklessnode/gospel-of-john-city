@@ -60,3 +60,20 @@ To rebuild: `python3 scripts/build_data.py && python3 scripts/build.py`
     at 7,707 gw while its ward rows sum higher).
   - Ward VII (11:1–54) is extended on the map to include the bridge passage
     11:55–12:11, with its stats adjusted accordingly (851 → 1,070 gw, noted in-app).
+
+## 3D view (`city3d.html`)
+
+A dependency-free 3D render of the same city: perspective Canvas renderer (painter's
+algorithm — no WebGL libraries, so it works offline and everywhere). **Orbit mode**
+(drag to rotate/tilt, scroll to zoom, shift-drag to pan, double-click to focus) and
+**Walk the Way** — a street-level camera that follows the Johannine Way from the West
+Gate (1:1) to the harbor (21:25), with a scrub bar that reads out the verse you're
+passing. Gold obelisks mark the "I AM" sayings.
+
+**Phase 2 (planned): ancient-world architecture.** Procedural building kits —
+Herodian temple platform for the Temple Citadel, Roman fortress for the Praetorium,
+stoa-lined agora for the marketplaces, stepped pools for Bethesda/Siloam, Judean
+courtyard houses for the Upper Room, crenellated wall with gate towers, quay + boats
+at the harbor, stelae for the I AM landmarks. Best built on Three.js (loaded from a
+CDN at view time; the cloud build sandbox cannot fetch npm/CDN packages, which is why
+Phase 1 ships its own renderer).

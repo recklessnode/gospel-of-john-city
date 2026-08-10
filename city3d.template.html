@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Gospel of John as a City — 3D</title>
+<style>
+  :root {
+    --surface-1: #fcfcfb; --page: #f6f4ee; --ink-1: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --panel: #ffffff; --gold: #b8860b;
+    --t-witness: #eda100; --t-sign: #1baf7a; --t-discourse: #2a78d6; --t-controversy: #e34948;
+    --t-love: #e87ba4; --t-passion: #4a3aa7; --t-resurrection: #008300;
+    --shadow: 0 8px 28px rgba(11,11,11,0.14);
+  }
+  :root[data-theme="dark"] {
+    --surface-1: #1a1a19; --page: #121211; --ink-1: #ffffff; --ink-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --baseline: #383835; --border: rgba(255,255,255,0.12);
+    --panel: #202020; --gold: #d9a419;
+    --t-witness: #c98500; --t-sign: #199e70; --t-discourse: #3987e5; --t-controversy: #e66767;
+    --t-love: #d55181; --t-passion: #9085e9; --t-resurrection: #2fb457;
+    --shadow: 0 8px 28px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page); color: var(--ink-1); display: flex; flex-direction: column; overflow: hidden; }
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface-1); }
+  header h1 { font-size: 17px; font-weight: 650; letter-spacing: 0.04em; font-variant-caps: small-caps; white-space: nowrap; }
+  header .sub { font-size: 12px; color: var(--muted); }
+  header a { color: var(--ink-2); font-size: 13px; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; background: var(--page); }
+  header a:hover { color: var(--ink-1); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--page); }
+  .seg button { border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; padding: 6px 13px; cursor: pointer; }
+  .seg button.on { background: var(--ink-1); color: var(--surface-1); }
+  .spacer { flex: 1; }
+  .iconbtn { border: 1px solid var(--border); background: var(--page); color: var(--ink-2); border-radius: 8px; font: inherit; font-size: 13px; padding: 6px 10px; cursor: pointer; }
+  #stage { position: relative; flex: 1; overflow: hidden; }
+  canvas#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  canvas#c.panning { cursor: grabbing; }
+  #tooltip { position: absolute; pointer-events: none; z-index: 40; display: none; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; font-size: 12px; max-width: 260px; box-shadow: var(--shadow); }
+  #tooltip .tt-name { font-weight: 650; font-size: 13px; }
+  #tooltip .tt-ref { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+  #tooltip .tt-path { color: var(--ink-2); font-size: 11px; margin-bottom: 4px; }
+  #tooltip .tt-stats { display: flex; gap: 10px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  #tooltip .tt-theme { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; color: var(--ink-2); }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; border: 1px solid var(--border); display: inline-block; }
+  #panel { position: absolute; top: 0; right: 0; bottom: 0; width: 340px; max-width: 92vw; background: var(--panel); border-left: 1px solid var(--border); box-shadow: var(--shadow); transform: translateX(105%); transition: transform .22s ease; overflow-y: auto; padding: 18px 18px 30px; z-index: 30; }
+  #panel.open { transform: translateX(0); }
+  #panel .close { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 20px; color: var(--muted); cursor: pointer; }
+  #panel .crumb { font-size: 11px; color: var(--muted); margin-bottom: 6px; margin-right: 24px; }
+  #panel h2 { font-size: 19px; margin-bottom: 2px; }
+  #panel .ref { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  #panel .statrow { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  #panel .stat { flex: 1 1 30%; background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  #panel .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  #panel .stat span { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  #panel .full-desc { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 14px; }
+  #panel .note { font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.45; margin-bottom: 14px; border-left: 3px solid var(--grid); padding-left: 9px; }
+  #panel h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 7px; }
+  #panel .detail-item { font-size: 12.5px; color: var(--ink-2); padding: 5px 0; border-bottom: 1px solid var(--grid); display: flex; justify-content: space-between; gap: 8px; }
+  #panel .detail-item .g { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ladder { display: flex; flex-direction: column; gap: 3px; }
+  .ladder .rung { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); padding: 5px 8px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
+  .ladder .rung:hover { border-color: var(--border); }
+  .ladder .rung.current { background: var(--page); border-color: var(--border); color: var(--ink-1); }
+  .ladder .tag { font-weight: 700; width: 34px; text-align: center; flex: none; white-space: nowrap; }
+  .ladder .rung.center .tag { color: var(--gold); }
+  .themechip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; margin-bottom: 12px; }
+  #walkbar {
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 16px; z-index: 20;
+    display: none; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 16px; box-shadow: var(--shadow); width: min(640px, 92vw);
+  }
+  #walkbar.show { display: flex; }
+  #walkbar input[type=range] { flex: 1; }
+  #walkbar .verse { font-size: 12px; color: var(--ink-2); min-width: 170px; text-align: left; }
+  #walkbar .verse b { display: block; font-size: 13px; color: var(--ink-1); }
+  #walkbar button { border: 1px solid var(--border); background: var(--page); color: var(--ink-1); border-radius: 8px; font: inherit; padding: 5px 11px; cursor: pointer; }
+  #legend3d { position: absolute; top: 12px; left: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; box-shadow: var(--shadow); font-size: 12px; color: var(--ink-2); max-width: 215px; }
+  #legend3d .grp-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 3px; }
+  #legend3d label { display: flex; align-items: center; gap: 7px; }
+  #hint3d { position: absolute; bottom: 14px; right: 16px; font-size: 11px; color: var(--muted); pointer-events: none; }
+  @media (max-width: 900px) { #hint3d, #legend3d { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>The Gospel of John as a City</h1>
+  <span class="sub">3D · building height = Greek word count</span>
+  <div class="seg" id="modeseg">
+    <button data-mode="orbit" class="on">Orbit</button>
+    <button data-mode="walk">Walk the Way</button>
+  </div>
+  <div class="spacer"></div>
+  <a href="index.html">2D map ↩</a>
+  <button class="iconbtn" id="themebtn" title="Day / night">◐</button>
+</header>
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="legend3d">
+    <div class="grp-title">Building themes</div>
+    <div id="legend"></div>
+  </div>
+  <div id="walkbar">
+    <button id="playbtn" title="Play / pause">▶</button>
+    <input type="range" id="walkpos" min="0" max="1000" value="0">
+    <div class="verse" id="walkinfo"><b>West Gate</b>John 1:1 — “In the beginning…”</div>
+  </div>
+  <div id="tooltip"></div>
+  <div id="panel">
+    <button class="close" onclick="closePanel()">×</button>
+    <div id="panel-body"></div>
+  </div>
+  <div id="hint3d">drag to orbit · shift-drag to pan · scroll to zoom · double-click a building to focus · click for detail</div>
+</div>
+<script>
+const JOHN = /*__DATA__*/;
+/*__APP__*/
+</script>
+</body>
+</html>
