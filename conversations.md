@@ -109,3 +109,17 @@ Implemented: a road-clearance phase in the layout (buildings pushed to ≥ radiu
 arched doorways on each building's road-facing side, paved entry walkways road-edge →
 door (drawn as alley stubs in 2D), a 0.25×–5× pace slider in the walk bar, and an
 "Enter ⏎" action that opens the interior (detail panel) of the passage being passed.
+
+- `1617a3e` — walkable streets (pace, corridor, doorways, Enter)
+
+### Streets v3 (same day, Ronald's feedback round 2)
+
+Ronald: draw the road more visibly; add an entrance gate where the Way pierces the
+wall (was clipping through); anchor building names as signs over their doorways;
+free look-around while walking. Implemented: higher-contrast pavement with dashed
+centerline + paving seams; Way×wall crossings detected and the wall gapped there,
+with gate towers + lintel to walk under (CITY GATE at the Prologue entrance, WATER
+GATE at the harbor exit); name-boards hung over each doorway, visible only from the
+street side, nearest-first collision culling; walk mode free look (drag or ←→,
+PgUp/PgDn pitch, ↑↓/wheel to move, look recenters on play); landmark buildings get
+gold portal trim; district labels hidden at street level.
