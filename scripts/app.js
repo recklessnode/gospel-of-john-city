@@ -132,6 +132,71 @@ function layoutOrganic() {
   });
 }
 
+/* ---------- the Way as a hard corridor (identical to app3d.js) ---------- */
+const ROAD_HALF = 9;
+let WAYPTS = null;
+function catmullSample(pts, per) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    for (let s = 0; s < per; s++) {
+      const t = s / per, t2 = t * t, t3 = t2 * t;
+      out.push([
+        0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+        0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3),
+      ]);
+    }
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+function buildWay() {
+  const AX = JOHN.annex;
+  const ordered = WARDS.slice().sort((a, b) => a.mid - b.mid);
+  const gate = wayPoint(-0.008, 462);
+  const port = wayPoint(1.028, 545);
+  WAYPTS = [wayPoint(-0.02, 470), gate].concat(ordered.map(w => [w.cx, w.cy]), [port]);
+  WAYPTS.gate = gate; WAYPTS.port = port;
+  const WAY = catmullSample(WAYPTS, 24);
+  const CLEAR = ROAD_HALF + 4.5;
+  const all = HOODS.concat([AX]);
+  const nearestWay = h => {
+    let best = Infinity, bi = 0;
+    for (let i = 0; i < WAY.length; i += 2) {
+      const dx = h.x - WAY[i][0], dy = h.y - WAY[i][1];
+      const d2 = dx * dx + dy * dy;
+      if (d2 < best) { best = d2; bi = i; }
+    }
+    return bi;
+  };
+  for (let it = 0; it < 90; it++) {
+    for (let a = 0; a < all.length; a++) for (let b = a + 1; b < all.length; b++) {
+      const A = all[a], B = all[b];
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const d = Math.hypot(dx, dy) || 0.01, min = A.r + B.r + 8;
+      if (d < min) {
+        const push = (min - d) / 2, ux = dx / d, uy = dy / d;
+        A.x -= ux * push; A.y -= uy * push; B.x += ux * push; B.y += uy * push;
+      }
+    }
+    for (const h of all) {
+      const bi = nearestWay(h);
+      const dx = h.x - WAY[bi][0], dy = h.y - WAY[bi][1];
+      const d = Math.hypot(dx, dy) || 0.01, min = h.r + CLEAR;
+      if (d < min) { h.x += dx / d * (min - d); h.y += dy / d * (min - d); }
+    }
+  }
+  all.forEach(h => {
+    const bi = nearestWay(h);
+    h.roadPt = WAY[bi];
+    h.doorAng = Math.atan2(h.roadPt[1] - h.y, h.roadPt[0] - h.x);
+  });
+  WARDS.forEach(w => {
+    w.cx = w.hoods.reduce((s, h) => s + h.x, 0) / w.hoods.length;
+    w.cy = w.hoods.reduce((s, h) => s + h.y, 0) / w.hoods.length;
+  });
+}
+
 /* ---------- svg helpers ---------- */
 const svg = document.getElementById("map");
 const NS = "http://www.w3.org/2000/svg";
@@ -321,15 +386,21 @@ function renderOrganic() {
   el("path", { d: wallPath, "class": "wall-inner" }, gWall);
 
   // the Johannine Way through ward centers
-  const ordered = WARDS.slice().sort((a, b) => a.mid - b.mid);
-  const gate = wayPoint(-0.008, 462);
-  const wayPts = [wayPoint(-0.02, 470), gate].concat(ordered.map(w => [w.cx, w.cy]));
-  const port = wayPoint(1.028, 545);
-  wayPts.push(port);
-  const wayD = catmull(wayPts);
+  const gate = WAYPTS.gate, port = WAYPTS.port;
+  const wayD = catmull(WAYPTS);
   el("path", { d: wayD, "class": "way-casing" }, gWay);
   el("path", { d: wayD, "class": "way-fill" }, gWay);
   el("path", { d: wayD, "class": "way-center" }, gWay);
+  // entry walkways: little alleys from the road to each doorway
+  HOODS.concat([JOHN.annex]).forEach(h => {
+    if (!h.roadPt) return;
+    const bx = h.x + Math.cos(h.doorAng) * h.r, by = h.y + Math.sin(h.doorAng) * h.r;
+    const dx = bx - h.roadPt[0], dy = by - h.roadPt[1];
+    const L = Math.hypot(dx, dy);
+    if (L > 150 || L < 2) return;
+    const sx = h.roadPt[0] + dx / L * (ROAD_HALF - 2), sy = h.roadPt[1] + dy / L * (ROAD_HALF - 2);
+    el("line", { x1: sx, y1: sy, x2: bx, y2: by, stroke: "var(--road-casing)", "stroke-width": 3, "stroke-linecap": "round" }, gWay);
+  });
   // gates & quay
   el("rect", { x: gate[0] - 13, y: gate[1] - 9, width: 26, height: 18, rx: 4, "class": "gate" }, gWay);
   txt(gWay, gate[0] + 24, gate[1] + 4, "WEST GATE · “In the beginning…” 1:1", "gate-label", { "text-anchor": "start" });
@@ -723,6 +794,7 @@ document.head.appendChild(style2);
 
 /* ---------- boot ---------- */
 layoutOrganic();
+buildWay();
 renderIndex();
 renderOrganic();
 resetVB();

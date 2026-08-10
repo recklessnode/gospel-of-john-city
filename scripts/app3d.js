@@ -82,15 +82,6 @@ const HGT = g => 10 + (g || 12) / MAXG * 115;
 HOODS.forEach(h => h.h = HGT(h.greek));
 AX.h = HGT(AX.greek);
 
-/* wall hull (plan) */
-const wallHull = convexHull(
-  DISTRICTS.filter(d => !d.outside)
-    .flatMap(d => d.wards.flatMap(w => w.hoods.flatMap(h => {
-      const out = [];
-      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; out.push([h.x + (h.r + 46) * Math.cos(a), h.y + (h.r + 46) * Math.sin(a)]); }
-      return out;
-    }))));
-
 /* the Way as a dense sampled polyline (catmull-rom through ward centers) */
 function catmullSample(pts, per) {
   const out = [];
@@ -132,6 +123,60 @@ function wayAt(t) { // t in [0,1] by arc length -> {x, y, dirx, diry}
   const L = Math.hypot(dx, dy) || 1;
   return { x, y, dx: dx / L, dy: dy / L };
 }
+
+/* ---------- road clearance: the Way is a hard corridor ----------
+   Buildings are pushed off the roadway (frozen from phase-1 ward centroids),
+   then get a door facing their nearest road point. Identical in app.js so the
+   2D and 3D plans stay the same city. */
+const ROAD_HALF = 9;
+(function roadClearance() {
+  const CLEAR = ROAD_HALF + 4.5;
+  const all = HOODS.concat([AX]);
+  const nearestWay = h => {
+    let best = Infinity, bi = 0;
+    for (let i = 0; i < WAY.length; i += 2) {
+      const dx = h.x - WAY[i][0], dy = h.y - WAY[i][1];
+      const d2 = dx * dx + dy * dy;
+      if (d2 < best) { best = d2; bi = i; }
+    }
+    return bi;
+  };
+  for (let it = 0; it < 90; it++) {
+    for (let a = 0; a < all.length; a++) for (let b = a + 1; b < all.length; b++) {
+      const A = all[a], B = all[b];
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const d = Math.hypot(dx, dy) || 0.01, min = A.r + B.r + 8;
+      if (d < min) {
+        const push = (min - d) / 2, ux = dx / d, uy = dy / d;
+        A.x -= ux * push; A.y -= uy * push; B.x += ux * push; B.y += uy * push;
+      }
+    }
+    for (const h of all) {
+      const bi = nearestWay(h);
+      const dx = h.x - WAY[bi][0], dy = h.y - WAY[bi][1];
+      const d = Math.hypot(dx, dy) || 0.01, min = h.r + CLEAR;
+      if (d < min) { h.x += dx / d * (min - d); h.y += dy / d * (min - d); }
+    }
+  }
+  all.forEach(h => {
+    const bi = nearestWay(h);
+    h.roadPt = WAY[bi];
+    h.doorAng = Math.atan2(h.roadPt[1] - h.y, h.roadPt[0] - h.x);
+  });
+  WARDS.forEach(w => {
+    w.cx = w.hoods.reduce((s, h) => s + h.x, 0) / w.hoods.length;
+    w.cy = w.hoods.reduce((s, h) => s + h.y, 0) / w.hoods.length;
+  });
+})();
+
+/* wall hull (plan) — after clearance so it hugs final positions */
+const wallHull = convexHull(
+  DISTRICTS.filter(d => !d.outside)
+    .flatMap(d => d.wards.flatMap(w => w.hoods.flatMap(h => {
+      const out = [];
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; out.push([h.x + (h.r + 46) * Math.cos(a), h.y + (h.r + 46) * Math.sin(a)]); }
+      return out;
+    }))));
 
 /* theme road samples */
 const themeRoadPts = {};
@@ -294,6 +339,27 @@ function addCylinder(x, z, r, hgt, colorHex, opts = {}) {
       pathPoly(top);
       ctx.fillStyle = shade(colorHex, opts.selected ? 1.35 : 1.12, fog);
       ctx.fill();
+      // arched doorway facing the road
+      if (opts.doorAng != null) {
+        const ang = opts.doorAng;
+        const dnx = Math.cos(ang), dnz = Math.sin(ang);
+        const dvx = (x + r * dnx) - V.ex, dvz = (z + r * dnz) - V.ez;
+        if (dnx * dvx + dnz * dvz < 0) {           // door face is camera-visible
+          const dW = Math.min(6.5, r * 0.75), dH = Math.min(11, hgt * 0.7), dA = dW / r / 2;
+          const b1 = project(x + r * Math.cos(ang - dA), 0, z + r * Math.sin(ang - dA));
+          const b2 = project(x + r * Math.cos(ang + dA), 0, z + r * Math.sin(ang + dA));
+          const t1 = project(x + r * Math.cos(ang - dA), dH, z + r * Math.sin(ang - dA));
+          const t2 = project(x + r * Math.cos(ang + dA), dH, z + r * Math.sin(ang + dA));
+          const tm = project(x + r * dnx, dH + dW * 0.5, z + r * dnz);
+          if (b1 && b2 && t1 && t2 && tm) {
+            ctx.fillStyle = shade(colorHex, 0.30, fog);
+            ctx.beginPath();
+            ctx.moveTo(b1[0], b1[1]); ctx.lineTo(t1[0], t1[1]);
+            ctx.quadraticCurveTo(tm[0], tm[1], t2[0], t2[1]);
+            ctx.lineTo(b2[0], b2[1]); ctx.closePath(); ctx.fill();
+          }
+        }
+      }
       if (opts.ring) { ctx.strokeStyle = P().gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); }
       if (opts.selected) { ctx.strokeStyle = P().ink; ctx.lineWidth = 2; ctx.stroke(); }
       if (opts.dashed) { pathPoly(bot); ctx.strokeStyle = P().label; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]); }
@@ -423,7 +489,7 @@ function render() {
   }));
 
   // the Way (road ribbon)
-  const ROADW = 9;
+  const ROADW = ROAD_HALF;
   const left = [], right = [];
   for (let i = 0; i < WAY.length - 1; i++) {
     const [x1, y1] = WAY[i], [x2, y2] = WAY[i + 1];
@@ -433,6 +499,21 @@ function render() {
     right.push([x1 - nx * ROADW, y1 - ny * ROADW]);
   }
   drawFlatPoly(left.concat(right.reverse()), P().road, P().roadEdge);
+
+  // entry walkways: road edge → each doorway
+  HOODS.concat([AX]).forEach(h => {
+    if (!h.roadPt) return;
+    const bx = h.x + Math.cos(h.doorAng) * h.r, by = h.y + Math.sin(h.doorAng) * h.r;
+    const dx = bx - h.roadPt[0], dy = by - h.roadPt[1];
+    const L = Math.hypot(dx, dy);
+    if (L > 150 || L < 2) return;
+    const ux = dx / L, uy = dy / L;
+    const sx = h.roadPt[0] + ux * (ROADW - 1), sy = h.roadPt[1] + uy * (ROADW - 1);
+    const px2 = -uy * 2.1, py2 = ux * 2.1;
+    drawFlatPoly([[sx + px2, sy + py2], [bx + px2 + ux * 1.5, by + py2 + uy * 1.5],
+                  [bx - px2 + ux * 1.5, by - py2 + uy * 1.5], [sx - px2, sy - py2]],
+                 P().road, P().roadEdge);
+  });
 
   // theme roads (dotted)
   const trColors = { life: P().themes.sign, light: P().themes.witness };
@@ -453,10 +534,10 @@ function render() {
   HOODS.forEach(h => {
     h._pick = null;
     addCylinder(h.x, h.y, h.r, h.h, P().themes[h.theme] || "#888",
-      { ring: !!h.landmark || !!h.center, selected: selectedId === h.id, owner: h });
+      { ring: !!h.landmark || !!h.center, selected: selectedId === h.id, owner: h, doorAng: h.doorAng });
   });
   AX._pick = null;
-  addCylinder(AX.x, AX.y, AX.r, AX.h, P().themes.controversy, { dashed: true, owner: AX });
+  addCylinder(AX.x, AX.y, AX.r, AX.h, P().themes.controversy, { dashed: true, owner: AX, doorAng: AX.doorAng });
   if (document.getElementById("ck3-iam").checked) OBELISKS.forEach(addObelisk);
   R.sort((a, b) => b.depth - a.depth);
   R.forEach(o => o.draw());
@@ -630,7 +711,21 @@ const walkbar = document.getElementById("walkbar");
 const walkpos = document.getElementById("walkpos");
 const walkinfo = document.getElementById("walkinfo");
 const playbtn = document.getElementById("playbtn");
+const enterbtn = document.getElementById("enterbtn");
+const pacectl = document.getElementById("pacectl");
+const paceval = document.getElementById("paceval");
 let playing = false;
+let pace = 1;
+pacectl.addEventListener("input", () => {
+  pace = +pacectl.value;
+  paceval.textContent = (pace % 1 ? pace.toFixed(2).replace(/0$/, "") : pace) + "×";
+});
+function currentWalkHood() { return hoodOfVerse(verseAt(cam.walkT)); }
+function enterCurrent() {
+  const h = currentWalkHood();
+  if (h) { playing = false; playbtn.textContent = "▶"; openHood(h); }
+}
+enterbtn.addEventListener("click", enterCurrent);
 function verseAt(t) { return Math.max(1, Math.min(TOTAL, Math.round(t * (TOTAL - 1) + 1))); }
 function chapterVerseOf(v) {
   let ch = 1;
@@ -688,12 +783,15 @@ document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("cl
     needRender = true;
   });
 })();
-document.addEventListener("keydown", ev => { if (ev.key === "Escape") closePanel(); });
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape") closePanel();
+  if (ev.key === "Enter" && mode === "walk" && !panel.classList.contains("open")) enterCurrent();
+});
 
 /* ---------- main loop ---------- */
 function loop() {
   if (playing && mode === "walk") {
-    cam.walkT += 0.00035;
+    cam.walkT += 0.00035 * pace;
     if (cam.walkT >= 1) { cam.walkT = 1; playing = false; playbtn.textContent = "▶"; }
     syncWalkUI();
     needRender = true;

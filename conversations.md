@@ -96,3 +96,16 @@ Canonical working copy is now `Documents/GitHub/gospel-of-john-city`; future ses
 should connect the GitHub repo so Claude pushes directly.
 
 - `15f59e7` — 3D camera fix (merged to GitHub in fff0189)
+- `13247d9` — logged the publishing resolution
+
+### Walkable streets (same day, Ronald's feedback)
+
+Ronald: add a **pace** control to Walk the Way; make the road a real walked road with
+a **hard boundary** so buildings never clip the camera; and give buildings **doorways
+opening onto the road with entry walkways**, so a viewer can "enter" a passage.
+Implemented: a road-clearance phase in the layout (buildings pushed to ≥ radius +
+13.5 units off the frozen Way centerline; identical code in app.js and app3d.js so
+2D and 3D remain the same city; wall hull and ward centroids recomputed after),
+arched doorways on each building's road-facing side, paved entry walkways road-edge →
+door (drawn as alley stubs in 2D), a 0.25×–5× pace slider in the walk bar, and an
+"Enter ⏎" action that opens the interior (detail panel) of the passage being passed.
