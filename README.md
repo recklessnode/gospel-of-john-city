@@ -5,7 +5,7 @@ architecture tangible: districts for the great narrative blocks, wards for the m
 sections, and neighborhood "buildings" sized by Greek word count. A collaboration
 between Ronald and PaulDz.
 
-**Live map:** https://ronaldbynoe.github.io/gospel-of-john-city/ *(GitHub Pages)*
+**Live map:** https://recklessnode.github.io/gospel-of-john-city/ *(GitHub Pages)*
 
 ## The three views
 
