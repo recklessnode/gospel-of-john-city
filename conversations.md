@@ -42,4 +42,16 @@ tooltips, detail panel with chiasm ladders, screenshot-based QA in headless Chro
 (fixed: annex NaN placement, pointer-capture eating clicks, label collisions,
 CSS-vs-attribute font sizing).
 
-**Commits:** *(IDs appended as made)*
+**Review results:** Fable 5 data audit — zero mismatches (all hood/ward/district stats,
+verse indices, I AM positions verified against the sheets; three half-verse boundary
+overlaps confirmed intentional). Opus 5 visual QA — 27 findings; all 3 CRITICAL and
+9 MAJOR fixed (label halos + counter-scaling on zoom, ward-lobe district hulls,
+harbor moved outside the wall, dark-mode resurrection green, legend/how-to-read
+rework, keyboard access); a few MINOR polish items deferred.
+
+**GitHub note:** the cloud sandbox's GitHub proxy only allows repos pre-connected to
+a session, so publishing runs from Ronald's WSL via `publish.sh` (gh repo create +
+push + enable Pages).
+
+**Commits:** *(IDs appended as made — each ID lands in the following commit)*
+- `4cb9bf8` — Initial build: interactive map, data pipeline, review fixes
