@@ -217,6 +217,51 @@ const WALL_SEGS = [], GATES = [];
   GATES.sort((a, b) => arc(a) - arc(b));
 })();
 
+/* ---------- shoreline + quay ----------
+   The Sea of Tiberias blob (same centre as the 2D map) overlapped the land: in
+   2D that was harmless — the city is painted over it — but in 3D you walked off
+   the end of the Way into open water. The water is now carved back to a
+   shoreline circle, and the last stretch of the Way runs out onto a stone quay.
+   Kept here (not in render) so verify_parity.mjs can hold both renderers to the
+   same geometry. */
+const SEA_A0 = -42 * Math.PI / 180, SEA_A1 = 64 * Math.PI / 180;
+function shoreR(a) {                       // how close the water comes, by bearing
+  const deg = a * 180 / Math.PI;
+  const t = Math.min(1, Math.max(0, (deg + 12) / 24));
+  return 552 + 56 * t;                     // held back where the harbour quarter stands
+}
+const SEA_POLY = (() => {
+  const N = 30, out = [];
+  for (let k = 0; k <= N; k++) {            // the shoreline, swept back along the coast
+    const a = SEA_A1 + (SEA_A0 - SEA_A1) * (k / N), r = shoreR(a);
+    out.push([CX + r * Math.cos(a), CY + r * Math.sin(a)]);
+  }
+  for (let k = 0; k <= N; k++) {            // open water
+    const a = SEA_A0 + (SEA_A1 - SEA_A0) * (k / N);
+    const r = 900 + 42 * Math.sin(a * 3.1 + 0.8);
+    out.push([CX + r * Math.cos(a), CY + r * Math.sin(a)]);
+  }
+  return out;
+})();
+const QUAY_W = 20;
+const QUAY_POLY = (() => {
+  let i0 = WAY.length - 1;
+  while (i0 > 1 && Math.hypot(WAY[i0 - 1][0] - CX, WAY[i0 - 1][1] - CY) > 500) i0--;
+  const pts = WAY.slice(i0);
+  const a = pts[pts.length - 2], b = pts[pts.length - 1];
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+  pts.push([b[0] + dx / L * 200, b[1] + dy / L * 200]);    // a jetty running out into the sea
+  const l = [], r = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[Math.min(i + 1, pts.length - 1)], o = pts[Math.max(0, i - 1)];
+    let nx = -(q[1] - o[1]), ny = q[0] - o[0];
+    const n = Math.hypot(nx, ny) || 1; nx /= n; ny /= n;
+    l.push([p[0] + nx * QUAY_W, p[1] + ny * QUAY_W]);
+    r.push([p[0] - nx * QUAY_W, p[1] - ny * QUAY_W]);
+  }
+  return l.concat(r.reverse());
+})();
+
 /* theme road samples */
 const themeRoadPts = {};
 for (const key in JOHN.themeRoads) {
@@ -241,6 +286,7 @@ const PAL = {
     skyTop: "#cfe3ef", skyBot: "#efe5cf", ground: "#e2d9c0", groundEdge: "#cdc2a3",
     district: "rgba(120,112,96,0.10)", sea: "#bcd9e4", seaEdge: "#8fb6c4",
     road: "#ddd1b2", roadEdge: "#ab9f7d", roadSeam: "rgba(90,80,60,0.18)",
+    quay: "#cfc3a2", quayEdge: "#9b8f6e",
     wall: "#7d7566", wallTop: "#948b7a",
     ink: "#3d3a35", label: "#52514e", halo: "rgba(252,252,251,0.85)",
     gold: "#d9a419", goldDark: "#a87b0a", fogColor: [214, 226, 235],
@@ -250,6 +296,7 @@ const PAL = {
     skyTop: "#0b1626", skyBot: "#25272b", ground: "#23221f", groundEdge: "#2e2c27",
     district: "rgba(255,255,255,0.05)", sea: "#16303a", seaEdge: "#2c5666",
     road: "#413e33", roadEdge: "#5d5943", roadSeam: "rgba(0,0,0,0.28)",
+    quay: "#3a382f", quayEdge: "#57523f",
     wall: "#5c5648", wallTop: "#6d6757",
     ink: "#d5d3c8", label: "#c3c2b7", halo: "rgba(20,20,19,0.85)",
     gold: "#e8b83a", goldDark: "#b8860b", fogColor: [16, 24, 36],
@@ -335,9 +382,35 @@ function pathPoly(pts) {
   pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
   ctx.closePath();
 }
+/* Ground-plane polygons (ground, sea, road, washes, walkways) are huge and wrap
+   around the camera, so once you walk into the city part of every one of them is
+   *behind* you. Projecting a behind-camera vertex is meaningless, so the polygon
+   is first clipped against the camera's near plane in world space — otherwise a
+   single bad vertex would drop the whole shape (the road vanished past the gate,
+   and the ground fell away at the harbour). */
+const NEARZ = 2.05;
+function clipNear(planPts, hy) {
+  const wp = planPts.map(p => [p[0], hy, p[1]]);
+  const cz = wp.map(p => (p[0] - V.ex) * V.fx + (p[1] - V.ey) * V.fy + (p[2] - V.ez) * V.fz);
+  const out = [];
+  for (let i = 0; i < wp.length; i++) {
+    const j = (i + 1) % wp.length;
+    const inI = cz[i] >= NEARZ, inJ = cz[j] >= NEARZ;
+    if (inI) out.push(wp[i]);
+    if (inI !== inJ) {
+      const t = (NEARZ - cz[i]) / (cz[j] - cz[i]);
+      out.push([wp[i][0] + (wp[j][0] - wp[i][0]) * t,
+                wp[i][1] + (wp[j][1] - wp[i][1]) * t,
+                wp[i][2] + (wp[j][2] - wp[i][2]) * t]);
+    }
+  }
+  return out.length >= 3 ? out : null;
+}
 function drawFlatPoly(planPts, fill, stroke, dash) {
+  const clipped = clipNear(planPts, 0.35);
+  if (!clipped) return;
   const pts = [];
-  for (const p of planPts) { const q = project(p[0], 0.35, p[1]); if (!q) return; pts.push(q); }
+  for (const p of clipped) { const q = project(p[0], p[1], p[2]); if (!q) return; pts.push(q); }
   pathPoly(pts);
   if (fill) { ctx.fillStyle = fill; ctx.fill(); }
   if (stroke) {
@@ -614,20 +687,14 @@ function render() {
   const groundPts = [];
   for (let k = 0; k < 40; k++) {
     const a = k / 40 * Math.PI * 2;
-    const r = 830 + 60 * Math.sin(a * 3 + 1.7);
+    const r = 900 + 60 * Math.sin(a * 3 + 1.7);
     groundPts.push([CX + r * Math.cos(a) + 110, CY + r * Math.sin(a) + 40]);
   }
   drawFlatPoly(groundPts, P().ground, P().groundEdge);
 
-  // sea
-  const seaC = wayPoint(1.035, 620);
-  const seaPts = [];
-  for (let k = 0; k < 26; k++) {
-    const a = k / 26 * Math.PI * 2;
-    const r = 150 + 32 * Math.sin(a * 2.4 + 0.8);
-    seaPts.push([seaC[0] + r * Math.cos(a) * 1.25, seaC[1] + r * Math.sin(a)]);
-  }
-  drawFlatPoly(seaPts, P().sea, P().seaEdge);
+  // sea (carved back to the shoreline) and the quay carrying the Way onto it
+  drawFlatPoly(SEA_POLY, P().sea, P().seaEdge);
+  drawFlatPoly(QUAY_POLY, P().quay, P().quayEdge);
 
   // district washes (per-ward lobes, flat)
   DISTRICTS.forEach(d => d.wards.forEach(w => {
@@ -735,8 +802,8 @@ function render() {
     GATES.forEach((g, i) => drawLabel(g.x, 34, g.y, i === 0 ? "CITY GATE" : "WATER GATE", 10, P().label));
     drawLabel(gatePt[0], 24, gatePt[1], "WEST GATE · 1:1", 10.5, P().label);
     drawLabel(portPt[0], 20, portPt[1], "THE HARBOR · 21:25", 10.5, P().label);
-    const seaC2 = wayPoint(1.035, 620);
-    drawLabel(seaC2[0] + 30, 2, seaC2[1] + 40, "SEA OF TIBERIAS", 11, P().seaEdge);
+    const seaLbl = [CX + 740 * Math.cos(0.17), CY + 740 * Math.sin(0.17)];   // out in the bay
+    drawLabel(seaLbl[0], 2, seaLbl[1], "SEA OF TIBERIAS", 11, P().seaEdge);
   }
 }
 

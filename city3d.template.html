@@ -37,6 +37,21 @@
   #stage { position: relative; flex: 1; overflow: hidden; }
   canvas#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
   canvas#c.panning { cursor: grabbing; }
+  /* billboarded DOM labels for the Three.js city (unused by the canvas renderer) */
+  #labels { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 15; }
+  #labels div { position: absolute; white-space: nowrap; font-weight: 600; will-change: transform; }
+  #labels .lbl { transform: translate(-50%, -50%); color: var(--ink-2);
+    text-shadow: 0 0 3px var(--surface-1), 0 0 3px var(--surface-1), 0 0 5px var(--surface-1); }
+  #labels .lbl.district { font-size: 15px; letter-spacing: .06em; }
+  #labels .lbl.ward { font-size: 11.5px; }
+  #labels .lbl.gate { font-size: 10.5px; letter-spacing: .05em; }
+  #labels .lbl.iam { font-size: 9.5px; color: var(--gold); }
+  #labels .lbl.sea { font-size: 11px; color: var(--ink-2); opacity: .8; }
+  #labels .sign { transform: translate(-50%, -100%); font-size: 11px; color: var(--ink-1);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 3px;
+    padding: 2px 6px; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+  #labels .sign::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 5px;
+    background: var(--baseline); }
   #tooltip { position: absolute; pointer-events: none; z-index: 40; display: none; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; font-size: 12px; max-width: 260px; box-shadow: var(--shadow); }
   #tooltip .tt-name { font-weight: 650; font-size: 13px; }
   #tooltip .tt-ref { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
@@ -89,17 +104,19 @@
 <body>
 <header>
   <h1>The Gospel of John as a City</h1>
-  <span class="sub">3D · building height = Greek word count</span>
+  <span class="sub"><!--__SUBTITLE__--></span>
   <div class="seg" id="modeseg">
     <button data-mode="orbit" class="on">Orbit</button>
     <button data-mode="walk">Walk the Way</button>
   </div>
   <div class="spacer"></div>
   <a href="index.html">2D map ↩</a>
+  <!--__ALT__-->
   <button class="iconbtn" id="themebtn" title="Day / night">◐</button>
 </header>
 <div id="stage">
   <canvas id="c"></canvas>
+  <div id="labels"></div>
   <div id="legend3d">
     <div class="grp-title">Building themes</div>
     <div id="legend"></div>
@@ -122,7 +139,7 @@
   <div id="hint3d">drag to orbit · shift-drag to pan · scroll to zoom · double-click a building to focus · click for detail</div>
 </div>
 <script>
-const JOHN = /*__DATA__*/;
+window.JOHN = /*__DATA__*/;
 /*__APP__*/
 </script>
 </body>
