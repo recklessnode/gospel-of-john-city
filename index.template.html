@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Gospel of John as a City</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f6f4ee;
+    --ink-1: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --panel: #ffffff;
+    --wall: #6b6558;
+    --road-fill: #efe9da;
+    --road-casing: #c9c2af;
+    --water: #d7e8ef;
+    --water-ink: #7fa8b8;
+    --gold: #b8860b;
+    --gold-fill: #eda100;
+    --district-wash: rgba(11,11,11,0.028);
+    --t-witness: #eda100;
+    --t-sign: #1baf7a;
+    --t-discourse: #2a78d6;
+    --t-controversy: #e34948;
+    --t-love: #e87ba4;
+    --t-passion: #4a3aa7;
+    --t-resurrection: #008300;
+    --shadow: 0 8px 28px rgba(11,11,11,0.14);
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #121211;
+    --ink-1: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.12);
+    --panel: #202020;
+    --wall: #8d8676;
+    --road-fill: #2a2822;
+    --road-casing: #4a463c;
+    --water: #16303a;
+    --water-ink: #4e7889;
+    --gold: #d9a419;
+    --gold-fill: #c98500;
+    --district-wash: rgba(255,255,255,0.035);
+    --t-witness: #c98500;
+    --t-sign: #199e70;
+    --t-discourse: #3987e5;
+    --t-controversy: #e66767;
+    --t-love: #d55181;
+    --t-passion: #9085e9;
+    --t-resurrection: #2fb457;
+    --shadow: 0 8px 28px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); color: var(--ink-1);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface-1);
+  }
+  header h1 {
+    font-size: 17px; font-weight: 650; letter-spacing: 0.04em;
+    font-variant-caps: small-caps; white-space: nowrap;
+  }
+  header .sub { font-size: 12px; color: var(--muted); }
+  .seg {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; background: var(--page);
+  }
+  .seg button {
+    border: 0; background: transparent; color: var(--ink-2); font: inherit;
+    font-size: 13px; padding: 6px 13px; cursor: pointer;
+  }
+  .seg button.on { background: var(--ink-1); color: var(--surface-1); }
+  .spacer { flex: 1; }
+  .iconbtn {
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-2);
+    border-radius: 8px; font: inherit; font-size: 13px; padding: 6px 10px; cursor: pointer;
+  }
+  .iconbtn:hover, .seg button:hover:not(.on) { color: var(--ink-1); }
+  #stage { position: relative; flex: 1; overflow: hidden; }
+  #mapwrap { position: absolute; inset: 0; }
+  svg#map { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  svg#map.panning { cursor: grabbing; }
+
+  /* ---- map element styles ---- */
+  .district-blob { fill: var(--district-wash); stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 7 5; pointer-events: stroke; }
+  .label-ward, .label-hood, .iam-label, .gate-label, .annex-label, .chiasm-badge,
+  .lin-ward-label, .milepost-label, .water-label, .lin-district-label, .label-district {
+    paint-order: stroke; stroke: var(--surface-1); stroke-width: 3px; stroke-linejoin: round;
+  }
+  .label-district { stroke-width: 4px; }
+  .hood:focus-visible { outline: 2px solid var(--ink-1); outline-offset: 2px; }
+  #controls.hidden { display: none !important; }
+  .wall { fill: none; stroke: var(--wall); stroke-width: 7; opacity: 0.85; }
+  .wall-inner { fill: none; stroke: var(--surface-1); stroke-width: 1.6; stroke-dasharray: 2 7; opacity: 0.8; }
+  .way-casing { fill: none; stroke: var(--road-casing); stroke-width: 13; stroke-linecap: round; }
+  .way-fill { fill: none; stroke: var(--road-fill); stroke-width: 9.5; stroke-linecap: round; }
+  .way-center { fill: none; stroke: var(--baseline); stroke-width: 1; stroke-dasharray: 8 8; }
+  .hood { stroke: var(--surface-1); stroke-width: 2; cursor: pointer; transition: filter .12s; }
+  .hood:hover { filter: brightness(1.12); }
+  .hood.selected { stroke: var(--ink-1); stroke-width: 2.5; }
+  .hood-ring { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-dasharray: 3 3; pointer-events: none; }
+  .center-ring { fill: none; stroke: var(--ink-2); stroke-width: 1.2; pointer-events: none; }
+  .label-district {
+    font-size: 26px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    fill: var(--ink-2); opacity: 0.65; text-anchor: middle; pointer-events: none;
+  }
+  .label-ward {
+    font-size: 12.5px; font-weight: 650; letter-spacing: 0.07em; font-variant-caps: small-caps;
+    fill: var(--ink-2); text-anchor: middle; pointer-events: none;
+  }
+  .label-hood { font-size: calc(12px * var(--inv, 1)); fill: var(--ink-2); text-anchor: middle; pointer-events: none; }
+  .iam-star { fill: var(--gold-fill); stroke: var(--surface-1); stroke-width: 1; cursor: pointer; }
+  .iam-label { font-size: calc(13px * var(--inv, 1)); font-weight: 600; fill: var(--gold); text-anchor: middle; pointer-events: none; }
+  .theme-road { fill: none; stroke-width: 2.4; stroke-dasharray: 1 6; stroke-linecap: round; opacity: 0.95; pointer-events: none; }
+  .chiasm-arc { fill: none; stroke: var(--t-passion); stroke-width: 1.3; stroke-dasharray: 4 4; opacity: 0.7; pointer-events: none; }
+  .chiasm-badge { font-size: 8px; font-weight: 700; fill: var(--ink-1); text-anchor: middle; pointer-events: none; }
+  .water-blob { fill: var(--water); stroke: var(--water-ink); stroke-width: 1; stroke-dasharray: 5 4; }
+  .water-label { font-size: 12px; font-style: italic; fill: var(--water-ink); text-anchor: middle; letter-spacing: .12em; pointer-events: none; }
+  .gate { fill: var(--road-fill); stroke: var(--wall); stroke-width: 2; }
+  .gate-label, .annex-label { font-size: 9.5px; font-weight: 600; fill: var(--ink-2); text-anchor: middle; pointer-events: none; }
+  .annex-blob { fill: var(--district-wash); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 4; cursor: pointer; }
+  .milepost { stroke: var(--baseline); stroke-width: 1; }
+  .milepost-label { font-size: 9px; fill: var(--muted); text-anchor: middle; }
+  .lin-bracket { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+  .lin-district-band { opacity: 0.16; }
+  .lin-district-label { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; fill: var(--ink-2); text-anchor: middle; }
+  .lin-ward-label { font-size: 10px; font-variant-caps: small-caps; font-weight: 650; fill: var(--ink-2); text-anchor: middle; }
+  .compass { fill: var(--muted); opacity: .7; }
+
+  /* ---- overlay UI ---- */
+  #controls {
+    position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 8px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; box-shadow: var(--shadow); font-size: 12.5px; max-width: 230px;
+  }
+  #controls .grp-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 2px; }
+  #controls label { display: flex; align-items: center; gap: 7px; cursor: pointer; color: var(--ink-2); }
+  #controls label:hover { color: var(--ink-1); }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; border: 1px solid var(--border); }
+  .roadline { width: 16px; height: 0; border-top: 3px dotted; flex: none; }
+  #zoomctl {
+    position: absolute; bottom: 16px; left: 12px; display: flex; flex-direction: column; gap: 5px;
+  }
+  #zoomctl button {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel); color: var(--ink-1); font-size: 16px; cursor: pointer; box-shadow: var(--shadow);
+  }
+  #tooltip {
+    position: absolute; pointer-events: none; z-index: 40; display: none;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 9px;
+    padding: 9px 11px; font-size: 12px; max-width: 260px; box-shadow: var(--shadow);
+  }
+  #tooltip .tt-name { font-weight: 650; font-size: 13px; }
+  #tooltip .tt-ref { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+  #tooltip .tt-path { color: var(--ink-2); font-size: 11px; margin-bottom: 4px; }
+  #tooltip .tt-stats { display: flex; gap: 10px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  #tooltip .tt-theme { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; color: var(--ink-2); }
+  #panel {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 340px; max-width: 92vw;
+    background: var(--panel); border-left: 1px solid var(--border); box-shadow: var(--shadow);
+    transform: translateX(105%); transition: transform .22s ease; overflow-y: auto;
+    padding: 18px 18px 30px; z-index: 30;
+  }
+  #panel.open { transform: translateX(0); }
+  #panel .close { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 20px; color: var(--muted); cursor: pointer; }
+  #panel .crumb { font-size: 11px; color: var(--muted); letter-spacing: .03em; margin-bottom: 6px; margin-right: 24px;}
+  #panel h2 { font-size: 19px; margin-bottom: 2px; }
+  #panel .ref { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  #panel .statrow { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  #panel .stat {
+    flex: 1 1 30%; background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; text-align: center;
+  }
+  #panel .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  #panel .stat span { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  #panel .full-desc { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 14px; }
+  #panel .note { font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.45; margin-bottom: 14px; border-left: 3px solid var(--grid); padding-left: 9px; }
+  #panel h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 7px; }
+  #panel .detail-item { font-size: 12.5px; color: var(--ink-2); padding: 5px 0; border-bottom: 1px solid var(--grid); display: flex; justify-content: space-between; gap: 8px; }
+  #panel .detail-item .g { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ladder { display: flex; flex-direction: column; gap: 3px; }
+  .ladder .rung {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2);
+    padding: 5px 8px; border-radius: 7px; cursor: pointer; border: 1px solid transparent;
+  }
+  .ladder .rung:hover { border-color: var(--border); }
+  .ladder .rung.current { background: var(--page); border-color: var(--border); color: var(--ink-1); }
+  .ladder .tag { font-weight: 700; width: 34px; text-align: center; flex: none; white-space: nowrap; }
+  .ladder .rung.center .tag { color: var(--gold); }
+  .themechip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; margin-bottom: 12px; }
+  /* ---- index view ---- */
+  #indexview { position: absolute; inset: 0; overflow: auto; padding: 22px 26px; display: none; background: var(--page); }
+  #indexview table { border-collapse: collapse; width: 100%; max-width: 1080px; margin: 0 auto; font-size: 13px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; }
+  #indexview th, #indexview td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--grid); }
+  #indexview th { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); position: sticky; top: 0; background: var(--surface-1); border-bottom: 1px solid var(--baseline); }
+  #indexview .tbl-note { max-width: 1080px; margin: 10px auto 30px; font-size: 12px; color: var(--muted); }
+  #indexview td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  #indexview tr.hood-row { cursor: pointer; }
+  #indexview tr.hood-row:hover { background: var(--page); }
+  #indexview tr.ward-row td { font-weight: 650; background: var(--page); font-variant-caps: small-caps; }
+  #indexview tr.district-row td { font-weight: 750; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; background: var(--grid); }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; }
+  #hint { position: absolute; bottom: 14px; right: 16px; font-size: 11px; color: var(--muted); pointer-events: none; }
+  @media (max-width: 900px) { #hint { display: none; } }
+  @media (max-width: 700px) {
+    #controls { display: none; }
+    header h1 { font-size: 14px; }
+  }
+  .howto { font-size: 11.5px; color: var(--ink-2); line-height: 1.55; }
+  .howto b { font-weight: 650; }
+  .qrow { display: flex; align-items: baseline; gap: 7px; font-size: 12px; color: var(--ink-2); }
+  .qrow .qref { color: var(--muted); font-size: 11px; margin-left: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>The Gospel of John as a City</h1>
+  <span class="sub">879 verses · four quarters · one Way</span>
+  <div class="seg" id="viewseg">
+    <button data-view="organic" class="on">City Map</button>
+    <button data-view="linear">The Way (linear)</button>
+    <button data-view="index">Index</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
+</header>
+<div id="stage">
+  <div id="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div id="indexview"></div>
+  <div id="controls">
+    <div class="grp-title">Overlays</div>
+    <label><input type="checkbox" id="ck-iam" checked><span class="swatch" style="background:var(--gold-fill)"></span>“I AM” landmarks</label>
+    <label><input type="checkbox" id="ck-life" checked><span class="roadline" style="border-color:var(--t-sign)"></span>Life &amp; Water road</label>
+    <label><input type="checkbox" id="ck-light" checked><span class="roadline" style="border-color:var(--t-witness)"></span>Light &amp; Witness road</label>
+    <label><input type="checkbox" id="ck-chiasm"><span class="roadline" style="border-color:var(--t-passion)"></span>Chiasm bridges</label>
+    <label><input type="checkbox" id="ck-labels" checked><span class="swatch" style="background:var(--grid)"></span>Place labels</label>
+    <div class="grp-title">Building themes (colors)</div>
+    <div id="legend"></div>
+    <div class="grp-title">Quarters (districts)</div>
+    <div class="qrow"><span>Prologue</span><span class="qref">1:1–51</span></div>
+    <div class="qrow"><span>Book of Signs</span><span class="qref">2–12</span></div>
+    <div class="qrow"><span>Book of Glory</span><span class="qref">13–20</span></div>
+    <div class="qrow"><span>The Harbor (Epilogue)</span><span class="qref">21</span></div>
+    <div class="grp-title">How to read</div>
+    <div class="howto">
+      Each bubble/building is a passage; <b>size ≈ Greek word count</b>.
+      The road is the <b>Johannine Way</b> (narrative order, gate 1:1 → harbor 21:25).
+      ✦ gold star = “I AM” saying · ◎ ringed centre = chiasm midpoint ·
+      dashed outlines = district bounds · detached dashed lot = disputed text (7:53–8:11).
+    </div>
+  </div>
+  <div id="zoomctl">
+    <button id="z-in" title="Zoom in">+</button>
+    <button id="z-out" title="Zoom out">−</button>
+    <button id="z-fit" title="Reset view">⌂</button>
+  </div>
+  <div id="tooltip"></div>
+  <div id="panel">
+    <button class="close" onclick="closePanel()">×</button>
+    <div id="panel-body"></div>
+  </div>
+  <div id="hint">scroll to zoom · drag to pan · click a building for detail</div>
+</div>
+<script>
+const JOHN = /*__DATA__*/;
+/*__APP__*/
+</script>
+</body>
+</html>

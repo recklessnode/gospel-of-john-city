@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Gospel of John as a City</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f6f4ee;
+    --ink-1: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --panel: #ffffff;
+    --wall: #6b6558;
+    --road-fill: #efe9da;
+    --road-casing: #c9c2af;
+    --water: #d7e8ef;
+    --water-ink: #7fa8b8;
+    --gold: #b8860b;
+    --gold-fill: #eda100;
+    --district-wash: rgba(11,11,11,0.028);
+    --t-witness: #eda100;
+    --t-sign: #1baf7a;
+    --t-discourse: #2a78d6;
+    --t-controversy: #e34948;
+    --t-love: #e87ba4;
+    --t-passion: #4a3aa7;
+    --t-resurrection: #008300;
+    --shadow: 0 8px 28px rgba(11,11,11,0.14);
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #121211;
+    --ink-1: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.12);
+    --panel: #202020;
+    --wall: #8d8676;
+    --road-fill: #2a2822;
+    --road-casing: #4a463c;
+    --water: #16303a;
+    --water-ink: #4e7889;
+    --gold: #d9a419;
+    --gold-fill: #c98500;
+    --district-wash: rgba(255,255,255,0.035);
+    --t-witness: #c98500;
+    --t-sign: #199e70;
+    --t-discourse: #3987e5;
+    --t-controversy: #e66767;
+    --t-love: #d55181;
+    --t-passion: #9085e9;
+    --t-resurrection: #2fb457;
+    --shadow: 0 8px 28px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); color: var(--ink-1);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface-1);
+  }
+  header h1 {
+    font-size: 17px; font-weight: 650; letter-spacing: 0.04em;
+    font-variant-caps: small-caps; white-space: nowrap;
+  }
+  header .sub { font-size: 12px; color: var(--muted); }
+  .seg {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; background: var(--page);
+  }
+  .seg button {
+    border: 0; background: transparent; color: var(--ink-2); font: inherit;
+    font-size: 13px; padding: 6px 13px; cursor: pointer;
+  }
+  .seg button.on { background: var(--ink-1); color: var(--surface-1); }
+  .spacer { flex: 1; }
+  .iconbtn {
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-2);
+    border-radius: 8px; font: inherit; font-size: 13px; padding: 6px 10px; cursor: pointer;
+  }
+  .iconbtn:hover, .seg button:hover:not(.on) { color: var(--ink-1); }
+  #stage { position: relative; flex: 1; overflow: hidden; }
+  #mapwrap { position: absolute; inset: 0; }
+  svg#map { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  svg#map.panning { cursor: grabbing; }
+
+  /* ---- map element styles ---- */
+  .district-blob { fill: var(--district-wash); stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 7 5; pointer-events: stroke; }
+  .label-ward, .label-hood, .iam-label, .gate-label, .annex-label, .chiasm-badge,
+  .lin-ward-label, .milepost-label, .water-label, .lin-district-label, .label-district {
+    paint-order: stroke; stroke: var(--surface-1); stroke-width: 3px; stroke-linejoin: round;
+  }
+  .label-district { stroke-width: 4px; }
+  .hood:focus-visible { outline: 2px solid var(--ink-1); outline-offset: 2px; }
+  #controls.hidden { display: none !important; }
+  .wall { fill: none; stroke: var(--wall); stroke-width: 7; opacity: 0.85; }
+  .wall-inner { fill: none; stroke: var(--surface-1); stroke-width: 1.6; stroke-dasharray: 2 7; opacity: 0.8; }
+  .way-casing { fill: none; stroke: var(--road-casing); stroke-width: 13; stroke-linecap: round; }
+  .way-fill { fill: none; stroke: var(--road-fill); stroke-width: 9.5; stroke-linecap: round; }
+  .way-center { fill: none; stroke: var(--baseline); stroke-width: 1; stroke-dasharray: 8 8; }
+  .hood { stroke: var(--surface-1); stroke-width: 2; cursor: pointer; transition: filter .12s; }
+  .hood:hover { filter: brightness(1.12); }
+  .hood.selected { stroke: var(--ink-1); stroke-width: 2.5; }
+  .hood-ring { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-dasharray: 3 3; pointer-events: none; }
+  .center-ring { fill: none; stroke: var(--ink-2); stroke-width: 1.2; pointer-events: none; }
+  .label-district {
+    font-size: 26px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    fill: var(--ink-2); opacity: 0.65; text-anchor: middle; pointer-events: none;
+  }
+  .label-ward {
+    font-size: 12.5px; font-weight: 650; letter-spacing: 0.07em; font-variant-caps: small-caps;
+    fill: var(--ink-2); text-anchor: middle; pointer-events: none;
+  }
+  .label-hood { font-size: calc(12px * var(--inv, 1)); fill: var(--ink-2); text-anchor: middle; pointer-events: none; }
+  .iam-star { fill: var(--gold-fill); stroke: var(--surface-1); stroke-width: 1; cursor: pointer; }
+  .iam-label { font-size: calc(13px * var(--inv, 1)); font-weight: 600; fill: var(--gold); text-anchor: middle; pointer-events: none; }
+  .theme-road { fill: none; stroke-width: 2.4; stroke-dasharray: 1 6; stroke-linecap: round; opacity: 0.95; pointer-events: none; }
+  .chiasm-arc { fill: none; stroke: var(--t-passion); stroke-width: 1.3; stroke-dasharray: 4 4; opacity: 0.7; pointer-events: none; }
+  .chiasm-badge { font-size: 8px; font-weight: 700; fill: var(--ink-1); text-anchor: middle; pointer-events: none; }
+  .water-blob { fill: var(--water); stroke: var(--water-ink); stroke-width: 1; stroke-dasharray: 5 4; }
+  .water-label { font-size: 12px; font-style: italic; fill: var(--water-ink); text-anchor: middle; letter-spacing: .12em; pointer-events: none; }
+  .gate { fill: var(--road-fill); stroke: var(--wall); stroke-width: 2; }
+  .gate-label, .annex-label { font-size: 9.5px; font-weight: 600; fill: var(--ink-2); text-anchor: middle; pointer-events: none; }
+  .annex-blob { fill: var(--district-wash); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 4; cursor: pointer; }
+  .milepost { stroke: var(--baseline); stroke-width: 1; }
+  .milepost-label { font-size: 9px; fill: var(--muted); text-anchor: middle; }
+  .lin-bracket { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+  .lin-district-band { opacity: 0.16; }
+  .lin-district-label { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; fill: var(--ink-2); text-anchor: middle; }
+  .lin-ward-label { font-size: 10px; font-variant-caps: small-caps; font-weight: 650; fill: var(--ink-2); text-anchor: middle; }
+  .compass { fill: var(--muted); opacity: .7; }
+
+  /* ---- overlay UI ---- */
+  #controls {
+    position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 8px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; box-shadow: var(--shadow); font-size: 12.5px; max-width: 230px;
+  }
+  #controls .grp-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 2px; }
+  #controls label { display: flex; align-items: center; gap: 7px; cursor: pointer; color: var(--ink-2); }
+  #controls label:hover { color: var(--ink-1); }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; border: 1px solid var(--border); }
+  .roadline { width: 16px; height: 0; border-top: 3px dotted; flex: none; }
+  #zoomctl {
+    position: absolute; bottom: 16px; left: 12px; display: flex; flex-direction: column; gap: 5px;
+  }
+  #zoomctl button {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel); color: var(--ink-1); font-size: 16px; cursor: pointer; box-shadow: var(--shadow);
+  }
+  #tooltip {
+    position: absolute; pointer-events: none; z-index: 40; display: none;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 9px;
+    padding: 9px 11px; font-size: 12px; max-width: 260px; box-shadow: var(--shadow);
+  }
+  #tooltip .tt-name { font-weight: 650; font-size: 13px; }
+  #tooltip .tt-ref { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+  #tooltip .tt-path { color: var(--ink-2); font-size: 11px; margin-bottom: 4px; }
+  #tooltip .tt-stats { display: flex; gap: 10px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  #tooltip .tt-theme { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; color: var(--ink-2); }
+  #panel {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 340px; max-width: 92vw;
+    background: var(--panel); border-left: 1px solid var(--border); box-shadow: var(--shadow);
+    transform: translateX(105%); transition: transform .22s ease; overflow-y: auto;
+    padding: 18px 18px 30px; z-index: 30;
+  }
+  #panel.open { transform: translateX(0); }
+  #panel .close { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 20px; color: var(--muted); cursor: pointer; }
+  #panel .crumb { font-size: 11px; color: var(--muted); letter-spacing: .03em; margin-bottom: 6px; margin-right: 24px;}
+  #panel h2 { font-size: 19px; margin-bottom: 2px; }
+  #panel .ref { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  #panel .statrow { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  #panel .stat {
+    flex: 1 1 30%; background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; text-align: center;
+  }
+  #panel .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+  #panel .stat span { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  #panel .full-desc { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 14px; }
+  #panel .note { font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.45; margin-bottom: 14px; border-left: 3px solid var(--grid); padding-left: 9px; }
+  #panel h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 7px; }
+  #panel .detail-item { font-size: 12.5px; color: var(--ink-2); padding: 5px 0; border-bottom: 1px solid var(--grid); display: flex; justify-content: space-between; gap: 8px; }
+  #panel .detail-item .g { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ladder { display: flex; flex-direction: column; gap: 3px; }
+  .ladder .rung {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2);
+    padding: 5px 8px; border-radius: 7px; cursor: pointer; border: 1px solid transparent;
+  }
+  .ladder .rung:hover { border-color: var(--border); }
+  .ladder .rung.current { background: var(--page); border-color: var(--border); color: var(--ink-1); }
+  .ladder .tag { font-weight: 700; width: 34px; text-align: center; flex: none; white-space: nowrap; }
+  .ladder .rung.center .tag { color: var(--gold); }
+  .themechip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; margin-bottom: 12px; }
+  /* ---- index view ---- */
+  #indexview { position: absolute; inset: 0; overflow: auto; padding: 22px 26px; display: none; background: var(--page); }
+  #indexview table { border-collapse: collapse; width: 100%; max-width: 1080px; margin: 0 auto; font-size: 13px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; }
+  #indexview th, #indexview td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--grid); }
+  #indexview th { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); position: sticky; top: 0; background: var(--surface-1); border-bottom: 1px solid var(--baseline); }
+  #indexview .tbl-note { max-width: 1080px; margin: 10px auto 30px; font-size: 12px; color: var(--muted); }
+  #indexview td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  #indexview tr.hood-row { cursor: pointer; }
+  #indexview tr.hood-row:hover { background: var(--page); }
+  #indexview tr.ward-row td { font-weight: 650; background: var(--page); font-variant-caps: small-caps; }
+  #indexview tr.district-row td { font-weight: 750; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; background: var(--grid); }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; }
+  #hint { position: absolute; bottom: 14px; right: 16px; font-size: 11px; color: var(--muted); pointer-events: none; }
+  @media (max-width: 900px) { #hint { display: none; } }
+  @media (max-width: 700px) {
+    #controls { display: none; }
+    header h1 { font-size: 14px; }
+  }
+  .howto { font-size: 11.5px; color: var(--ink-2); line-height: 1.55; }
+  .howto b { font-weight: 650; }
+  .qrow { display: flex; align-items: baseline; gap: 7px; font-size: 12px; color: var(--ink-2); }
+  .qrow .qref { color: var(--muted); font-size: 11px; margin-left: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>The Gospel of John as a City</h1>
+  <span class="sub">879 verses · four quarters · one Way</span>
+  <div class="seg" id="viewseg">
+    <button data-view="organic" class="on">City Map</button>
+    <button data-view="linear">The Way (linear)</button>
+    <button data-view="index">Index</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
+</header>
+<div id="stage">
+  <div id="mapwrap"><svg id="map" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div id="indexview"></div>
+  <div id="controls">
+    <div class="grp-title">Overlays</div>
+    <label><input type="checkbox" id="ck-iam" checked><span class="swatch" style="background:var(--gold-fill)"></span>“I AM” landmarks</label>
+    <label><input type="checkbox" id="ck-life" checked><span class="roadline" style="border-color:var(--t-sign)"></span>Life &amp; Water road</label>
+    <label><input type="checkbox" id="ck-light" checked><span class="roadline" style="border-color:var(--t-witness)"></span>Light &amp; Witness road</label>
+    <label><input type="checkbox" id="ck-chiasm"><span class="roadline" style="border-color:var(--t-passion)"></span>Chiasm bridges</label>
+    <label><input type="checkbox" id="ck-labels" checked><span class="swatch" style="background:var(--grid)"></span>Place labels</label>
+    <div class="grp-title">Building themes (colors)</div>
+    <div id="legend"></div>
+    <div class="grp-title">Quarters (districts)</div>
+    <div class="qrow"><span>Prologue</span><span class="qref">1:1–51</span></div>
+    <div class="qrow"><span>Book of Signs</span><span class="qref">2–12</span></div>
+    <div class="qrow"><span>Book of Glory</span><span class="qref">13–20</span></div>
+    <div class="qrow"><span>The Harbor (Epilogue)</span><span class="qref">21</span></div>
+    <div class="grp-title">How to read</div>
+    <div class="howto">
+      Each bubble/building is a passage; <b>size ≈ Greek word count</b>.
+      The road is the <b>Johannine Way</b> (narrative order, gate 1:1 → harbor 21:25).
+      ✦ gold star = “I AM” saying · ◎ ringed centre = chiasm midpoint ·
+      dashed outlines = district bounds · detached dashed lot = disputed text (7:53–8:11).
+    </div>
+  </div>
+  <div id="zoomctl">
+    <button id="z-in" title="Zoom in">+</button>
+    <button id="z-out" title="Zoom out">−</button>
+    <button id="z-fit" title="Reset view">⌂</button>
+  </div>
+  <div id="tooltip"></div>
+  <div id="panel">
+    <button class="close" onclick="closePanel()">×</button>
+    <div id="panel-body"></div>
+  </div>
+  <div id="hint">scroll to zoom · drag to pan · click a building for detail</div>
+</div>
+<script>
+const JOHN = {"title": "The Gospel of John as a City", "totalVerses": 879, "chapterOffsets": {"1": 0, "2": 51, "3": 76, "4": 112, "5": 166, "6": 213, "7": 284, "8": 337, "9": 396, "10": 437, "11": 479, "12": 536, "13": 586, "14": 624, "15": 655, "16": 682, "17": 715, "18": 741, "19": 781, "20": 823, "21": 854}, "chapterVerses": {"1": 51, "2": 25, "3": 36, "4": 54, "5": 47, "6": 71, "7": 53, "8": 59, "9": 41, "10": 42, "11": 57, "12": 50, "13": 38, "14": 31, "15": 27, "16": 33, "17": 26, "18": 40, "19": 42, "20": 31, "21": 25}, "themes": {"witness": {"label": "Witness & Testimony", "light": "#eda100", "dark": "#c98500"}, "sign": {"label": "Signs & Life-Giving", "light": "#1baf7a", "dark": "#199e70"}, "discourse": {"label": "Discourse & Dialogue", "light": "#2a78d6", "dark": "#3987e5"}, "controversy": {"label": "Controversy & Conflict", "light": "#e34948", "dark": "#e66767"}, "love": {"label": "Farewell & Love", "light": "#e87ba4", "dark": "#d55181"}, "passion": {"label": "Passion & Exaltation", "light": "#4a3aa7", "dark": "#9085e9"}, "resurrection": {"label": "Resurrection & Restoration", "light": "#008300", "dark": "#008300"}}, "districts": [{"id": "d1", "short": "Prologue Quarter", "ref": "1:1–51", "desc": "The grand western entrance: the cosmic hymn and the Baptist's twin obelisks of testimony.", "greek": 732, "eng": 893, "verses": 51, "v0": 1, "v1": 51, "mid": 26.0, "wards": [{"id": "w2", "short": "The Cosmic Poem", "ref": "1:1–18", "desc": "I. Prologue: Presenting Jesus, Israel’s Messiah—The Source of Light and Life That Makes Us Children of God (1:1–18)", "verses": 18, "eng": 306, "greek": 252, "v0": 1, "v1": 18, "mid": 9.5, "hoods": [{"id": "n3", "short": "Hymn to the Word", "ref": "1:1–18", "theme": "witness", "desc": "1:1–18 A Poem about the Messiah’s Cosmic Status and Mission to Israel", "verses": 18, "eng": 306, "greek": 252, "v0": 1, "v1": 18, "mid": 9.5, "details": [{"desc": "1:1–5 The Creative Word", "greek": 63}, {"desc": "1:6–8 John the Witness", "greek": 37}, {"desc": "1:9–11 Light in Israel", "greek": 36}, {"desc": "1:12–13 Children of God", "greek": 40}, {"desc": "1:14 Word in Israel", "greek": 27}, {"desc": "1:15 John the Witness", "greek": 23}, {"desc": "1:16–18 Life-Mediating Son", "greek": 42}]}]}, {"id": "w4", "short": "Gate of Witness", "ref": "1:19–51", "desc": "II. Presenting Jesus of Nazareth, Israel’s Messiah (1:19–51)", "verses": 33, "eng": 587, "greek": 480, "v0": 19, "v1": 51, "mid": 35.0, "hoods": [{"id": "n5", "short": "John on Himself", "ref": "1:19–28", "theme": "witness", "desc": "1:19–28 The Witness of John the Prophet about Himself", "verses": 10, "eng": 151, "greek": 127, "v0": 19, "v1": 28, "mid": 23.5}, {"id": "n6", "short": "John on Jesus", "ref": "1:29–34", "theme": "witness", "desc": "1:29–34 The Witness of John the Prophet about Jesus", "verses": 6, "eng": 121, "greek": 95, "v0": 29, "v1": 34, "mid": 31.5}, {"id": "n8", "short": "First Invitation", "ref": "1:35–42", "theme": "witness", "desc": "1:35–42 Jesus’ First Invitation", "verses": 8, "eng": 151, "greek": 120, "v0": 35, "v1": 42, "mid": 38.5, "chiasm": "A"}, {"id": "n9", "short": "Second Invitation", "ref": "1:43–51", "theme": "witness", "desc": "1:43–51 Jesus’ Second Invitation", "verses": 9, "eng": 164, "greek": 138, "v0": 43, "v1": 51, "mid": 47.0, "chiasm": "A′"}]}]}, {"id": "d10", "short": "Book of Signs Metropolis", "ref": "2:1–12:50", "desc": "The sprawling public metropolis of chapters 2–12: miracle plazas, marketplaces of dispute, and the elevated Temple Citadel — Jesus' public offer of light and life to Israel.", "greek": 7707, "eng": 9763, "verses": 496, "v0": 52, "v1": 586, "mid": 319.0, "wards": [{"id": "w11", "short": "Cana–Samaria Plazas", "ref": "2:1–4:54", "desc": "III. Jesus Began Bringing Life to Israel: From Galilee to Jerusalem and Back (2:1–4:54)", "verses": 131, "eng": 2518, "greek": 2088, "v0": 52, "v1": 166, "mid": 109.0, "hoods": [{"id": "n12", "short": "Wedding at Cana", "ref": "2:1–12", "theme": "sign", "desc": "2:1–12 A Wedding in Galilee: Jesus’ Initial Self-Disclosure", "verses": 12, "eng": 214, "greek": 188, "v0": 52, "v1": 63, "mid": 57.5}, {"id": "n13", "short": "Temple Cleansing", "ref": "2:13–25", "theme": "controversy", "desc": "2:13–25 First Passover: Jesus’ Opposition to the Temple System Elicits Belief", "verses": 13, "eng": 238, "greek": 198, "v0": 64, "v1": 76, "mid": 70.0}, {"id": "n14", "short": "Nicodemus Assembly", "ref": "3:1–21", "theme": "discourse", "desc": "3:1–21 Jesus’ Conversation with Nicodemus Signals the Coming Opposition between Believers Who Have New Life and Unbelievers Who Do Not", "verses": 21, "eng": 427, "greek": 347, "v0": 77, "v1": 97, "mid": 87.0, "details": [{"desc": "Addendum Son of Man, Son, Light 3:13–21", "greek": 140, "verses": 9}]}, {"id": "n16", "short": "John's Affirmation", "ref": "3:22–36", "theme": "witness", "desc": "3:22–36 John’s Affirmation of Jesus’ Superiority Signals Coming Opposition Between Believers Who Have New Life and Unbelievers Who Do Not", "verses": 15, "eng": 286, "greek": 233, "v0": 98, "v1": 112, "mid": 105.0, "details": [{"desc": "Addendum Belief in Son = eternal life, otherwise wrath of God 3:31–35", "greek": 82, "verses": 5}]}, {"id": "n18", "short": "Samaritan Well Forum", "ref": "4:1–42", "theme": "discourse", "desc": "4:1–42 On the Way Back to Galilee: Jesus Encounters a Samaritan Woman", "verses": 42, "eng": 774, "greek": 634, "v0": 113, "v1": 154, "mid": 133.5}, {"id": "n19", "short": "Honor in Galilee", "ref": "4:43–45", "theme": "witness", "desc": "4:43–45 Jesus’ Honor in Galilee", "verses": 3, "eng": 50, "greek": 37, "v0": 155, "v1": 157, "mid": 156.0}, {"id": "n20", "short": "Official's Son Healed", "ref": "4:46–54", "theme": "sign", "desc": "4:46–54 A Healing in Galilee: Jesus’ Second Self-Disclosure", "verses": 9, "eng": 188, "greek": 152, "v0": 158, "v1": 166, "mid": 162.0}]}, {"id": "w21", "short": "Controversy Marketplace", "ref": "5:1–6:71", "desc": "IV. Jesus’ Bringing Life to Israel Provoked Controversy in Jerusalem and Galilee (5:1–6:71)", "verses": 118, "eng": 2426, "greek": 1889, "v0": 167, "v1": 284, "mid": 225.5, "hoods": [{"id": "n22", "short": "Bethesda Pool", "ref": "5:1–20", "theme": "sign", "desc": "5:1–20 A Feast in Jerusalem: Controversy over Jesus’ Rescue of a Lame Man", "verses": 20, "eng": 388, "greek": 303, "v0": 167, "v1": 186, "mid": 176.5, "details": [{"desc": "Addendum 5:17–20", "greek": 66, "verses": 4}]}, {"id": "n24", "short": "The Honored Broker", "ref": "5:21–30", "theme": "discourse", "desc": "5:21–30 Jesus as God’s Honored Broker", "verses": 10, "eng": 216, "greek": 169, "v0": 187, "v1": 196, "mid": 191.5}, {"id": "n25", "short": "Hall of Legitimation", "ref": "5:31–47", "theme": "discourse", "desc": "5:31–47 Legitimation of Jesus’ Brokerage", "verses": 17, "eng": 315, "greek": 248, "v0": 197, "v1": 213, "mid": 205.0, "details": [{"desc": "Theme 1 Witnesses to the Son 5:31–40", "greek": 138, "verses": 10}, {"desc": "Theme 2 The Father’s Honored Son and Unbelief (5:41–47)", "greek": 110, "verses": 7}]}, {"id": "n28", "short": "Loaves & Fishes Field", "ref": "6:1–15", "theme": "sign", "desc": "6:1–15 Second Passover, in Galilee: An Outdoor Meal of Bread and Fish", "verses": 15, "eng": 275, "greek": 217, "v0": 214, "v1": 228, "mid": 221.0}, {"id": "n29", "short": "Sea Crossing", "ref": "6:16–23", "theme": "sign", "desc": "6:16–23 Jesus’ Power over the Sea", "verses": 8, "eng": 162, "greek": 128, "v0": 229, "v1": 236, "mid": 232.5}, {"id": "n30", "short": "Bread of Life Forum", "ref": "6:24–59", "theme": "discourse", "desc": "6:24–59 Jesus Talks with the Crowd about Bread of Life", "verses": 36, "eng": 733, "greek": 566, "v0": 237, "v1": 272, "mid": 254.5, "details": [{"desc": "6:24–31a Seeking Jesus: A Challenge to Jesus at Capernaum on the Other Side of the Sea", "greek": 114, "verses": 8}, {"desc": "6:31b–59 Jesus Explains the Passage Cited from Exodus 16 by His Challengers", "greek": 409, "verses": 28}], "landmark": "iam-bread"}, {"id": "n33", "short": "Disloyalty Unmasked", "ref": "6:60–66", "theme": "controversy", "desc": "6:60–66 Insider Talk Unmasks Antisociety Disloyalty", "verses": 7, "eng": 154, "greek": 108, "v0": 273, "v1": 279, "mid": 276.0}, {"id": "n34", "short": "The Twelve Respond", "ref": "6:67–71", "theme": "witness", "desc": "6:67–71 Reaction of the Twelve", "verses": 5, "eng": 83, "greek": 68, "v0": 280, "v1": 284, "mid": 282.0}]}, {"id": "w35", "short": "Temple Citadel", "ref": "7:1–8:59", "desc": "V. Jesus Brought Light and Life to the Jerusalem Temple (7:1–8:59)", "verses": 112, "eng": 2172, "greek": 1722, "v0": 285, "v1": 396, "mid": 340.5, "hoods": [{"id": "n36", "short": "Brothers' Challenge", "ref": "7:1–9", "theme": "controversy", "desc": "7:1–9 Around the Feast of Sukkoth in Galilee: A Challenge from Jesus’ Brothers", "verses": 9, "eng": 161, "greek": 127, "v0": 285, "v1": 293, "mid": 289.0}, {"id": "n37", "short": "Divided Judgment", "ref": "7:10–14a", "theme": "controversy", "desc": "7:10–14a Around the Feast of Sukkoth in Jerusalem: Divided Public Judgment about Jesus", "verses": 5, "eng": 73, "greek": 58, "v0": 294, "v1": 298, "mid": 296.0}, {"id": "n40", "short": "Authority Challenged", "ref": "7:14b–18", "theme": "controversy", "desc": "7:14b–18 Sukkoth in Jerusalem: Initial Challenge to Jesus about His Authority to Teach and Interpret Scripture", "verses": 5, "eng": 83, "greek": 66, "v0": 298, "v1": 302, "mid": 300.0}, {"id": "n41", "short": "Moses Riposte", "ref": "7:19–28", "theme": "controversy", "desc": "7:19–28 Jesus’ Riposte: Moses Gives the Law, but You Do Not Observe It", "verses": 10, "eng": 200, "greek": 161, "v0": 303, "v1": 312, "mid": 307.5}, {"id": "n44", "short": "Arrest Attempts", "ref": "7:29–36", "theme": "controversy", "desc": "7:29–36 Second Challenge in Jerusalem: Attempts to Arrest Jesus", "verses": 8, "eng": 155, "greek": 124, "v0": 313, "v1": 320, "mid": 316.5}, {"id": "n46", "short": "Living Water Fountain", "ref": "7:37–39", "theme": "discourse", "desc": "Central Marker III: Jesus proclaimed in the temple: If anyone thirst, let him come to me and drink! 7:37–39", "verses": 3, "eng": 63, "greek": 49, "v0": 321, "v1": 323, "mid": 322.0, "landmark": "iam-water"}, {"id": "n47", "short": "Status Dispute", "ref": "7:40–52", "theme": "controversy", "desc": "7:40–52 Opponents’ Controversy over Jesus’ Status and Role", "verses": 13, "eng": 229, "greek": 184, "v0": 324, "v1": 336, "mid": 330.0}, {"id": "n48", "short": "Light of the World", "ref": "8:12", "theme": "discourse", "desc": "Central Marker I Jesus again spoke to them saying, “I am the Light of the World” 8:12", "verses": 1, "eng": 25, "greek": 21, "v0": 349, "v1": 349, "mid": 349.0, "landmark": "iam-light"}, {"id": "n49", "short": "Testimony Dispute", "ref": "8:13–19", "theme": "controversy", "desc": "8:13–19 Opponents’ Controversy over Jesus’ Testimony", "verses": 7, "eng": 149, "greek": 122, "v0": 350, "v1": 356, "mid": 353.0}, {"id": "n51", "short": "Riddle Counterchallenge", "ref": "8:21–30", "theme": "controversy", "desc": "8:21–30 Jesus Uses a Riddle as a Counterchallenge", "verses": 10, "eng": 209, "greek": 161, "v0": 358, "v1": 367, "mid": 362.5, "details": [{"desc": "8:21–24a First Gambit", "greek": 60, "verses": 4}, {"desc": "8:24b–30 Second Gambit", "greek": 101, "verses": 7}]}, {"id": "n54", "short": "Abraham Controversy", "ref": "8:31–59", "theme": "controversy", "desc": "8:31–59 Controversy over Kinship with Abraham", "verses": 29, "eng": 630, "greek": 505, "v0": 368, "v1": 396, "mid": 382.0, "landmark": "iam-before"}], "chiasmNote": "Structured by temple 'markers': Jesus enters (7:14b), proclaims at the feast's center (7:37–39: living water), and exits under stoning (8:59)."}, {"id": "w56", "short": "Siloam & Sheepfold", "ref": "9:1–10:42", "desc": "VI. Judeans Reaction to Jesus’ Bringing Light and Life to Jerusalem (9:1–10:42)", "verses": 83, "eng": 1568, "greek": 1208, "v0": 397, "v1": 479, "mid": 438.0, "hoods": [{"id": "n57", "short": "Blind Man's Court", "ref": "9:1–41", "theme": "sign", "desc": "9:1–41 Jesus’ Rescue of a Man Born Blind Occasions Controversy", "verses": 41, "eng": 829, "greek": 622, "v0": 397, "v1": 437, "mid": 417.0, "details": [{"desc": "Episode I: Healing", "greek": 92, "verses": 7}, {"desc": "Episode II: First Interrogation", "greek": 71, "verses": 5}, {"desc": "Episode III: Interrogation of Parents", "greek": 90, "verses": 6}, {"desc": "Episode IV: Second Interrogation", "greek": 186, "verses": 11}]}, {"id": "n62", "short": "The Sheepfold", "ref": "10:1–18", "theme": "discourse", "desc": "10:1–18 Jesus as the Sheep Gate and Good Shepherd", "verses": 18, "eng": 342, "greek": 264, "v0": 438, "v1": 455, "mid": 446.5, "landmark": "iam-shepherd"}, {"id": "n66", "short": "Hanukkah Challenge", "ref": "10:19–24", "theme": "controversy", "desc": "10:19–24 Hanukkah in Jerusalem: Another Challenge—Deviance Accusations against Jesus", "verses": 6, "eng": 100, "greek": 82, "v0": 456, "v1": 461, "mid": 458.5}, {"id": "n67", "short": "Near-Stoning Riposte", "ref": "10:25–38", "theme": "controversy", "desc": "10:25–38 Jesus’ Riposte Nearly Erupts in Violence", "verses": 14, "eng": 245, "greek": 192, "v0": 462, "v1": 475, "mid": 468.5}, {"id": "n68", "short": "Honor Notice", "ref": "10:39–42", "theme": "witness", "desc": "10:39–42 An Honor Notice about Jesus", "verses": 4, "eng": 52, "greek": 48, "v0": 476, "v1": 479, "mid": 477.5}]}, {"id": "w69", "short": "Bethany Gardens", "ref": "11:1–12:11", "desc": "VII. As His Last Public Act, Jesus Brought Life to a Beloved Friend (Like Us) (11:1–54)", "verses": 68, "eng": 1319, "greek": 1070, "v0": 480, "v1": 547, "mid": 513.5, "hoods": [{"id": "n70", "short": "The Request", "ref": "11:1–6", "theme": "sign", "desc": "11:1–6 A Request to Save Lazarus, a Beloved Friend", "verses": 6, "eng": 102, "greek": 82, "v0": 480, "v1": 485, "mid": 482.5}, {"id": "n71", "short": "Reluctant Journey", "ref": "11:7–16", "theme": "sign", "desc": "11:7–16 Reluctant Compliance: Jesus Comes to Rescue Lazarus from Death", "verses": 10, "eng": 172, "greek": 137, "v0": 486, "v1": 495, "mid": 490.5}, {"id": "n72", "short": "Lazarus Raised", "ref": "11:17–44", "theme": "sign", "desc": "11:17–44 Jesus Rescues Lazarus, the Beloved Friend, from Death", "verses": 28, "eng": 563, "greek": 446, "v0": 496, "v1": 523, "mid": 509.5, "landmark": "iam-resurrection"}, {"id": "n73", "short": "The Death Plot", "ref": "11:45–54", "theme": "controversy", "desc": "11:45–54 Reaction to Jesus’ Raising Lazarus: A Plot to Kill Jesus", "verses": 10, "eng": 215, "greek": 186, "v0": 524, "v1": 533, "mid": 528.5}, {"id": "n74", "short": "Anointing at Bethany", "ref": "11:55–12:11", "theme": "passion", "desc": "11:55–12:11 A Third Passover Draws Near: Jesus Is Anointed", "verses": 14, "eng": 267, "greek": 219, "v0": 534, "v1": 547, "mid": 540.5}], "note": "Ward VII (11:1–54, 851 Greek words) extended here to include the anointing bridge passage 11:55–12:11 (219 gw)."}, {"id": "w75", "short": "Passover Approach", "ref": "12:12–50", "desc": "VIII. The Close of the Story of Jesus’ Public Offer of Light and Life to Israel (12:12–50)", "verses": 39, "eng": 780, "greek": 601, "v0": 548, "v1": 586, "mid": 567.0, "hoods": [{"id": "n76", "short": "Royal Entry Avenue", "ref": "12:12–19", "theme": "passion", "desc": "12:12–19 Jesus Enters Jerusalem and Is Hailed as King of Israel", "verses": 8, "eng": 155, "greek": 124, "v0": 548, "v1": 555, "mid": 551.5}, {"id": "n77", "short": "Final Public Word", "ref": "12:20–36", "theme": "discourse", "desc": "12:20–36 Jesus’ Final Public Revelation", "verses": 17, "eng": 347, "greek": 265, "v0": 556, "v1": 572, "mid": 564.0}, {"id": "n78", "short": "Unbelief Explained", "ref": "12:37–43", "theme": "controversy", "desc": "12:37–43 The Problem of Judean Unbelief Explained", "verses": 7, "eng": 132, "greek": 99, "v0": 573, "v1": 579, "mid": 576.0}, {"id": "n79", "short": "Closing Proclamation", "ref": "12:44–50", "theme": "discourse", "desc": "12:44–50 Conclusion to the Series of Jesus’ Self-Disclosures", "verses": 7, "eng": 146, "greek": 113, "v0": 580, "v1": 586, "mid": 583.0}]}]}, {"id": "d80", "short": "Book of Glory District", "ref": "13:1–20:31", "desc": "The walled historic district of chapters 13–20: private courtyards, the judicial fortress, and the sunrise gardens of resurrection.", "greek": 3673, "eng": 4809, "verses": 238, "v0": 587, "v1": 854, "mid": 720.5, "wards": [{"id": "w81", "short": "Upper Room Enclave", "ref": "13:1–17:26", "desc": "IX. Passover in Jerusalem: What Jesus Said and Did During His Last Meal with His Friends (Like Us) (13:1–17:26)", "verses": 155, "eng": 3000, "greek": 2296, "v0": 587, "v1": 741, "mid": 664.0, "hoods": [{"id": "n82", "short": "Footwashing Courtyard", "ref": "13:1–38", "theme": "love", "desc": "A 13:1–38 Jesus Washes Feet of Core Group: Urges Imitation and Mutual Love", "verses": 38, "eng": 758, "greek": 571, "v0": 587, "v1": 624, "mid": 605.5, "chiasm": "A"}, {"id": "n83", "short": "House of Reassurance", "ref": "14:1–31", "theme": "love", "desc": "B 14:1–31 Jesus Gives Reassurance to His Core Group in Face of His Departure", "verses": 31, "eng": 587, "greek": 446, "v0": 625, "v1": 655, "mid": 640.0, "chiasm": "B", "landmark": "iam-way"}, {"id": "n84", "short": "The Vine Trellis", "ref": "15:1–11", "theme": "love", "desc": "C 15:1–11 Solidarity in Jesus’ Group", "verses": 11, "eng": 214, "greek": 161, "v0": 656, "v1": 666, "mid": 661.0, "chiasm": "C", "landmark": "iam-vine"}, {"id": "n86", "short": "Love Commandment Court", "ref": "15:12–17", "theme": "love", "desc": "D 15:12–17 Jesus’ New Commandment - Love", "verses": 6, "eng": 129, "greek": 94, "v0": 667, "v1": 672, "mid": 669.5, "chiasm": "D", "center": true}, {"id": "n87", "short": "Insiders & Outsiders", "ref": "15:18–16:4a", "theme": "love", "desc": "C′ 15:18–16:4a Insiders and Outsiders", "verses": 14, "eng": 275, "greek": 216, "v0": 673, "v1": 686, "mid": 679.5, "chiasm": "C′"}, {"id": "m16_4b-33", "short": "Departure Preparations", "ref": "16:4b–33", "theme": "love", "desc": "16:4b–33 Jesus Prepares His Friends for His Departure", "verses": 30, "eng": null, "greek": 442, "v0": 686, "v1": 715, "mid": 700.5, "chiasm": "B′", "note": "Greek count from the 'bubble data' sheet (row absent from John Stats)."}, {"id": "n88", "short": "High Priestly Prayer", "ref": "17:1–26", "theme": "love", "desc": "A′ 17:1–26 Jesus Prays for Honor for Himself and His Followers", "verses": 26, "eng": 475, "greek": 366, "v0": 716, "v1": 741, "mid": 728.5, "chiasm": "A′"}], "chiasmNote": "A radial chiasm plaza: A footwashing ↔ A′ prayer, B reassurance ↔ B′ departure, C solidarity ↔ C′ opposition, with D — the new commandment of love — as the central fountain."}, {"id": "w89", "short": "Praetorium Fortress", "ref": "18:1–19:42", "desc": "X. Jesus Was Lifted Up and Gave His Spirit to Us: His Process of Ascent (18:1–19:42)", "verses": 82, "eng": 1754, "greek": 1367, "v0": 742, "v1": 823, "mid": 782.5, "hoods": [{"id": "n90", "short": "Garden of Arrest", "ref": "18:1–11", "theme": "passion", "desc": "A 18:1–11 Jesus’ Arrest", "verses": 11, "eng": 214, "greek": 169, "v0": 742, "v1": 752, "mid": 747.0, "chiasm": "A"}, {"id": "n91", "short": "High Priest's Hall", "ref": "18:12–27", "theme": "passion", "desc": "B 18:12–27 Jesus before the High Priest; Peter’s Disloyalty", "verses": 16, "eng": 300, "greek": 233, "v0": 753, "v1": 768, "mid": 760.5, "chiasm": "B"}, {"id": "n92", "short": "Pilate's Judgment Seat", "ref": "18:28–19:16a", "theme": "passion", "desc": "C 18:28–19:16a Jesus before Pilate: The King of the Judeans", "verses": 30, "eng": 630, "greek": 488, "v0": 769, "v1": 797, "mid": 783.0, "chiasm": "C", "center": true}, {"id": "n93", "short": "Golgotha Hill", "ref": "19:16b–37", "theme": "passion", "desc": "B′ 19:16b–37 Jesus is Lifted Up before “This World”: His Exaltation (Glorification)", "verses": 22, "eng": 481, "greek": 370, "v0": 797, "v1": 818, "mid": 807.5, "chiasm": "B′"}, {"id": "n94", "short": "Garden Tomb", "ref": "19:38–42", "theme": "passion", "desc": "A′ 19:38–42 Conclusion: Jesus’ Burial in a Garden", "verses": 5, "eng": 129, "greek": 107, "v0": 819, "v1": 823, "mid": 821.0, "chiasm": "A′"}], "chiasmNote": "A second chiasm plaza: arrest garden ↔ burial garden, priest's hall ↔ the cross, with the trial before Pilate — 'the King of the Judeans' — at dead center."}, {"id": "w95", "short": "Sunrise Gardens", "ref": "20:1–31", "desc": "XI. God’s Vindication of Jesus: Jesus Ascends to God and Descends to His Friends (20:1–31)", "verses": 31, "eng": 630, "greek": 488, "v0": 824, "v1": 854, "mid": 839.0, "hoods": [{"id": "n96", "short": "Empty Tomb & Upper Room", "ref": "20:1–31", "theme": "resurrection", "desc": "20:1–31 Jesus Completes His Ascent and Descends Twice", "verses": 31, "eng": 630, "greek": 488, "v0": 824, "v1": 854, "mid": 839.0}]}]}, {"id": "d97", "short": "Harbor of Tiberias", "ref": "21:1–25", "desc": "The addendum port on the Sea of Tiberias, outside the old city wall — a third appearance, breakfast on the beach, and Peter restored.", "greek": 419, "eng": 526, "verses": 25, "v0": 855, "v1": 879, "mid": 867.0, "wards": [{"id": "w97", "short": "The Waterfront", "ref": "21:1–23", "desc": "XII. Addendum: Another Descent and Appearance of the Risen Jesus (21:1–25)", "verses": 25, "eng": 526, "greek": 419, "v0": 855, "v1": 877, "mid": 866.0, "hoods": [{"id": "n98", "short": "Charcoal-Fire Beach", "ref": "21:1–14", "theme": "resurrection", "desc": "21:1–14 Third Appearance of the Risen Jesus", "verses": 14, "eng": 284, "greek": 226, "v0": 855, "v1": 868, "mid": 861.5}, {"id": "n99", "short": "Shepherd's Commission", "ref": "21:15–23", "theme": "resurrection", "desc": "21:15–23 Tying Up Loose Ends in the Story", "verses": 9, "eng": 201, "greek": 161, "v0": 869, "v1": 877, "mid": 873.0, "details": [{"desc": "Theme 1: Reconciliation conversation with Peter 21:15–18", "greek": 92, "verses": 4}, {"desc": "Theme 2: About the fate of the beloved disciple 21:19–23", "greek": 69, "verses": 5}]}]}, {"id": "w102", "short": "Scribes' Postscript", "ref": "21:24–25", "desc": "XIII. Epilogue: Group Attestation to the Author’s Veracity (21:24–25)", "verses": 2, "eng": 41, "greek": 32, "v0": 878, "v1": 879, "mid": 878.5, "hoods": [{"id": "n102", "short": "Attestation Stone", "ref": "21:24–25", "theme": "witness", "desc": "XIII. Epilogue: Group Attestation to the Author’s Veracity (21:24–25)", "verses": 2, "eng": 41, "greek": 32, "v0": 878, "v1": 879, "mid": 878.5}]}], "outside": true}], "iam": [{"id": "iam-bread", "label": "I am the Bread of Life", "ref": "6:35", "v": 248}, {"id": "iam-water", "label": "Rivers of Living Water", "ref": "7:37–38", "v": 321, "minor": true}, {"id": "iam-light", "label": "I am the Light of the World", "ref": "8:12", "v": 349}, {"id": "iam-before", "label": "Before Abraham was, I AM", "ref": "8:58", "v": 395, "minor": true}, {"id": "iam-gate", "label": "I am the Gate for the Sheep", "ref": "10:7", "v": 444}, {"id": "iam-shepherd", "label": "I am the Good Shepherd", "ref": "10:11", "v": 448}, {"id": "iam-resurrection", "label": "I am the Resurrection and the Life", "ref": "11:25", "v": 504}, {"id": "iam-way", "label": "I am the Way, the Truth, and the Life", "ref": "14:6", "v": 630}, {"id": "iam-vine", "label": "I am the True Vine", "ref": "15:1", "v": 656}], "themeRoads": {"life": {"label": "The Life & Water Road", "note": "1:4 — 'In him was life' • water, bread, and resurrection sites", "stops": ["n3", "n14", "n18", "n22", "n30", "n46", "n62", "n72", "n83", "n96", "n98"]}, "light": {"label": "The Light & Witness Road", "note": "1:4 — 'the life was the light of men' • testimony and light sites", "stops": ["n3", "n5", "n6", "n16", "n48", "n57", "n77", "n88", "n102"]}}, "annex": {"id": "annex", "short": "The Mercy Annex", "ref": "7:53–8:11", "theme": "controversy", "desc": "Later Insertion: Jesus Rescues a Woman Caught in Adultery (7:53–8:1–11)", "verses": 12, "eng": 221, "greek": 181, "v0": 337, "v1": 348, "mid": 342.5, "note": "The woman caught in adultery — a later insertion, mapped as a detached annex outside the city wall, adjoining the Temple Citadel."}};
+/* ============ The Gospel of John as a City — map application ============ */
+"use strict";
+
+/* ---------- data prep ---------- */
+const TOTAL = JOHN.totalVerses;
+const HOODS = [];           // flat list of neighborhoods with parent links
+const WARDS = [];
+const DISTRICTS = JOHN.districts;
+DISTRICTS.forEach((d, di) => {
+  d.index = di;
+  d.wards.forEach(w => {
+    w.district = d;
+    WARDS.push(w);
+    w.hoods.forEach(h => { h.ward = w; h.district = d; HOODS.push(h); });
+  });
+});
+const byId = {};
+HOODS.forEach(h => byId[h.id] = h);
+const MAXG = Math.max(...HOODS.map(h => h.greek || 0));
+
+function themeColor(t) {
+  return getComputedStyle(document.documentElement).getPropertyValue("--t-" + t).trim();
+}
+function fmt(n) { return n == null ? "—" : n.toLocaleString("en-US"); }
+function rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+/* ---------- geometry helpers ---------- */
+const W = 1200, H = 1000, CX = 585, CY = 505;
+function wayPoint(t, r) { // t in [0,1] along the narrative; r = radius from center
+  const phi = (84 + 258 * t) * Math.PI / 180;
+  return [CX + r * Math.cos(phi), CY - r * Math.sin(phi)];
+}
+function catmull(points, closed = false) {
+  // Catmull-Rom to cubic bezier path
+  const p = points.slice();
+  if (p.length < 2) return "";
+  if (closed) p.push(p[0], p[1], p[2]);
+  let d = `M${p[0][0].toFixed(1)},${p[0][1].toFixed(1)}`;
+  for (let i = 0; i < p.length - (closed ? 3 : 1); i++) {
+    const p0 = p[Math.max(0, i - 1)], p1 = p[i], p2 = p[i + 1], p3 = p[Math.min(p.length - 1, i + 2)];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  if (closed) d += "Z";
+  return d;
+}
+function convexHull(pts) {
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower = [], upper = [];
+  for (const pt of p) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], pt) <= 0) lower.pop();
+    lower.push(pt);
+  }
+  for (let i = p.length - 1; i >= 0; i--) {
+    const pt = p[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], pt) <= 0) upper.pop();
+    upper.push(pt);
+  }
+  return lower.slice(0, -1).concat(upper.slice(0, -1));
+}
+function blobAround(circles, pad) {
+  // sample points around each circle, hull, wobble, smooth
+  const pts = [];
+  circles.forEach((c, ci) => {
+    for (let k = 0; k < 10; k++) {
+      const a = k / 10 * Math.PI * 2;
+      pts.push([c.x + (c.r + pad) * Math.cos(a), c.y + (c.r + pad) * Math.sin(a)]);
+    }
+  });
+  let hull = convexHull(pts);
+  // wobble outward a touch for a hand-drawn feel
+  const cx = hull.reduce((s, p) => s + p[0], 0) / hull.length;
+  const cy = hull.reduce((s, p) => s + p[1], 0) / hull.length;
+  hull = hull.map((p, i) => {
+    const dx = p[0] - cx, dy = p[1] - cy, L = Math.hypot(dx, dy) || 1;
+    const w = 1 + (rnd(i * 7 + cx) - 0.5) * 0.05;
+    return [cx + dx * w, cy + dy * w];
+  });
+  return catmull(hull, true);
+}
+
+/* ---------- organic layout ---------- */
+function layoutOrganic() {
+  const BASE_R = 315;
+  HOODS.forEach((h, i) => {
+    const t = h.mid / TOTAL;
+    let r = BASE_R + ((i % 2 === 0) ? -1 : 1) * (42 + rnd(i) * 26);
+    if (h.district.outside) r = 535 + rnd(i) * 18;      // harbor: beyond the wall
+    const [x, y] = wayPoint(t, r);
+    h.r = Math.max(7, 1.35 * Math.sqrt(h.greek || 25));
+    h.x = h.tx = x; h.y = h.ty = y;
+  });
+  // annex
+  const AX = JOHN.annex;
+  { const [x, y] = wayPoint(AX.mid / TOTAL, 470); AX.x = AX.tx = x; AX.y = AX.ty = y; AX.r = Math.max(7, 1.35 * Math.sqrt(AX.greek)); }
+  // collision relaxation (deterministic)
+  const all = HOODS.concat([AX]);
+  for (let it = 0; it < 220; it++) {
+    for (let a = 0; a < all.length; a++) {
+      for (let b = a + 1; b < all.length; b++) {
+        const A = all[a], B = all[b];
+        const dx = B.x - A.x, dy = B.y - A.y;
+        const d = Math.hypot(dx, dy) || 0.01, min = A.r + B.r + 5;
+        if (d < min) {
+          const push = (min - d) / 2, ux = dx / d, uy = dy / d;
+          A.x -= ux * push; A.y -= uy * push;
+          B.x += ux * push; B.y += uy * push;
+        }
+      }
+    }
+    all.forEach(h => { h.x += (h.tx - h.x) * 0.02; h.y += (h.ty - h.y) * 0.02; });
+  }
+  // pin the annex just outside the wall at its own angle
+  {
+    const at = AX.mid / TOTAL, aphi = (84 + 258 * at) * Math.PI / 180;
+    let maxr = 0;
+    HOODS.forEach(h => {
+      if (h.district.outside) return;
+      const hphi = Math.atan2(-(h.y - CY), h.x - CX);
+      let dphi = Math.abs(hphi - aphi);
+      if (dphi > Math.PI) dphi = 2 * Math.PI - dphi;
+      if (dphi < 0.5) maxr = Math.max(maxr, Math.hypot(h.x - CX, h.y - CY) + h.r);
+    });
+    const [ax, ay] = wayPoint(at, maxr + 88);
+    AX.x = ax; AX.y = ay;
+  }
+  WARDS.forEach(w => {
+    w.cx = w.hoods.reduce((s, h) => s + h.x, 0) / w.hoods.length;
+    w.cy = w.hoods.reduce((s, h) => s + h.y, 0) / w.hoods.length;
+  });
+}
+
+/* ---------- svg helpers ---------- */
+const svg = document.getElementById("map");
+const NS = "http://www.w3.org/2000/svg";
+function el(name, attrs, parent) {
+  const e = document.createElementNS(NS, name);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  (parent || svg).appendChild(e);
+  return e;
+}
+function txt(parent, x, y, str, cls, attrs) {
+  const t = el("text", Object.assign({ x, y, "class": cls }, attrs || {}), parent);
+  t.textContent = str;
+  return t;
+}
+
+/* ---------- shared interactive bits ---------- */
+const tooltip = document.getElementById("tooltip");
+let selectedId = null;
+
+function hoodTooltip(h) {
+  const th = JOHN.themes[h.theme];
+  return `<div class="tt-name">${h.short}</div>
+    <div class="tt-ref">John ${h.ref}${h.chiasm ? " · chiasm " + h.chiasm : ""}</div>
+    <div class="tt-path">${h.district ? h.district.short + " › " + h.ward.short : "Outside the wall"}</div>
+    <div class="tt-stats"><span><b>${fmt(h.verses)}</b> vv</span><span><b>${fmt(h.greek)}</b> Greek</span><span><b>${fmt(h.eng)}</b> English</span></div>
+    <div class="tt-theme"><span class="swatch" style="background:var(--t-${h.theme})"></span>${th ? th.label : h.theme}</div>`;
+}
+function showTip(html, ev) {
+  tooltip.innerHTML = html;
+  tooltip.style.display = "block";
+  moveTip(ev);
+}
+function moveTip(ev) {
+  const st = document.getElementById("stage").getBoundingClientRect();
+  let x = ev.clientX - st.left + 14, y = ev.clientY - st.top + 14;
+  const tw = tooltip.offsetWidth, thh = tooltip.offsetHeight;
+  if (x + tw > st.width - 8) x = ev.clientX - st.left - tw - 12;
+  if (y + thh > st.height - 8) y = ev.clientY - st.top - thh - 12;
+  tooltip.style.left = x + "px"; tooltip.style.top = y + "px";
+}
+function hideTip() { tooltip.style.display = "none"; }
+
+function attachHood(elm, h) {
+  elm.addEventListener("pointerenter", ev => showTip(hoodTooltip(h), ev));
+  elm.addEventListener("pointermove", moveTip);
+  elm.addEventListener("pointerleave", hideTip);
+  elm.addEventListener("click", ev => { ev.stopPropagation(); openHood(h); });
+  elm.setAttribute("tabindex", "0");
+  elm.setAttribute("role", "button");
+  elm.setAttribute("aria-label", `${h.short}, John ${h.ref}`);
+  elm.addEventListener("keydown", ev => {
+    if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openHood(h); }
+  });
+}
+
+/* ---------- detail panel ---------- */
+const panel = document.getElementById("panel");
+const panelBody = document.getElementById("panel-body");
+function closePanel() {
+  panel.classList.remove("open");
+  selectedId = null;
+  document.querySelectorAll(".hood.selected").forEach(e => e.classList.remove("selected"));
+}
+window.closePanel = closePanel;
+
+function statBlock(o) {
+  return `<div class="statrow">
+    <div class="stat"><b>${fmt(o.verses)}</b><span>verses</span></div>
+    <div class="stat"><b>${fmt(o.greek)}</b><span>Greek words</span></div>
+    <div class="stat"><b>${fmt(o.eng)}</b><span>English words</span></div>
+  </div>`;
+}
+function buildingKind(g) {
+  if (g == null) return "";
+  if (g >= 500) return "Mega-complex / Forum";
+  if (g >= 250) return "Civic hall";
+  if (g >= 150) return "Commercial block";
+  return "Pocket park / gatehouse";
+}
+function openHood(h) {
+  selectedId = h.id;
+  document.querySelectorAll(".hood.selected").forEach(e => e.classList.remove("selected"));
+  document.querySelectorAll(`[data-hood="${h.id}"]`).forEach(e => e.classList.add("selected"));
+  // if the subject would be hidden behind the panel, pan it into view
+  if (view !== "index") {
+    const ax = view === "organic" ? h.x : h.lx, ay = view === "organic" ? h.y : h.ly;
+    if (ax != null) {
+      const r = svg.getBoundingClientRect();
+      const sc = Math.min(r.width / vb.w, r.height / vb.h);
+      const ox = (r.width - vb.w * sc) / 2;
+      const screenX = (ax - vb.x) * sc + ox;
+      if (screenX > r.width - 370) { vb.x += (screenX - (r.width - 390)) / sc; setVB(); }
+    }
+  }
+  const th = JOHN.themes[h.theme];
+  let html = `<div class="crumb">${h.district ? h.district.short + " › " + h.ward.short : "Outside the city wall"}</div>
+    <h2>${h.short}</h2><div class="ref">John ${h.ref} · ${buildingKind(h.greek)}</div>
+    <div class="themechip"><span class="swatch" style="background:var(--t-${h.theme})"></span>${th ? th.label : h.theme}${h.chiasm ? " · chiasm " + h.chiasm : ""}</div>
+    ${statBlock(h)}
+    <div class="full-desc">${h.desc}</div>`;
+  if (h.note) html += `<div class="note">${h.note}</div>`;
+  if (h.details && h.details.length) {
+    html += `<h3>Inside this block</h3>` + h.details.map(d =>
+      `<div class="detail-item"><span>${d.desc}</span><span class="g">${d.greek != null ? d.greek + " gw" : ""}</span></div>`).join("");
+  }
+  if (h.ward) {
+    const chi = h.ward.hoods.filter(x => x.chiasm);
+    if (chi.length) {
+      html += `<h3>Chiasm plaza — ${h.ward.short}</h3><div class="ladder">` + h.ward.hoods.map(x => {
+        if (!x.chiasm) return "";
+        const cur = x.id === h.id ? " current" : "", cen = x.center ? " center" : "";
+        return `<div class="rung${cur}${cen}" data-open="${x.id}"><span class="tag">${x.center ? "◈ " + x.chiasm : x.chiasm}</span><span>${x.short} <span style="color:var(--muted)">· ${x.ref}</span></span></div>`;
+      }).join("") + `</div>`;
+      if (h.ward.chiasmNote) html += `<div class="note" style="margin-top:10px">${h.ward.chiasmNote}</div>`;
+    }
+    html += `<h3>Ward</h3><div class="full-desc">${h.ward.desc}${h.ward.note ? "<br><em style='color:var(--muted);font-size:12px'>" + h.ward.note + "</em>" : ""}</div>`;
+    html += `<h3>District</h3><div class="full-desc"><b>${h.district.short}</b> (John ${h.district.ref}) — ${h.district.desc}</div>`;
+  }
+  panelBody.innerHTML = html;
+  panelBody.querySelectorAll("[data-open]").forEach(r =>
+    r.addEventListener("click", () => openHood(byId[r.dataset.open])));
+  panel.classList.add("open");
+}
+function openDistrict(d) {
+  let html = `<div class="crumb">District · John ${d.ref}</div><h2>${d.short}</h2>
+    <div class="ref">John ${d.ref}</div>${statBlock(d)}
+    <div class="full-desc">${d.desc}</div><h3>Wards</h3>`;
+  d.wards.forEach(w => {
+    html += `<div class="detail-item"><span><b>${w.short}</b> · ${w.ref}</span><span class="g">${fmt(w.greek)} gw</span></div>`;
+  });
+  panelBody.innerHTML = html;
+  panel.classList.add("open");
+}
+
+/* ---------- I AM star ---------- */
+function starPath(cx, cy, R) {
+  let d = "";
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 === 0 ? R : R * 0.42;
+    d += (i === 0 ? "M" : "L") + (cx + r * Math.cos(a)).toFixed(1) + "," + (cy + r * Math.sin(a)).toFixed(1);
+  }
+  return d + "Z";
+}
+function iamHood(iam) {
+  return HOODS.find(h => h.v0 <= iam.v && iam.v <= h.v1);
+}
+
+/* ---------- ORGANIC VIEW ---------- */
+function renderOrganic() {
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", "0 0 1200 1000");
+  const gWater = el("g", {}), gDistrict = el("g", {}), gWall = el("g", {}), gWay = el("g", {}),
+        gRoads = el("g", { "class": "layer-roads" }), gHoods = el("g", {}),
+        gChiasm = el("g", { "class": "layer-chiasm" }), gIam = el("g", { "class": "layer-iam" }),
+        gLabels = el("g", { "class": "layer-labels" });
+
+  // Sea of Tiberias behind the harbor
+  const seaC = wayPoint(1.035, 620);
+  el("path", {
+    d: catmull([[seaC[0] - 130, seaC[1] - 85], [seaC[0] + 40, seaC[1] - 120], [seaC[0] + 165, seaC[1] - 35],
+                [seaC[0] + 180, seaC[1] + 90], [seaC[0] - 20, seaC[1] + 135], [seaC[0] - 150, seaC[1] + 40]], true),
+    "class": "water-blob"
+  }, gWater);
+  txt(gWater, seaC[0] + 25, seaC[1] + 55, "SEA OF TIBERIAS", "water-label");
+
+  // district blobs — one lobe per ward, merged into a single path, so a
+  // C-shaped district doesn't get a convex hull across the central plaza
+  DISTRICTS.forEach(d => {
+    const lobes = d.wards.map(w =>
+      blobAround(w.hoods.map(h => ({ x: h.x, y: h.y, r: h.r })), 22)).join(" ");
+    const p = el("path", { d: lobes, "class": "district-blob" }, gDistrict);
+    p.style.cursor = "pointer";
+    p.addEventListener("click", ev => { ev.stopPropagation(); openDistrict(d); });
+    const th = { title: `${d.short} — John ${d.ref}` };
+    p.addEventListener("pointerenter", ev => showTip(
+      `<div class="tt-name">${d.short}</div><div class="tt-ref">John ${d.ref} · District</div>
+       <div class="tt-stats"><span><b>${fmt(d.greek)}</b> Greek words</span></div>`, ev));
+    p.addEventListener("pointermove", moveTip);
+    p.addEventListener("pointerleave", hideTip);
+  });
+
+  // city wall around the three inner districts
+  const inner = DISTRICTS.filter(d => !d.outside)
+    .flatMap(d => d.wards.flatMap(w => w.hoods.map(h => ({ x: h.x, y: h.y, r: h.r }))));
+  const wallPath = blobAround(inner, 58);
+  el("path", { d: wallPath, "class": "wall" }, gWall);
+  el("path", { d: wallPath, "class": "wall-inner" }, gWall);
+
+  // the Johannine Way through ward centers
+  const ordered = WARDS.slice().sort((a, b) => a.mid - b.mid);
+  const gate = wayPoint(-0.008, 462);
+  const wayPts = [wayPoint(-0.02, 470), gate].concat(ordered.map(w => [w.cx, w.cy]));
+  const port = wayPoint(1.028, 545);
+  wayPts.push(port);
+  const wayD = catmull(wayPts);
+  el("path", { d: wayD, "class": "way-casing" }, gWay);
+  el("path", { d: wayD, "class": "way-fill" }, gWay);
+  el("path", { d: wayD, "class": "way-center" }, gWay);
+  // gates & quay
+  el("rect", { x: gate[0] - 13, y: gate[1] - 9, width: 26, height: 18, rx: 4, "class": "gate" }, gWay);
+  txt(gWay, gate[0] + 24, gate[1] + 4, "WEST GATE · “In the beginning…” 1:1", "gate-label", { "text-anchor": "start" });
+  el("rect", { x: port[0] - 12, y: port[1] - 8, width: 24, height: 16, rx: 3, "class": "gate" }, gWay);
+  txt(gWay, port[0], port[1] + 28, "THE HARBOR · 21:25", "gate-label");
+
+  // theme roads
+  for (const key in JOHN.themeRoads) {
+    const road = JOHN.themeRoads[key];
+    const pts = road.stops.map(id => byId[id]).filter(Boolean).map(h => [h.x, h.y]);
+    el("path", {
+      d: catmull(pts), "class": "theme-road", id: "road-" + key,
+      stroke: key === "life" ? "var(--t-sign)" : "var(--t-witness)"
+    }, gRoads);
+  }
+
+  // neighborhoods
+  HOODS.forEach(h => {
+    const c = el("circle", {
+      cx: h.x, cy: h.y, r: h.r, "class": "hood", "data-hood": h.id,
+      fill: `var(--t-${h.theme})`
+    }, gHoods);
+    attachHood(c, h);
+    if (h.landmark) el("circle", { cx: h.x, cy: h.y, r: h.r + 3.5, "class": "hood-ring" }, gHoods);
+    if (h.center) {
+      el("circle", { cx: h.x, cy: h.y, r: h.r + 6.5, "class": "center-ring" }, gHoods);
+      el("circle", { cx: h.x, cy: h.y, r: h.r + 9, "class": "center-ring", "stroke-dasharray": "1 3" }, gHoods);
+    }
+    if (h.r > 10) txt(gLabels, h.x, h.y + h.r + 9, h.short, "label-hood zoomlabel");
+    else txt(gLabels, h.x, h.y + h.r + 8, h.short, "label-hood zoomlabel");
+    if (h.chiasm) txt(gChiasm, h.x, h.y - h.r - 5, h.chiasm, "chiasm-badge");
+  });
+
+  // annex
+  const AX = JOHN.annex;
+  const ap = el("circle", { cx: AX.x, cy: AX.y, r: AX.r + 6, "class": "annex-blob" }, gHoods);
+  const ac = el("circle", { cx: AX.x, cy: AX.y, r: AX.r, "class": "hood", "data-hood": "annex", fill: "var(--t-controversy)", opacity: 0.55 }, gHoods);
+  attachHood(ac, AX); attachHood(ap, AX);
+  txt(gLabels, AX.x, AX.y + AX.r + 16, "The Mercy Annex (7:53–8:11)", "annex-label");
+
+  // chiasm bridges
+  WARDS.forEach(w => {
+    const tagged = {};
+    w.hoods.forEach(h => { if (h.chiasm) tagged[h.chiasm] = h; });
+    for (const tag in tagged) {
+      if (tag.endsWith("′")) {
+        const base = tag.slice(0, -1);
+        if (tagged[base]) {
+          const A = tagged[base], B = tagged[tag];
+          const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+          const dxc = mx - CX, dyc = my - CY, L = Math.hypot(dxc, dyc) || 1;
+          const cx2 = mx + dxc / L * 52, cy2 = my + dyc / L * 52;
+          el("path", { d: `M${A.x},${A.y} Q${cx2},${cy2} ${B.x},${B.y}`, "class": "chiasm-arc" }, gChiasm);
+        }
+      }
+    }
+  });
+
+  // I AM landmarks
+  JOHN.iam.forEach((s, i) => {
+    const h = iamHood(s);
+    if (!h) return;
+    const siblings = JOHN.iam.filter(z => iamHood(z) === h);
+    const k = siblings.indexOf(s);
+    const ang = -Math.PI / 3 + k * 0.85;
+    const sx = h.x + (h.r + 8) * Math.cos(ang), sy = h.y + (h.r + 8) * Math.sin(ang);
+    const st = el("path", { d: starPath(sx, sy, s.minor ? 5.5 : 7.5), "class": "iam-star" }, gIam);
+    st.addEventListener("pointerenter", ev => showTip(
+      `<div class="tt-name">✦ ${s.label}</div><div class="tt-ref">John ${s.ref}</div>`, ev));
+    st.addEventListener("pointermove", moveTip);
+    st.addEventListener("pointerleave", hideTip);
+    st.addEventListener("click", ev => { ev.stopPropagation(); openHood(h); });
+    txt(gIam, sx, sy - 11, s.label, "iam-label zoomlabel");
+  });
+
+  // ward labels
+  WARDS.forEach(w => {
+    const maxr = Math.max(...w.hoods.map(h => h.r));
+    const dxc = w.cx - CX, dyc = w.cy - CY, L = Math.hypot(dxc, dyc) || 1;
+    const off = w.district.outside ? 0 : (maxr + 30);
+    txt(gLabels, w.cx + dxc / L * off, w.cy + dyc / L * off + 4, w.short, "label-ward");
+  });
+  // district labels — on the inner plaza side (short display names)
+  const DNAMES = { d1: "PROLOGUE", d10: "BOOK OF SIGNS", d80: "BOOK OF GLORY", d97: "THE HARBOR" };
+  DISTRICTS.forEach(d => {
+    let x, y;
+    if (d.outside) {
+      x = d.wards[0].cx - 10; y = Math.max(...d.wards.flatMap(w => w.hoods.map(h => h.y + h.r))) + 34;
+    } else if (d.id === "d80") {
+      [x, y] = wayPoint(d.mid / TOTAL, 520);   // Glory: outside the wall, bottom
+    } else {
+      [x, y] = wayPoint(d.mid / TOTAL, d.id === "d1" ? 170 : 200);
+    }
+    const lbl = txt(gLabels, x, y, DNAMES[d.id] || d.short.toUpperCase(), "label-district");
+    if (d.outside) lbl.style.fontSize = "15px";
+  });
+  // central plaza note
+  txt(gLabels, CX + 40, CY - 64, "879 verses from gate to harbor", "label-ward", { "opacity": 0.8 });
+  txt(gLabels, CX + 40, CY - 46, "bubble size ≈ Greek word count", "label-ward", { "opacity": 0.6 });
+  // compass
+  const comp = el("g", { "class": "compass", transform: "translate(72,86)" });
+  el("path", { d: "M0,-26 L7,8 L0,2 L-7,8 Z", "class": "compass" }, comp);
+  txt(comp, 0, -32, "N", "label-ward");
+
+  applyOverlays();
+  applySelection();
+}
+
+/* ---------- LINEAR VIEW ---------- */
+function renderLinear() {
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", "0 0 1200 1000");
+  const ML = 52, MR = 60, ROAD_Y = 620, ROAD_H = 22;
+  const X = v => ML + (v - 0.5) / TOTAL * (W - ML - MR);
+  const gBase = el("g", {}), gRoads = el("g", { "class": "layer-roads" }),
+        gHoods = el("g", {}), gChiasm = el("g", { "class": "layer-chiasm" }),
+        gIam = el("g", { "class": "layer-iam" }), gLabels = el("g", { "class": "layer-labels" });
+
+  // water behind the harbor stretch
+  const seaX = X(852), seaW = X(879) + 12 - seaX;
+  el("rect", { x: seaX, y: ROAD_Y - 130, width: seaW, height: 200, rx: 10, "class": "water-blob" }, gBase);
+  txt(gBase, seaX + seaW / 2, ROAD_Y + 58, "SEA OF", "water-label", { "font-size": 10 });
+  txt(gBase, seaX + seaW / 2, ROAD_Y + 70, "TIBERIAS", "water-label", { "font-size": 10 });
+
+  // the road
+  el("rect", { x: ML - 22, y: ROAD_Y, width: W - ML - MR + 44, height: ROAD_H, fill: "var(--road-fill)", stroke: "var(--road-casing)", "stroke-width": 2, rx: 5 }, gBase);
+  el("line", { x1: ML - 12, y1: ROAD_Y + ROAD_H / 2, x2: W - MR + 12, y2: ROAD_Y + ROAD_H / 2, "class": "way-center" }, gBase);
+
+  // chapter mileposts
+  for (let ch = 1; ch <= 21; ch++) {
+    const x = X(JOHN.chapterOffsets[ch] + 0.5);
+    el("line", { x1: x, y1: ROAD_Y + ROAD_H, x2: x, y2: ROAD_Y + ROAD_H + 8, "class": "milepost" }, gBase);
+    txt(gBase, x + 2, ROAD_Y + ROAD_H + 20, String(ch), "milepost-label", { "text-anchor": "start" });
+  }
+  txt(gBase, ML - 22, ROAD_Y + ROAD_H + 20, "ch.", "milepost-label", { "text-anchor": "start" });
+
+  // buildings
+  const BH = g => 18 + (g || 12) / MAXG * 400;
+  HOODS.forEach(h => {
+    const x0 = X(h.v0), x1 = X(h.v1 + 1);
+    const bw = Math.max(5, x1 - x0 - 1.2), bh = BH(h.greek);
+    const rx = Math.min(4, bw / 2), yTop = ROAD_Y - bh;
+    const d = `M${x0},${ROAD_Y} L${x0},${yTop + rx} Q${x0},${yTop} ${x0 + rx},${yTop} L${x0 + bw - rx},${yTop} Q${x0 + bw},${yTop} ${x0 + bw},${yTop + rx} L${x0 + bw},${ROAD_Y} Z`;
+    const p = el("path", { d, "class": "hood", "data-hood": h.id, fill: `var(--t-${h.theme})` }, gHoods);
+    attachHood(p, h);
+    h.lx = x0 + bw / 2; h.ly = yTop;                 // linear anchor for overlays
+    if (h.center) el("circle", { cx: x0 + bw / 2, cy: yTop - 8, r: 4.5, "class": "center-ring", fill: "none" }, gChiasm);
+    if (h.chiasm) txt(gChiasm, x0 + bw / 2, yTop - 20, h.chiasm, "chiasm-badge");
+    if (bw > 34) txt(gLabels, x0 + bw / 2, yTop - 5, h.short, "label-hood zoomlabel");
+  });
+
+  // chiasm bridges (linear: arcs over the skyline)
+  WARDS.forEach(w => {
+    const tagged = {};
+    w.hoods.forEach(h => { if (h.chiasm) tagged[h.chiasm] = h; });
+    for (const tag in tagged) {
+      if (tag.endsWith("′") && tagged[tag.slice(0, -1)]) {
+        const A = tagged[tag.slice(0, -1)], B = tagged[tag];
+        const top = Math.min(A.ly, B.ly) - 46;
+        el("path", { d: `M${A.lx},${A.ly - 4} Q${(A.lx + B.lx) / 2},${top} ${B.lx},${B.ly - 4}`, "class": "chiasm-arc" }, gChiasm);
+      }
+    }
+  });
+
+  // ward brackets (skip degenerate slivers)
+  WARDS.forEach((w, i) => {
+    const x0 = X(w.v0), x1 = X(w.v1 + 1);
+    if (x1 - x0 < 8) return;
+    const y = ROAD_Y + ROAD_H + 34 + (i % 2) * 20;
+    el("path", { d: `M${x0},${y - 5} L${x0},${y} L${x1},${y} L${x1},${y - 5}`, "class": "lin-bracket" }, gBase);
+    if (x1 - x0 > 62) txt(gBase, (x0 + x1) / 2, y + 12, w.short, "lin-ward-label");
+  });
+
+  // district bands
+  const bandY = ROAD_Y + ROAD_H + 88;
+  DISTRICTS.forEach((d, i) => {
+    const x0 = X(d.v0), x1 = X(d.v1 + 1);
+    el("rect", { x: x0, y: bandY, width: x1 - x0, height: 20, rx: 4, fill: "var(--ink-2)", "class": "lin-district-band" }, gBase);
+    const LNAMES = { d1: "PROLOGUE", d10: "BOOK OF SIGNS", d80: "BOOK OF GLORY", d97: "HARBOR" };
+    const lbl = txt(gBase, (x0 + x1) / 2, bandY + 36, LNAMES[d.id] || d.short.toUpperCase(), "lin-district-label");
+    if (x1 - x0 < 110) lbl.style.fontSize = "9.5px";
+    const c = el("rect", { x: x0, y: bandY, width: x1 - x0, height: 20, fill: "transparent" }, gBase);
+    c.style.cursor = "pointer";
+    c.addEventListener("click", ev => { ev.stopPropagation(); openDistrict(d); });
+  });
+
+  // annex hanging below the road
+  const AX = JOHN.annex;
+  const ax0 = X(AX.v0), ax1 = X(AX.v1 + 1), aw = Math.max(24, ax1 - ax0);
+  const axc = (ax0 + ax1) / 2, ay = bandY + 76;
+  el("line", { x1: axc, y1: ROAD_Y + ROAD_H, x2: axc, y2: ay, "class": "milepost", "stroke-dasharray": "3 4" }, gBase);
+  const ar = el("rect", { x: axc - aw / 2, y: ay, width: aw, height: 48, rx: 5, "class": "annex-blob" }, gHoods);
+  attachHood(ar, AX);
+  txt(gLabels, axc, ay + 64, "Mercy Annex · 7:53–8:11", "annex-label");
+
+  // I AM flags
+  JOHN.iam.forEach(s => {
+    const h = iamHood(s);
+    const x = X(s.v), topY = (h ? h.ly : ROAD_Y - 60) - 16;
+    el("line", { x1: x, y1: h ? h.ly : ROAD_Y, x2: x, y2: topY + 6, stroke: "var(--gold)", "stroke-width": 1.2 }, gIam);
+    const st = el("path", { d: starPath(x, topY, s.minor ? 5 : 7), "class": "iam-star" }, gIam);
+    st.addEventListener("pointerenter", ev => showTip(`<div class="tt-name">✦ ${s.label}</div><div class="tt-ref">John ${s.ref}</div>`, ev));
+    st.addEventListener("pointermove", moveTip);
+    st.addEventListener("pointerleave", hideTip);
+    if (h) st.addEventListener("click", ev => { ev.stopPropagation(); openHood(h); });
+  });
+
+  // theme lanes above the skyline
+  let lane = 0;
+  for (const key in JOHN.themeRoads) {
+    const road = JOHN.themeRoads[key];
+    const y = 74 + lane * 30;
+    const color = key === "life" ? "var(--t-sign)" : "var(--t-witness)";
+    const stops = road.stops.map(id => byId[id]).filter(Boolean);
+    el("line", { x1: X(1), y1: y, x2: X(TOTAL), y2: y, "class": "theme-road", stroke: color, id: "road-" + key }, gRoads);
+    const gDots = el("g", { "class": "theme-road-dots", "data-road": key }, gRoads);
+    stops.forEach(h => {
+      el("circle", { cx: h.lx, cy: y, r: 4, fill: color, stroke: "var(--surface-1)", "stroke-width": 1.5 }, gDots);
+      el("line", { x1: h.lx, y1: y + 4, x2: h.lx, y2: h.ly - 2, stroke: color, "stroke-width": 0.7, opacity: 0.45, "stroke-dasharray": "2 3" }, gDots);
+    });
+    txt(gRoads, X(TOTAL), y - 9, road.label, "label-ward", { "text-anchor": "end", fill: color, "data-road": key });
+    lane++;
+  }
+
+  // gate labels (topmost so the skyline can't cover them)
+  txt(gLabels, ML - 20, ROAD_Y - 8, "WEST GATE · 1:1", "gate-label", { "text-anchor": "start" });
+  txt(gLabels, W - MR + 12, ROAD_Y + ROAD_H + 18, "HARBOR · 21:25", "gate-label", { "text-anchor": "end" });
+  // encoding hint
+  txt(gBase, 262, 58, "building height = Greek word count", "milepost-label", { "text-anchor": "start" });
+
+  applyOverlays();
+  applySelection();
+}
+
+/* ---------- INDEX VIEW ---------- */
+function renderIndex() {
+  const iv = document.getElementById("indexview");
+  let rows = "";
+  DISTRICTS.forEach(d => {
+    rows += `<tr class="district-row"><td colspan="2">${d.short} — John ${d.ref}</td><td class="num">${fmt(d.verses)}</td><td class="num">${fmt(d.eng)}</td><td class="num">${fmt(d.greek)}</td><td></td></tr>`;
+    d.wards.forEach(w => {
+      rows += `<tr class="ward-row"><td colspan="2" style="padding-left:22px">${w.short} · ${w.ref}</td><td class="num">${fmt(w.verses)}</td><td class="num">${fmt(w.eng)}</td><td class="num">${fmt(w.greek)}</td><td></td></tr>`;
+      w.hoods.forEach(h => {
+        const th = JOHN.themes[h.theme];
+        rows += `<tr class="hood-row" data-open="${h.id}"><td style="padding-left:40px">${h.chiasm ? "<b>" + h.chiasm + "</b> " : ""}${h.short}</td><td>${h.ref}</td>
+          <td class="num">${fmt(h.verses)}</td><td class="num">${fmt(h.eng)}</td><td class="num">${fmt(h.greek)}</td>
+          <td><span class="dot" style="background:var(--t-${h.theme})"></span>${th.label}</td></tr>`;
+      });
+    });
+  });
+  const AX = JOHN.annex;
+  rows += `<tr class="district-row"><td colspan="6">Outside the wall</td></tr>
+    <tr class="hood-row" data-open="annex"><td style="padding-left:40px">${AX.short} (later insertion)</td><td>${AX.ref}</td>
+    <td class="num">${fmt(AX.verses)}</td><td class="num">${fmt(AX.eng)}</td><td class="num">${fmt(AX.greek)}</td>
+    <td><span class="dot" style="background:var(--t-controversy)"></span>${JOHN.themes.controversy.label}</td></tr>`;
+  iv.innerHTML = `<table><thead><tr><th>Place</th><th>Ref</th><th>Verses</th><th>English</th><th>Greek</th><th>Theme</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="tbl-note"><b>A B C D C′ B′ A′</b> mark chiasm positions within their ward (◈ = the centre).
+    16:4b–33 has no English word count in the source outline; its Greek count comes from the companion chart sheet.
+    Word counts are quoted from the source spreadsheet; ward and district totals may differ slightly from the sum of their parts (overlapping addenda in the source).</div>`;
+  iv.querySelectorAll("[data-open]").forEach(r => r.addEventListener("click", () => {
+    const id = r.dataset.open;
+    openHood(id === "annex" ? AX : byId[id]);
+  }));
+}
+
+/* ---------- overlays / legend ---------- */
+function applyOverlays() {
+  const show = (sel, on) => document.querySelectorAll(sel).forEach(e => e.style.display = on ? "" : "none");
+  show(".layer-iam", document.getElementById("ck-iam").checked);
+  show("#road-life, [data-road=life]", document.getElementById("ck-life").checked);
+  show("#road-light, [data-road=light]", document.getElementById("ck-light").checked);
+  show(".layer-chiasm", document.getElementById("ck-chiasm").checked);
+  svg.classList.toggle("nolabels", !document.getElementById("ck-labels").checked);
+}
+function applySelection() {
+  if (selectedId) document.querySelectorAll(`[data-hood="${selectedId}"]`).forEach(e => e.classList.add("selected"));
+}
+["ck-iam", "ck-life", "ck-light", "ck-chiasm", "ck-labels"].forEach(id =>
+  document.getElementById(id).addEventListener("change", applyOverlays));
+
+(function buildLegend() {
+  const lg = document.getElementById("legend");
+  for (const key in JOHN.themes) {
+    const t = JOHN.themes[key];
+    const lab = document.createElement("label");
+    lab.innerHTML = `<span class="swatch" style="background:var(--t-${key})"></span>${t.label}`;
+    lab.style.cursor = "default";
+    lg.appendChild(lab);
+  }
+})();
+
+/* ---------- pan & zoom ---------- */
+let vb = { x: 0, y: 0, w: 1200, h: 1000 };
+function setVB() {
+  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  svg.classList.toggle("zoomed", 1200 / vb.w >= 1.55);
+  svg.style.setProperty("--inv", (vb.w / 1200).toFixed(4)); // counter-scale labels
+}
+function resetVB() { vb = { x: 0, y: 0, w: 1200, h: 1000 }; setVB(); }
+function clientToMap(cx, cy) {
+  const r = svg.getBoundingClientRect();
+  // account for preserveAspectRatio="xMidYMid meet"
+  const sc = Math.min(r.width / vb.w, r.height / vb.h);
+  const ox = (r.width - vb.w * sc) / 2, oy = (r.height - vb.h * sc) / 2;
+  return [vb.x + (cx - r.left - ox) / sc, vb.y + (cy - r.top - oy) / sc];
+}
+svg.addEventListener("wheel", ev => {
+  ev.preventDefault();
+  const f = Math.pow(1.0016, ev.deltaY);
+  const nw = Math.min(3200, Math.max(300, vb.w * f));
+  const [mx, my] = clientToMap(ev.clientX, ev.clientY);
+  const k = nw / vb.w;
+  vb.x = mx - (mx - vb.x) * k; vb.y = my - (my - vb.y) * k;
+  vb.w = nw; vb.h = vb.h * k;
+  setVB();
+}, { passive: false });
+let panning = null;
+svg.addEventListener("pointerdown", ev => {
+  panning = { x: ev.clientX, y: ev.clientY, vx: vb.x, vy: vb.y, moved: false, pid: ev.pointerId };
+});
+svg.addEventListener("pointermove", ev => {
+  if (!panning) return;
+  const r = svg.getBoundingClientRect();
+  const sc = Math.min(r.width / vb.w, r.height / vb.h);
+  const dx = (ev.clientX - panning.x) / sc, dy = (ev.clientY - panning.y) / sc;
+  if (Math.abs(dx) + Math.abs(dy) > 3 && !panning.moved) {
+    panning.moved = true;
+    try { svg.setPointerCapture(panning.pid); } catch (e) {}
+  }
+  if (panning.moved) { vb.x = panning.vx - dx; vb.y = panning.vy - dy; setVB(); svg.classList.add("panning"); }
+});
+svg.addEventListener("pointerup", ev => {
+  svg.classList.remove("panning");
+  panning = null;
+});
+svg.addEventListener("dblclick", ev => {
+  const [mx, my] = clientToMap(ev.clientX, ev.clientY);
+  const k = 0.6;
+  vb.x = mx - (mx - vb.x) * k; vb.y = my - (my - vb.y) * k; vb.w *= k; vb.h *= k;
+  setVB();
+});
+document.getElementById("z-in").addEventListener("click", () => { zoomCenter(0.72); });
+document.getElementById("z-out").addEventListener("click", () => { zoomCenter(1 / 0.72); });
+document.getElementById("z-fit").addEventListener("click", resetVB);
+function zoomCenter(k) {
+  const mx = vb.x + vb.w / 2, my = vb.y + vb.h / 2;
+  vb.w = Math.min(3200, Math.max(300, vb.w * k));
+  vb.h = vb.w * (1000 / 1200);
+  vb.x = mx - vb.w / 2; vb.y = my - vb.h / 2;
+  setVB();
+}
+
+/* ---------- view switching ---------- */
+let view = "organic";
+document.querySelectorAll("#viewseg button").forEach(b => b.addEventListener("click", () => {
+  view = b.dataset.view;
+  document.querySelectorAll("#viewseg button").forEach(x => x.classList.toggle("on", x === b));
+  const isIndex = view === "index";
+  document.getElementById("indexview").style.display = isIndex ? "block" : "none";
+  document.getElementById("mapwrap").style.display = isIndex ? "none" : "block";
+  document.getElementById("controls").classList.toggle("hidden", isIndex);
+  document.getElementById("zoomctl").style.display = isIndex ? "none" : "flex";
+  document.getElementById("hint").style.display = isIndex ? "none" : "block";
+  hideTip();
+  if (view === "organic") { resetVB(); renderOrganic(); }
+  else if (view === "linear") { resetVB(); renderLinear(); }
+}));
+
+/* ---------- theme toggle (in-memory only; no storage APIs) ---------- */
+(function initTheme() {
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (prefersDark) document.documentElement.setAttribute("data-theme", "dark");
+  document.getElementById("themebtn").addEventListener("click", () => {
+    const cur = document.documentElement.getAttribute("data-theme") === "dark";
+    document.documentElement.setAttribute("data-theme", cur ? "light" : "dark");
+  });
+})();
+
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") closePanel(); });
+svg.addEventListener("click", ev => { if (ev.target === svg) closePanel(); });
+
+/* ---------- label visibility by zoom ---------- */
+const style2 = document.createElement("style");
+style2.textContent = `
+  svg#map .zoomlabel { display: none; }
+  svg#map.zoomed .zoomlabel { display: initial; }
+  svg#map.nolabels .zoomlabel, svg#map.nolabels .label-ward, svg#map.nolabels .label-district,
+  svg#map.nolabels .iam-label, svg#map.nolabels .gate-label, svg#map.nolabels .annex-label { display: none !important; }
+`;
+document.head.appendChild(style2);
+
+/* ---------- boot ---------- */
+layoutOrganic();
+renderIndex();
+renderOrganic();
+resetVB();
+
+</script>
+</body>
+</html>
