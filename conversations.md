@@ -55,3 +55,20 @@ push + enable Pages).
 
 **Commits:** *(IDs appended as made — each ID lands in the following commit)*
 - `4cb9bf8` — Initial build: interactive map, data pipeline, review fixes
+- `e211124` — publish.sh + logged 4cb9bf8
+
+### Addendum: 3D view (same session)
+
+Ronald asked what 3D would take (street-view height, orbit/tilt, easier zoom) and
+about ancient-world styling (Jerusalem/Rome/Ephesus/Aksum). Decisions:
+**Phase 1 now** — 3D as a separate `city3d.html`; ancient-architecture kits are
+Phase 2 (scoped in README). Constraint discovered: the sandbox blocks npm/pip/CDN
+fetches, so Phase 1 ships a dependency-free Canvas perspective renderer (painter's
+algorithm) instead of bundling Three.js; the plan layout is shared verbatim with the
+2D map so both views agree. Features: orbit/tilt/zoom/focus camera, **Walk the Way**
+street mode with verse scrub (gate 1:1 → harbor 21:25), I AM obelisks, theme roads,
+day/night, tooltips + detail panel. GitHub publishing clarified for Ronald: cloud
+sessions can't create repos (proxy is repo-scoped); one-time `publish.sh` in WSL,
+after which the repo can be connected to future sessions for direct pushes.
+
+- `d497d07` — city3d.html: 3D orbit + Walk-the-Way
