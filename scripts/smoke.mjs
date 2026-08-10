@@ -11,7 +11,7 @@ const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", e => errors.push(String(e)));
 page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text()); });
-await page.goto("file://" + resolve(target));
+await page.goto(/^https?:/.test(target) ? target : "file://" + resolve(target));
 await page.waitForTimeout(1200);
 
 const checks = [];
