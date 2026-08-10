@@ -303,6 +303,45 @@ const wallHull = convexHull(
       return out;
     }))));
 
+/* ---------- wall segments with gate gaps where the Way crosses ---------- */
+function segInt(p1, p2, p3, p4) {
+  const d = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0]);
+  if (Math.abs(d) < 1e-9) return null;
+  const t = ((p3[0] - p1[0]) * (p4[1] - p3[1]) - (p3[1] - p1[1]) * (p4[0] - p3[0])) / d;
+  const u = ((p3[0] - p1[0]) * (p2[1] - p1[1]) - (p3[1] - p1[1]) * (p2[0] - p1[0])) / d;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  return [p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1])];
+}
+const GATE_GAP = 16;
+const WALL_SEGS = [], GATES = [];
+(function buildWallWithGates() {
+  for (let i = 0; i < wallHull.length; i++) {
+    const a = wallHull[i], b = wallHull[(i + 1) % wallHull.length];
+    let q = null;
+    for (let j = 0; j < WAY.length - 1; j++) {
+      q = segInt(a, b, WAY[j], WAY[j + 1]);
+      if (q) break;
+    }
+    if (!q) { WALL_SEGS.push([a, b]); continue; }
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
+    const ux = dx / L, uy = dy / L;
+    const t = (q[0] - a[0]) * ux + (q[1] - a[1]) * uy;
+    if (t - GATE_GAP > 4) WALL_SEGS.push([a, [a[0] + ux * (t - GATE_GAP), a[1] + uy * (t - GATE_GAP)]]);
+    if (L - (t + GATE_GAP) > 4) WALL_SEGS.push([[a[0] + ux * (t + GATE_GAP), a[1] + uy * (t + GATE_GAP)], b]);
+    GATES.push({ x: q[0], y: q[1], ux, uy });
+  }
+  // order gates along the way (entrance first)
+  const arc = g => {
+    let best = Infinity, bi = 0;
+    for (let i = 0; i < WAY.length; i += 2) {
+      const d2 = (g.x - WAY[i][0]) ** 2 + (g.y - WAY[i][1]) ** 2;
+      if (d2 < best) { best = d2; bi = i; }
+    }
+    return bi;
+  };
+  GATES.sort((a, b) => arc(a) - arc(b));
+})();
+
 /* theme road samples */
 const themeRoadPts = {};
 for (const key in JOHN.themeRoads) {
@@ -324,9 +363,10 @@ JOHN.iam.forEach(s => {
 /* ---------- palettes ---------- */
 const PAL = {
   light: {
-    skyTop: "#cfe3ef", skyBot: "#f2ead8", ground: "#e9e2cf", groundEdge: "#d8cfb6",
+    skyTop: "#cfe3ef", skyBot: "#efe5cf", ground: "#e2d9c0", groundEdge: "#cdc2a3",
     district: "rgba(120,112,96,0.10)", sea: "#bcd9e4", seaEdge: "#8fb6c4",
-    road: "#efe6d1", roadEdge: "#c9bfa4", wall: "#7d7566", wallTop: "#948b7a",
+    road: "#ddd1b2", roadEdge: "#ab9f7d", roadSeam: "rgba(90,80,60,0.18)",
+    wall: "#7d7566", wallTop: "#948b7a",
     ink: "#3d3a35", label: "#52514e", halo: "rgba(252,252,251,0.85)",
     gold: "#d9a419", goldDark: "#a87b0a", fogColor: [214, 226, 235],
     themes: { witness: "#eda100", sign: "#1baf7a", discourse: "#2a78d6", controversy: "#e34948", love: "#e87ba4", passion: "#4a3aa7", resurrection: "#008300" },
@@ -334,7 +374,8 @@ const PAL = {
   dark: {
     skyTop: "#0b1626", skyBot: "#25272b", ground: "#23221f", groundEdge: "#2e2c27",
     district: "rgba(255,255,255,0.05)", sea: "#16303a", seaEdge: "#2c5666",
-    road: "#39352b", roadEdge: "#4a463c", wall: "#5c5648", wallTop: "#6d6757",
+    road: "#413e33", roadEdge: "#5d5943", roadSeam: "rgba(0,0,0,0.28)",
+    wall: "#5c5648", wallTop: "#6d6757",
     ink: "#d5d3c8", label: "#c3c2b7", halo: "rgba(20,20,19,0.85)",
     gold: "#e8b83a", goldDark: "#b8860b", fogColor: [16, 24, 36],
     themes: { witness: "#c98500", sign: "#199e70", discourse: "#3987e5", controversy: "#e66767", love: "#d55181", passion: "#9085e9", resurrection: "#2fb457" },
@@ -368,7 +409,7 @@ window.addEventListener("resize", resize);
 let mode = "orbit";                    // 'orbit' | 'walk'
 const cam = {
   target: [CX, 0, CY + 40], yaw: 1.5, pitch: 0.66, dist: 980,   // orbit params (south of the city, looking north — matches the 2D orientation)
-  walkT: 0, eye: 6.2,
+  walkT: 0, eye: 6.2, lookYaw: 0, lookPitch: -0.15,
 };
 let FOCAL = 1;
 function viewMatrix() {
@@ -382,9 +423,11 @@ function viewMatrix() {
     fx = cam.target[0] - ex; fy = cam.target[1] - ey; fz = cam.target[2] - ez;
   } else {
     const p = wayAt(cam.walkT);
-    const ahead = wayAt(Math.min(1, cam.walkT + 0.012));
     ex = p.x - p.dx * 26; ey = cam.eye + 7; ez = p.y - p.dy * 26;   // slightly behind & above
-    fx = ahead.x - ex; fy = 9 - ey; fz = ahead.y - ez;
+    const baseAng = Math.atan2(p.dy, p.dx);
+    const ang = baseAng + cam.lookYaw;
+    const cp2 = Math.cos(cam.lookPitch);
+    fx = Math.cos(ang) * cp2; fy = Math.sin(cam.lookPitch); fz = Math.sin(ang) * cp2;
   }
   const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
   // right = f × worldUp(0,1,0) = (-fz, 0, fx) — right-handed basis, so the
@@ -464,6 +507,8 @@ function addCylinder(x, z, r, hgt, colorHex, opts = {}) {
       pathPoly(top);
       ctx.fillStyle = shade(colorHex, opts.selected ? 1.35 : 1.12, fog);
       ctx.fill();
+      if (opts.ring) { ctx.strokeStyle = P().gold; ctx.lineWidth = 1.6; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); }
+      if (opts.selected) { ctx.strokeStyle = P().ink; ctx.lineWidth = 2; ctx.stroke(); }
       // arched doorway facing the road
       if (opts.doorAng != null) {
         const ang = opts.doorAng;
@@ -482,11 +527,13 @@ function addCylinder(x, z, r, hgt, colorHex, opts = {}) {
             ctx.moveTo(b1[0], b1[1]); ctx.lineTo(t1[0], t1[1]);
             ctx.quadraticCurveTo(tm[0], tm[1], t2[0], t2[1]);
             ctx.lineTo(b2[0], b2[1]); ctx.closePath(); ctx.fill();
+            if (opts.ring) {   // landmark buildings get gold portal trim
+              ctx.strokeStyle = P().gold; ctx.lineWidth = 1.4;
+              ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+            }
           }
         }
       }
-      if (opts.ring) { ctx.strokeStyle = P().gold; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); }
-      if (opts.selected) { ctx.strokeStyle = P().ink; ctx.lineWidth = 2; ctx.stroke(); }
       if (opts.dashed) { pathPoly(bot); ctx.strokeStyle = P().label; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]); }
       // screen-space pick info
       const c = project(x, hgt, z);
@@ -527,10 +574,85 @@ function addObelisk(o) {
     },
   });
 }
+function addPrism(cx, cz, hw, ux, uy, hgt, colorFn, yBase = 0) {
+  // square-ish prism footprint oriented along (ux,uy); returns corner list drawer
+  const px = -uy, py = ux;
+  const C = [
+    [cx - ux * hw - px * hw, cz - uy * hw - py * hw],
+    [cx + ux * hw - px * hw, cz + uy * hw - py * hw],
+    [cx + ux * hw + px * hw, cz + uy * hw + py * hw],
+    [cx - ux * hw + px * hw, cz - uy * hw + py * hw],
+  ];
+  const bot = C.map(c => project(c[0], yBase, c[1]));
+  const top = C.map(c => project(c[0], yBase + hgt, c[1]));
+  if (bot.some(p => !p) || top.some(p => !p)) return;
+  const fog = fogOf(bot[0][2]);
+  for (let i = 0; i < 4; i++) {
+    const j = (i + 1) % 4;
+    const nx = (C[i][0] + C[j][0]) / 2 - cx, nz = (C[i][1] + C[j][1]) / 2 - cz;
+    const vx = (C[i][0] + C[j][0]) / 2 - V.ex, vz = (C[i][1] + C[j][1]) / 2 - V.ez;
+    if (nx * vx + nz * vz > 0) continue;
+    const nl = Math.hypot(nx, nz) || 1;
+    const lit = 0.55 + 0.45 * Math.max(0, (nx / nl) * SUN[0] + (nz / nl) * SUN[2]);
+    ctx.fillStyle = colorFn(lit, fog);
+    ctx.beginPath();
+    ctx.moveTo(bot[i][0], bot[i][1]); ctx.lineTo(bot[j][0], bot[j][1]);
+    ctx.lineTo(top[j][0], top[j][1]); ctx.lineTo(top[i][0], top[i][1]);
+    ctx.closePath(); ctx.fill();
+  }
+  pathPoly(top);
+  ctx.fillStyle = colorFn(1.12, fog); ctx.fill();
+}
+function addGate(g, label) {
+  const depth = Math.hypot(g.x - V.ex, 14 - V.ey, g.y - V.ez);
+  R.push({
+    depth,
+    draw() {
+      const wallColor = (lit, fog) => shade(P().wall, lit, fog);
+      // two flanking towers just outside the road gap
+      const t1x = g.x - g.ux * GATE_GAP, t1y = g.y - g.uy * GATE_GAP;
+      const t2x = g.x + g.ux * GATE_GAP, t2y = g.y + g.uy * GATE_GAP;
+      addPrism(t1x, t1y, 6.5, g.ux, g.uy, 30, wallColor);
+      addPrism(t2x, t2y, 6.5, g.ux, g.uy, 30, wallColor);
+      // lintel spanning the road, high enough to walk under
+      const px = -g.uy, py = g.ux;
+      const L1 = [g.x - g.ux * (GATE_GAP - 4), g.y - g.uy * (GATE_GAP - 4)];
+      const L2 = [g.x + g.ux * (GATE_GAP - 4), g.y + g.uy * (GATE_GAP - 4)];
+      const Y0 = 21, Y1 = 27;
+      const quads = [
+        // front + back faces (across the road direction)
+        [[L1[0] + px * 3, L1[1] + py * 3], [L2[0] + px * 3, L2[1] + py * 3]],
+        [[L1[0] - px * 3, L1[1] - py * 3], [L2[0] - px * 3, L2[1] - py * 3]],
+      ];
+      for (const [A, B] of quads) {
+        const nx = (A[0] + B[0]) / 2 - g.x, nz = (A[1] + B[1]) / 2 - g.y;
+        const vx = (A[0] + B[0]) / 2 - V.ex, vz = (A[1] + B[1]) / 2 - V.ez;
+        if (nx * vx + nz * vz > 0) continue;
+        const a0 = project(A[0], Y0, A[1]), a1 = project(A[0], Y1, A[1]);
+        const b0 = project(B[0], Y0, B[1]), b1 = project(B[0], Y1, B[1]);
+        if (!a0 || !a1 || !b0 || !b1) continue;
+        const fog = fogOf(a0[2]);
+        ctx.fillStyle = shade(P().wall, 0.9, fog);
+        ctx.beginPath();
+        ctx.moveTo(a0[0], a0[1]); ctx.lineTo(b0[0], b0[1]);
+        ctx.lineTo(b1[0], b1[1]); ctx.lineTo(a1[0], a1[1]);
+        ctx.closePath(); ctx.fill();
+      }
+      // lintel top
+      const c1 = project(L1[0] + px * 3, Y1, L1[1] + py * 3), c2 = project(L2[0] + px * 3, Y1, L2[1] + py * 3);
+      const c3 = project(L2[0] - px * 3, Y1, L2[1] - py * 3), c4 = project(L1[0] - px * 3, Y1, L1[1] - py * 3);
+      if (c1 && c2 && c3 && c4) {
+        ctx.fillStyle = shade(P().wallTop, 1.1, fogOf(c1[2]));
+        ctx.beginPath();
+        ctx.moveTo(c1[0], c1[1]); ctx.lineTo(c2[0], c2[1]); ctx.lineTo(c3[0], c3[1]); ctx.lineTo(c4[0], c4[1]);
+        ctx.closePath(); ctx.fill();
+      }
+    },
+  });
+}
 function addWall() {
   const H = 16;
-  for (let i = 0; i < wallHull.length; i++) {
-    const a = wallHull[i], b = wallHull[(i + 1) % wallHull.length];
+  for (const [a, b] of WALL_SEGS) {
     const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2;
     const depth = Math.hypot(mx - V.ex, H / 2 - V.ey, mz - V.ez);
     R.push({
@@ -562,6 +684,36 @@ function addWall() {
 }
 
 /* ---------- labels (screen space, after 3D) ---------- */
+let SIGN_RECTS = [];
+function drawSign(h) {
+  // a name-board hung over the doorway, visible from the street side
+  if (h.doorAng == null) return;
+  const dH = Math.min(11, (h.h || 20) * 0.7);
+  const nx = Math.cos(h.doorAng), nz = Math.sin(h.doorAng);
+  const ax = h.x + nx * (h.r + 1.2), az = h.y + nz * (h.r + 1.2);
+  const ay = Math.min((h.h || 20) + 3, dH + 8);
+  if (nx * (ax - V.ex) + nz * (az - V.ez) > 0) return;   // wrong side of the building
+  const p = project(ax, ay, az);
+  if (!p || p[2] > (mode === "walk" ? 340 : 1500)) return;
+  ctx.font = "600 11px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  const w = ctx.measureText(h.short).width;
+  const bx = p[0] - w / 2 - 5, by = p[1] - 8, bw = w + 10, bh = 16;
+  // nearest sign wins a spot: skip if it would overlap one already drawn
+  for (const r of SIGN_RECTS) {
+    if (bx < r[0] + r[2] && bx + bw > r[0] && by < r[1] + r[3] && by + bh > r[1]) return;
+  }
+  SIGN_RECTS.push([bx, by, bw, bh]);
+  // hanger bracket
+  ctx.strokeStyle = P().roadEdge; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(p[0], by); ctx.lineTo(p[0], by - 4); ctx.stroke();
+  ctx.fillStyle = P().road;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 3); else ctx.rect(bx, by, bw, bh);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = P().ink;
+  ctx.fillText(h.short, p[0], by + 12);
+}
 function drawLabel(x, y3, z, text, size, color, always) {
   const p = project(x, y3, z);
   if (!p) return;
@@ -624,6 +776,22 @@ function render() {
     right.push([x1 - nx * ROADW, y1 - ny * ROADW]);
   }
   drawFlatPoly(left.concat(right.reverse()), P().road, P().roadEdge);
+  // paving seams across the road + dashed center line
+  ctx.strokeStyle = P().roadSeam; ctx.lineWidth = 1;
+  for (let i = 4; i < WAY.length - 1; i += 5) {
+    const [x1, y1] = WAY[i], [x2, y2] = WAY[i + 1];
+    let nx = -(y2 - y1), ny = x2 - x1;
+    const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+    const a = project(x1 + nx * (ROADW - 1.2), 0.5, y1 + ny * (ROADW - 1.2));
+    const b = project(x1 - nx * (ROADW - 1.2), 0.5, y1 - ny * (ROADW - 1.2));
+    if (a && b && a[2] < 1600) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  }
+  ctx.strokeStyle = P().roadEdge; ctx.lineWidth = 1.2;
+  for (let i = 0; i < WAY.length - 3; i += 6) {
+    const a = project(WAY[i][0], 0.5, WAY[i][1]);
+    const b = project(WAY[i + 3][0], 0.5, WAY[i + 3][1]);
+    if (a && b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  }
 
   // entry walkways: road edge → each doorway
   HOODS.concat([AX]).forEach(h => {
@@ -656,6 +824,7 @@ function render() {
   // 3D objects
   R = [];
   addWall();
+  GATES.forEach(addGate);
   HOODS.forEach(h => {
     h._pick = null;
     addCylinder(h.x, h.y, h.r, h.h, P().themes[h.theme] || "#888",
@@ -670,7 +839,7 @@ function render() {
   // labels
   if (document.getElementById("ck3-labels").checked) {
     const DN = { d1: "PROLOGUE", d10: "BOOK OF SIGNS", d80: "BOOK OF GLORY", d97: "THE HARBOR" };
-    DISTRICTS.forEach(d => {
+    if (mode === "orbit") DISTRICTS.forEach(d => {
       const cx2 = d.wards.reduce((s, w) => s + w.cx, 0) / d.wards.length;
       const cz2 = d.wards.reduce((s, w) => s + w.cy, 0) / d.wards.length;
       drawLabel(cx2, 150, cz2, DN[d.id] || d.short, 15, P().label, true);
@@ -680,10 +849,15 @@ function render() {
       drawLabel(w.cx, hmax + 26, w.cy, w.short, 11.5, P().label);
     });
     if (mode === "walk" || cam.dist < 520) {
-      HOODS.forEach(h => drawLabel(h.x, h.h + 9, h.y, h.short, 10, P().ink));
+      SIGN_RECTS = [];
+      // draw nearest signs first so they win overlap contests
+      HOODS.concat([AX])
+        .slice().sort((a, b) =>
+          ((a.x - V.ex) ** 2 + (a.y - V.ez) ** 2) - ((b.x - V.ex) ** 2 + (b.y - V.ez) ** 2))
+        .forEach(drawSign);
       OBELISKS.forEach(o => drawLabel(o.x, o.hgt + 8, o.y, "✦ " + o.s.label, 9.5, P().goldDark));
-      drawLabel(AX.x, AX.h + 9, AX.y, AX.short, 10, P().ink);
     }
+    GATES.forEach((g, i) => drawLabel(g.x, 34, g.y, i === 0 ? "CITY GATE" : "WATER GATE", 10, P().label));
     drawLabel(gatePt[0], 24, gatePt[1], "WEST GATE · 1:1", 10.5, P().label);
     drawLabel(portPt[0], 20, portPt[1], "THE HARBOR · 21:25", 10.5, P().label);
     const seaC2 = wayPoint(1.035, 620);
@@ -798,8 +972,9 @@ canvas.addEventListener("pointermove", ev => {
       cam.pitch = Math.max(0.10, Math.min(1.55, cam.pitch + dy * 0.004));
     }
   } else {
-    cam.walkT = Math.max(0, Math.min(1, cam.walkT - dy * 0.0004));
-    syncWalkUI();
+    // free look while walking
+    cam.lookYaw = Math.max(-2.7, Math.min(2.7, cam.lookYaw + dx * 0.0045));
+    cam.lookPitch = Math.max(-0.7, Math.min(0.7, cam.lookPitch - dy * 0.0035));
   }
   dragging.x = ev.clientX; dragging.y = ev.clientY;
   needRender = true;
@@ -865,12 +1040,19 @@ function syncWalkUI() {
   walkinfo.innerHTML = `<b>${h ? h.short : (v < 5 ? "West Gate" : "The Way")}</b>John ${chapterVerseOf(v)}${h ? " · " + h.ward.short : ""}`;
 }
 walkpos.addEventListener("input", () => { cam.walkT = walkpos.value / 1000; playing = false; playbtn.textContent = "▶"; syncWalkUI(); needRender = true; });
-playbtn.addEventListener("click", () => { playing = !playing; playbtn.textContent = playing ? "⏸" : "▶"; });
+playbtn.addEventListener("click", () => {
+  playing = !playing;
+  playbtn.textContent = playing ? "⏸" : "▶";
+  if (playing) { cam.lookYaw = 0; cam.lookPitch = -0.15; }   // face forward when setting off
+});
 document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("click", () => {
   mode = b.dataset.mode;
   document.querySelectorAll("#modeseg button").forEach(x => x.classList.toggle("on", x === b));
   walkbar.classList.toggle("show", mode === "walk");
-  if (mode === "walk") syncWalkUI();
+  if (mode === "walk") { syncWalkUI(); cam.lookYaw = 0; cam.lookPitch = -0.15; }
+  document.getElementById("hint3d").textContent = mode === "walk"
+    ? "drag or ← → to look around · ↑ ↓ / wheel to walk · PgUp/PgDn to look up/down · Enter to step inside"
+    : "drag to orbit · shift-drag to pan · scroll to zoom · double-click a building to focus · click for detail";
   playing = false; playbtn.textContent = "▶";
   needRender = true;
 }));
@@ -910,7 +1092,14 @@ document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("cl
 })();
 document.addEventListener("keydown", ev => {
   if (ev.key === "Escape") closePanel();
-  if (ev.key === "Enter" && mode === "walk" && !panel.classList.contains("open")) enterCurrent();
+  if (mode !== "walk") return;
+  if (ev.key === "Enter" && !panel.classList.contains("open")) enterCurrent();
+  if (ev.key === "ArrowLeft") { cam.lookYaw = Math.max(-2.7, cam.lookYaw - 0.07); ev.preventDefault(); needRender = true; }
+  if (ev.key === "ArrowRight") { cam.lookYaw = Math.min(2.7, cam.lookYaw + 0.07); ev.preventDefault(); needRender = true; }
+  if (ev.key === "ArrowUp") { cam.walkT = Math.min(1, cam.walkT + 0.0022); ev.preventDefault(); syncWalkUI(); needRender = true; }
+  if (ev.key === "ArrowDown") { cam.walkT = Math.max(0, cam.walkT - 0.0022); ev.preventDefault(); syncWalkUI(); needRender = true; }
+  if (ev.key === "PageUp") { cam.lookPitch = Math.min(0.7, cam.lookPitch + 0.06); ev.preventDefault(); needRender = true; }
+  if (ev.key === "PageDown") { cam.lookPitch = Math.max(-0.7, cam.lookPitch - 0.06); ev.preventDefault(); needRender = true; }
 });
 
 /* ---------- main loop ---------- */
