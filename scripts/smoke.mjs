@@ -48,6 +48,20 @@ await page.waitForTimeout(300);
 ok("Enter steps inside", await page.$eval("#panel", el => el.classList.contains("open")));
 await page.keyboard.press("Escape");
 
+// Space must pause AND resume (it used to cancel itself out against the focused button)
+await page.click("#playbtn");
+await page.waitForTimeout(200);
+const playing = await page.textContent("#playbtn");
+await page.keyboard.press("Space");
+await page.waitForTimeout(200);
+const paused = await page.textContent("#playbtn");
+await page.keyboard.press("Space");
+await page.waitForTimeout(200);
+const resumed = await page.textContent("#playbtn");
+ok("Space pauses", playing.trim() === "⏸" && paused.trim() === "▶");
+ok("Space resumes", resumed.trim() === "⏸", `${playing.trim()} → ${paused.trim()} → ${resumed.trim()}`);
+await page.click("#playbtn");
+
 // overlays + theme
 for (const id of ["ck3-iam", "ck3-life", "ck3-light", "ck3-labels"]) {
   await page.uncheck("#" + id); await page.waitForTimeout(120);
@@ -61,6 +75,36 @@ const after = await page.getAttribute("html", "data-theme");
 ok("day/night toggles", before !== after, `${before} → ${after}`);
 await page.click('#modeseg button[data-mode="orbit"]');
 await page.waitForTimeout(300);
+
+// shift-drag must pan the way you grabbed: drag right, the city goes right.
+// (Only measurable on the Three.js page, which positions its labels as DOM.)
+const labelX = () => page.evaluate(() => {
+  const el = document.querySelector("#labels div:not([style*='display: none'])");
+  if (!el) return null;
+  const m = /translate\(([-\d.]+)px/.exec(el.style.transform);
+  return m ? { text: el.textContent, x: +m[1] } : null;
+});
+const before2 = await labelX();
+if (before2) {
+  await page.keyboard.down("Shift");
+  await page.mouse.move(700, 450);
+  await page.mouse.down();
+  for (let i = 1; i <= 8; i++) await page.mouse.move(700 + i * 20, 450);
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  await page.waitForTimeout(300);
+  const after2 = await page.evaluate(t => {
+    for (const el of document.querySelectorAll("#labels div")) {
+      if (el.textContent === t && el.style.display !== "none") {
+        const m = /translate\(([-\d.]+)px/.exec(el.style.transform);
+        return m ? +m[1] : null;
+      }
+    }
+    return null;
+  }, before2.text);
+  ok("shift-drag pans with the grab, not against it",
+    after2 != null && after2 > before2.x + 20, `“${before2.text}” ${before2.x.toFixed(0)} → ${after2}`);
+}
 
 await b.close();
 for (const c of checks) console.log(`${c.pass ? "✓" : "✗"} ${c.name}${c.detail ? "  (" + c.detail + ")" : ""}`);

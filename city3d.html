@@ -1124,11 +1124,13 @@ function syncWalkUI() {
   walkinfo.innerHTML = `<b>${h ? h.short : (v < 5 ? "West Gate" : "The Way")}</b>John ${chapterVerseOf(v)}${h ? " · " + h.ward.short : ""}`;
 }
 walkpos.addEventListener("input", () => { cam.walkT = walkpos.value / 1000; playing = false; playbtn.textContent = "▶"; syncWalkUI(); needRender = true; });
-playbtn.addEventListener("click", () => {
+function togglePlay() {
   playing = !playing;
   playbtn.textContent = playing ? "⏸" : "▶";
   if (playing) { cam.lookYaw = 0; cam.lookPitch = -0.15; }   // face forward when setting off
-});
+  needRender = true;
+}
+playbtn.addEventListener("click", togglePlay);
 document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("click", () => {
   mode = b.dataset.mode;
   document.querySelectorAll("#modeseg button").forEach(x => x.classList.toggle("on", x === b));
@@ -1177,6 +1179,9 @@ document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("cl
 document.addEventListener("keydown", ev => {
   if (ev.key === "Escape") closePanel();
   if (mode !== "walk") return;
+  // Space pauses *and* resumes. preventDefault matters: without it the browser
+  // also "clicks" the focused play button, and the two toggles cancel out.
+  if (ev.code === "Space") { ev.preventDefault(); togglePlay(); return; }
   if (ev.key === "Enter" && !panel.classList.contains("open")) enterCurrent();
   if (ev.key === "ArrowLeft") { cam.lookYaw = Math.max(-2.7, cam.lookYaw - 0.07); ev.preventDefault(); needRender = true; }
   if (ev.key === "ArrowRight") { cam.lookYaw = Math.min(2.7, cam.lookYaw + 0.07); ev.preventDefault(); needRender = true; }

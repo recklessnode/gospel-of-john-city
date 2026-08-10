@@ -194,3 +194,22 @@ stepped pools, courtyard houses, crenellated wall, harbour quay + boats, stelae)
 **Commits:** *(IDs appended as made — each ID lands in the following commit)*
 - `47be0b4` — near-plane clipping fix + harbour coast/quay
 - `9ff43d2` — M1: Three.js city, parity check, QA harness, docs
+
+### Walk-mode controls (same day, Ronald's feedback)
+
+Ronald: shift-drag pan is inverted left/right, and Space paused the walk but never
+resumed it. Both fixed, both now covered by `scripts/smoke.mjs`:
+
+- **Pan inverted.** The Three.js port double-negated the pan vector — it built the
+  camera's *left* vector `(f.z, 0, -f.x)` and then subtracted, so the city ran away
+  from the mouse. Restored the canvas view's formula (right = `(-f.z, 0, f.x)`,
+  target moves opposite the drag) so grabbing and dragging right carries the city
+  right. The vertical axis was inverted by the same sign error and is fixed with it.
+- **Space wouldn't resume.** Space was never handled in code — it was reaching the
+  focused play button as a browser button activation. Once the walk was playing,
+  pressing Space fired *both* that activation and (after the walk bar re-rendered)
+  a second toggle, so pause stuck and resume cancelled itself out. Space is now an
+  explicit walk-mode binding with `preventDefault()`, so it is a single clean
+  pause/resume toggle no matter what has focus. Fixed in both 3D views.
+
+- `c83d146` — smoke.mjs accepts a live URL

@@ -224,13 +224,14 @@ canvas.addEventListener("pointermove", ev => {
   canvas.classList.add("panning");
   if (mode === "orbit") {
     if (dragging.shift) {
-      // pan the target across the ground, in the camera's own frame
+      // pan the target across the ground, in the camera's own frame — drag and
+      // the city follows the mouse (same formula as the canvas view)
       const s = cam.dist / ((canvas.clientHeight / 2) / Math.tan(camera.fov * Math.PI / 360));
       const f = new THREE.Vector3(); camera.getWorldDirection(f);
-      const r = new THREE.Vector3(f.z, 0, -f.x).normalize();
-      const fwd = new THREE.Vector3(f.x, 0, f.z).normalize();
-      cam.target.addScaledVector(r, -dx * s);
-      cam.target.addScaledVector(fwd, -dy * s / Math.max(0.35, Math.cos(cam.pitch)));
+      const rx = -f.z, rz = f.x;                        // camera right, on the ground
+      const k = Math.max(0.35, Math.cos(cam.pitch));
+      cam.target.x -= (dx * rx - dy * f.x / k) * s;
+      cam.target.z -= (dx * rz - dy * f.z / k) * s;
     } else {
       cam.yaw += dx * 0.0055;
       // street-grazing (≈6°) up to near-top-down (≈89°): never under the ground
@@ -300,11 +301,13 @@ walkpos.addEventListener("input", () => {
   cam.walkT = walkpos.value / 1000; playing = false; playbtn.textContent = "▶";
   syncWalkUI(); needRender = true;
 });
-playbtn.addEventListener("click", () => {
+function togglePlay() {
   playing = !playing;
   playbtn.textContent = playing ? "⏸" : "▶";
-  if (playing) { cam.lookYaw = 0; cam.lookPitch = -0.15; }
-});
+  if (playing) { cam.lookYaw = 0; cam.lookPitch = -0.15; }   // face forward when setting off
+  needRender = true;
+}
+playbtn.addEventListener("click", togglePlay);
 document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("click", () => {
   mode = b.dataset.mode;
   document.querySelectorAll("#modeseg button").forEach(x => x.classList.toggle("on", x === b));
@@ -353,6 +356,9 @@ document.getElementById("themebtn").addEventListener("click", () => {
 document.addEventListener("keydown", ev => {
   if (ev.key === "Escape") closePanel();
   if (mode !== "walk") return;
+  // Space pauses *and* resumes. preventDefault matters: without it the browser
+  // also "clicks" the focused play button, and the two toggles cancel out.
+  if (ev.code === "Space") { ev.preventDefault(); togglePlay(); return; }
   if (ev.key === "Enter" && !panel.classList.contains("open")) enterCurrent();
   if (ev.key === "ArrowLeft") { cam.lookYaw = Math.max(-2.7, cam.lookYaw - 0.07); ev.preventDefault(); needRender = true; }
   if (ev.key === "ArrowRight") { cam.lookYaw = Math.min(2.7, cam.lookYaw + 0.07); ev.preventDefault(); needRender = true; }
