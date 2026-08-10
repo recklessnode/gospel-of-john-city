@@ -61,19 +61,40 @@ To rebuild: `python3 scripts/build_data.py && python3 scripts/build.py`
   - Ward VII (11:1–54) is extended on the map to include the bridge passage
     11:55–12:11, with its stats adjusted accordingly (851 → 1,070 gw, noted in-app).
 
-## 3D view (`city3d.html`)
+## 3D views
 
-A dependency-free 3D render of the same city: perspective Canvas renderer (painter's
-algorithm — no WebGL libraries, so it works offline and everywhere). **Orbit mode**
+There are two, and they render the same city from the same plan:
+
+| Page | Renderer | Notes |
+|---|---|---|
+| [`city3d-three.html`](https://recklessnode.github.io/gospel-of-john-city/city3d-three.html) | Three.js (WebGL) | Phase 2. Real sun + shadows, fog, raycast picking. The one to look at. |
+| [`city3d.html`](https://recklessnode.github.io/gospel-of-john-city/city3d.html) | Canvas, dependency-free | Phase 1 classic. Kept as the fallback for machines without WebGL. |
+
+Both are single self-contained files — the Three.js build is bundled and inlined, so
+there is no CDN dependency at view time. They cross-link in the header.
+
+### The 3D view
+
+A 3D render of the same city. **Orbit mode**
 (drag to rotate/tilt, scroll to zoom, shift-drag to pan, double-click to focus) and
 **Walk the Way** — a street-level camera that follows the Johannine Way from the West
 Gate (1:1) to the harbor (21:25), with a scrub bar that reads out the verse you're
 passing. Gold obelisks mark the "I AM" sayings.
 
-**Phase 2 (planned): ancient-world architecture.** Procedural building kits —
+**Phase 2: ancient-world architecture.** Milestone M1 (done) rebuilt the 3D view on
+Three.js — see `docs/phase2-ancient-city.md`. M2 brings the procedural building kits:
 Herodian temple platform for the Temple Citadel, Roman fortress for the Praetorium,
 stoa-lined agora for the marketplaces, stepped pools for Bethesda/Siloam, Judean
 courtyard houses for the Upper Room, crenellated wall with gate towers, quay + boats
-at the harbor, stelae for the I AM landmarks. Best built on Three.js (loaded from a
-CDN at view time; the cloud build sandbox cannot fetch npm/CDN packages, which is why
-Phase 1 ships its own renderer).
+at the harbor, stelae for the I AM landmarks.
+
+### Building it
+
+```bash
+npm install       # three + esbuild + playwright
+npm run build     # parity check → bundle → assemble all three pages
+```
+
+`npm run verify` alone checks that the 2D map, the canvas 3D view and the Three.js
+view still lay the city out in exactly the same place — the plan is duplicated across
+three renderers by design, so it is held together by a test rather than by care.

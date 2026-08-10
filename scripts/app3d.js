@@ -236,9 +236,9 @@ const SEA_POLY = (() => {
     const a = SEA_A1 + (SEA_A0 - SEA_A1) * (k / N), r = shoreR(a);
     out.push([CX + r * Math.cos(a), CY + r * Math.sin(a)]);
   }
-  for (let k = 0; k <= N; k++) {            // open water
+  for (let k = 0; k <= N; k++) {            // open water, running past the land's edge
     const a = SEA_A0 + (SEA_A1 - SEA_A0) * (k / N);
-    const r = 900 + 42 * Math.sin(a * 3.1 + 0.8);
+    const r = 1400 + 60 * Math.sin(a * 3.1 + 0.8);
     out.push([CX + r * Math.cos(a), CY + r * Math.sin(a)]);
   }
   return out;

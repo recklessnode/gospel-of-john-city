@@ -8,13 +8,18 @@ https://recklessnode.github.io/gospel-of-john-city/ (2D) and `/city3d.html` (3D)
 ## Commands
 
 ```bash
+npm install                     # once: three + esbuild + playwright
+npm run build                   # verify parity → bundle src/ → assemble all three pages
+npm run verify                  # plan parity check alone (fast, no browser)
+npm run bundle                  # esbuild only
+node scripts/shots.mjs city3d-three.html shots [--dark]   # walkthrough screenshots
+node scripts/smoke.mjs city3d-three.html                  # interaction checks
 python3 scripts/build_data.py   # xlsx → data/john-data.json (only when data changes)
-python3 scripts/build.py        # assemble index.html AND city3d.html from templates
+python3 scripts/build.py        # assemble the pages (skips the 3-D bundle if absent)
 ```
 
-There is no framework and no build system beyond those two scripts. Verify changes
-by opening the built HTML in a browser (or headless: playwright/chromium screenshots
-— see the walkthrough positions in docs/phase2-ancient-city.md).
+`npm run build` is the normal entry point. `python3 scripts/build.py` alone still
+works — it just warns and skips `city3d-three.html` when the bundle is missing.
 
 ## Architecture
 
@@ -22,22 +27,35 @@ by opening the built HTML in a browser (or headless: playwright/chromium screens
 data/John gospel as a city.xlsx   source data (John Stats outline is authoritative)
 scripts/build_data.py             extracts/curates → data/john-data.json
 index.template.html + scripts/app.js     → index.html   (2D: city / linear / index)
-city3d.template.html + scripts/app3d.js  → city3d.html  (3D canvas renderer)
+city3d.template.html + scripts/app3d.js  → city3d.html  (3D canvas renderer, classic)
+city3d.template.html + src/ (bundled)    → city3d-three.html (3D Three.js, Phase 2)
 scripts/build.py                  injects JSON + app code at /*__DATA__*/ and /*__APP__*/
+
+src/plan.js      the city plan — pure math, no DOM, no Three.js
+src/scene.js     the plan built as Three.js geometry
+src/palette.js   day/night palettes + the sun direction
+src/labels.js    billboarded DOM labels with nearest-first collision culling
+src/main.js      cameras, picking, panel, walk UI, day/night, main loop
 ```
+
+Both 3D pages share `city3d.template.html`; the build fills in `<!--__SUBTITLE__-->`
+and `<!--__ALT__-->` (the cross-link between them) per page.
 
 Both outputs are fully self-contained single files (required: GitHub Pages + Claude
 artifact previews + offline use).
 
 ## Invariants — do not break
 
-1. **app.js and app3d.js share the city plan and MUST stay in lockstep.** The
-   duplicated functions (`wayPoint`, `layoutOrganic`/`layoutPlan`, `catmullSample`,
-   `convexHull`, the road-clearance pass in `buildWay`/`roadClearance`, and all their
-   constants: BASE_R 315, harbor r 535, relaxation 220+90 iters, padding 8,
-   ROAD_HALF 9, CLEAR 13.5, rnd() seed math) must produce identical positions in
-   both files. If you change layout in one, change the other identically — or
-   better, verify by diffing hood positions.
+1. **app.js, app3d.js and src/plan.js share the city plan and MUST stay in
+   lockstep.** The duplicated functions (`wayPoint`, `layoutOrganic`/`layoutPlan`,
+   `catmullSample`, `convexHull`, the road-clearance pass in `buildWay`/
+   `roadClearance`, the shoreline/quay geometry, and all their constants: BASE_R
+   315, harbor r 535, relaxation 220+90 iters, padding 8, ROAD_HALF 9, CLEAR 13.5,
+   rnd() seed math) must produce identical positions in all three. This is now
+   machine-checked: **`npm run verify`** (scripts/verify_parity.mjs) evaluates each
+   renderer's plan section over the same data and diffs hood positions, the Way,
+   wall segments, gates, obelisks and the sea/quay polygons. Run it after any
+   layout change; `npm run build` runs it first and refuses to build on drift.
 2. **Data quirks are intentional, not bugs.** 16:4b–33 is absent from John Stats
    (Greek count 442 comes from the bubble-data sheet); ward totals sometimes exceed
    district totals (overlapping addenda in the source); ward VII is extended to
@@ -80,6 +98,9 @@ abstract cylinders with procedural ancient-architecture kits (Herodian temple
 platform, Roman fortress, stoas, stepped pools, courtyard houses, crenellated wall,
 harbor with boats, stelae), while keeping everything that already works: the shared
 city plan, walk-the-Way camera with pace/free-look, gates on the wall crossings,
-door signs, Enter-to-explore, day/night, and the detail panel. The canvas renderer
-(`scripts/app3d.js`) stays in the repo as reference/fallback until the Three.js
-version reaches feature parity.
+door signs, Enter-to-explore, day/night, and the detail panel.
+
+**M1 is done** — `city3d-three.html` reproduces the canvas view on WebGL with real
+shadows and raycast picking. The canvas renderer (`scripts/app3d.js` →
+`city3d.html`) stays as the classic/fallback view until Ronald signs off; the two
+pages cross-link in the header. **M2 (building kits) is next.**

@@ -123,3 +123,73 @@ GATE at the harbor exit); name-boards hung over each doorway, visible only from 
 street side, nearest-first collision culling; walk mode free look (drag or ←→,
 PgUp/PgDn pitch, ↑↓/wheel to move, look recenters on play); landmark buildings get
 gold portal trim; district labels hidden at street level.
+
+---
+
+## 2026-08-10 — Session 2: Phase 2 M1 (Three.js) + two walk-mode bugs
+
+**Participants:** Ronald + Claude (Opus 5, Claude Code on Ronald's machine)
+
+**Setup:** the project moved out of the Cowork sandbox into Claude Code, cloned to
+`~/gospel-of-john-city` (native ext4, so none of the /mnt/c fileMode/CRLF trouble).
+Real npm and direct `git push` here: `npm install three esbuild playwright` just
+works, and pushes go straight to origin — no more bundle relay.
+
+**Bugs Ronald hit while walking the Way** (both in the canvas 3D view, both fixed
+and pushed first, in `47be0b4`):
+
+- *The road disappeared once you passed the gate; the ground fell away at the
+  harbour.* Root cause was one line: `drawFlatPoly` bailed out entirely if **any**
+  vertex projected behind the camera — which is guaranteed for the ground disc, the
+  sea and the road ribbon as soon as you are standing on them. Ground polygons are
+  now clipped against the camera's near plane in world space before projection.
+  (The Three.js view never had this bug — the GPU clips properly.)
+- *The environment dropped off the map at The Harbor.* The Sea of Tiberias blob
+  overlapped the land, and the Way's last stretch ran into open water and simply
+  stopped: you ended the book standing in the sea. The water is now a **bay with a
+  real shoreline** (held back where the harbour quarter stands), the Way ends on a
+  **stone quay with a jetty** running out into the water, and the ground disc was
+  widened so the horizon is land, not void. The sea runs out past the land's edge
+  so it meets the sky. The 2D map's decorative sea blob was left alone (it is
+  painted behind the city there, so it never read as wrong) — say the word if you
+  want the two synced.
+
+**M1 — Three.js parity, done.** New page `city3d-three.html` (622 KB, self-contained,
+no CDN), built from `src/` by esbuild and inlined by `scripts/build.py`. It
+reproduces the canvas view feature-for-feature — orbit and Walk-the-Way cameras with
+the same numbers and clamps, pace/scrub/free-look/Enter-to-explore, door signs with
+nearest-first collision culling, ward/district/gate labels, overlays, day/night,
+tooltips and the detail panel — on real WebGL: directional sun + hemisphere ambient,
+PCF soft shadow maps, distance fog, and raycast picking instead of screen-space hit
+circles. The two 3D pages cross-link in the header so they can be compared live.
+
+**The invariant is now machine-checked.** `src/plan.js` holds the city plan as pure
+math (no DOM, no Three.js), and `scripts/verify_parity.mjs` evaluates the plan
+sections of `app.js`, `app3d.js` and `plan.js` over the same data and diffs hood
+positions, the Way, wall segments, gates, obelisks and the sea/quay polygons. All
+three agree exactly (61 hoods + annex, 361 way points, 24 wall segments, 2 gates,
+9 obelisks). `npm run build` runs it first and refuses to build on drift — CLAUDE.md
+invariant 1 is no longer a promise, it is a test.
+
+**QA harness:** `scripts/shots.mjs` drives the real UI controls in headless Chromium
+(swiftshader) and screenshots the walkthrough positions from the Phase 2 spec, light
+and dark; `scripts/smoke.mjs` checks hover tooltip → click panel → Escape → walk bar
+→ Enter-to-explore → overlay toggles → day/night. Both 3D pages pass all 9 checks.
+
+**Tuned from the screenshots:** exposure lowered (the first pass washed out), road
+darkened a touch for contrast against the ground, theme-road dots switched to
+screen-space size (with size attenuation they ballooned into beach balls as you
+walked past), label distance horizons matched to the canvas view's cutoffs, and
+night shadows softened to 50% (a full-strength shadow at night was a black hole in
+the street).
+
+**Deviation from the spec, on purpose:** the spec suggested OrbitControls, but the
+hand-rolled orbit camera was kept so the framing, drag feel and pitch clamps stay
+identical to the canvas view — parity was the point of M1. Easy to swap later if
+you want inertia.
+
+**Next:** M2 — the building kits (Herodian temple platform, Roman fortress, stoas,
+stepped pools, courtyard houses, crenellated wall, harbour quay + boats, stelae).
+
+**Commits:** *(IDs appended as made — each ID lands in the following commit)*
+- `47be0b4` — near-plane clipping fix + harbour coast/quay
