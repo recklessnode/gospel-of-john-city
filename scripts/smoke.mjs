@@ -15,6 +15,10 @@ await page.goto(/^https?:/.test(target) ? target : "file://" + resolve(target));
 await page.waitForTimeout(1200);
 
 const checks = [];
+const ok0 = (n, p, d = "") => checks.push({ name: n, pass: p, detail: d });
+// the build stamp: how you tell a refreshed page from a cached one
+const stamp = await page.$eval(".build", el => el.textContent.trim()).catch(() => null);
+ok0("build stamp is on the page", !!stamp && /^build \d{4}-\d{2}-\d{2}/.test(stamp), stamp || "missing");
 const ok = (name, pass, detail = "") => { checks.push({ name, pass, detail }); };
 
 // hover + click the biggest building near the centre of the view: sweep for a hit

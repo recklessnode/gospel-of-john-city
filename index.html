@@ -77,6 +77,10 @@
     font-size: 17px; font-weight: 650; letter-spacing: 0.04em;
     font-variant-caps: small-caps; white-space: nowrap;
   }
+  .build { font-size: 10.5px; color: var(--muted); text-decoration: none; white-space: nowrap;
+    font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .build:hover { color: var(--ink-2); }
+  @media (max-width: 760px) { .build { display: none; } }
   header .sub { font-size: 12px; color: var(--muted); }
   .seg {
     display: inline-flex; border: 1px solid var(--border); border-radius: 8px;
@@ -239,6 +243,7 @@
     <button data-view="index">Index</button>
   </div>
   <div class="spacer"></div>
+  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/ff1b5c4" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-08-11 03:04Z · ff1b5c4</a>
   <a class="iconbtn" href="city3d.html" style="text-decoration:none">3D City ⇗</a>
   <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
 </header>

@@ -396,3 +396,16 @@ charcoal fire are in John 21 and a market stall is not.
 - `96ce9a3` — M2a: building kits, crenellated wall, arched gates
 - `ecc9c05` — M2a review fixes (labels, doorways, tone mapping, night)
 - `255d4bb` — road entry straightened, held to the ring, gates squared to the road
+
+### Build stamps (Ronald's request)
+
+Ronald: there was no way to tell, on refresh, whether the page in front of him was
+the latest build or a cached one. All three pages now carry a discreet stamp in the
+header — `build 2026-08-11 03:04Z · ff1b5c4` — linking to the commit it was built
+from, injected by `scripts/build.py` at `<!--__BUILD__-->`. The smoke test asserts
+it is present and well-formed.
+
+One wrinkle worth knowing: the hash names HEAD at *build* time, and the built HTML
+is committed afterwards, so the stamp trails the history by one commit — the same
+convention conversations.md already uses. The **timestamp** is the reliable signal
+that something changed; the hash tells you which source state produced it.

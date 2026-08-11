@@ -83,6 +83,12 @@ artifact previews + offline use).
 - **conversations.md** is the session log, tied to commit IDs. Each working session
   appends an entry as work happens; a commit's ID is recorded by the *following*
   commit (a commit can't contain its own hash). Keep this up to date.
+- **Every page carries a build stamp** in its header (`build <UTC time> · <sha>`,
+  linking to that commit) so a refresh can be told apart from a cached page. It is
+  injected by `scripts/build.py` at `<!--__BUILD__-->`. Note the hash names HEAD at
+  *build* time — the built HTML is committed afterwards, so the stamp trails the
+  history by one commit, the same convention as conversations.md. The timestamp is
+  the reliable "did this change" signal.
 - **agents.md** documents the model-mix policy (build inline, review with
   independent agents; cheapest capable model wins).
 - Word counts shown in UI come from the sheet by row — formatting `fmt()` handles
