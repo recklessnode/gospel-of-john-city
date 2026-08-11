@@ -10,10 +10,10 @@ export const PAL = {
     road: "#d3c6a3", roadEdge: "#9c9070", roadSeam: "#5a503c", seamOpacity: 0.30,
     quay: "#c8bb99", quayEdge: "#9b8f6e",
     wall: "#7d7566", wallTop: "#948b7a",
-    stone: "#ddd4bb", stone2: "#c7bd9f", roofTile: "#b9a98a", opening: "#2a2620",
+    stone: "#ddd4bb", stone2: "#c7bd9f", roofTile: "#b9a98a", opening: "#4a4238",
     ink: "#3d3a35", label: "#52514e",
     gold: "#d9a419", goldDark: "#a87b0a", fog: "#d6e2eb",
-    sun: 1.55, hemi: 0.62, hemiSky: "#cfe3ef", hemiGround: "#b9ac8c", sunColor: "#fff3dc",
+    sun: 2.0, hemi: 0.95, hemiSky: "#cfe3ef", hemiGround: "#b9ac8c", sunColor: "#fff3dc",
     themes: { witness: "#eda100", sign: "#1baf7a", discourse: "#2a78d6", controversy: "#e34948", love: "#e87ba4", passion: "#4a3aa7", resurrection: "#008300" },
   },
   dark: {
@@ -22,11 +22,13 @@ export const PAL = {
     sea: "#16303a", seaEdge: "#2c5666",
     road: "#413e33", roadEdge: "#5d5943", roadSeam: "#000000", seamOpacity: 0.28,
     quay: "#3a382f", quayEdge: "#57523f",
-    wall: "#5c5648", wallTop: "#6d6757",
-    stone: "#544e42", stone2: "#423d33", roofTile: "#39342b", opening: "#14120f",
+    wall: "#6f6857", wallTop: "#837b68",
+    stone: "#77705f", stone2: "#5f584a", roofTile: "#4f4839", opening: "#2b2822",
     ink: "#d5d3c8", label: "#c3c2b7",
     gold: "#e8b83a", goldDark: "#b8860b", fog: "#101824",
-    sun: 1.15, hemi: 0.95, hemiSky: "#31445f", hemiGround: "#2b2721", sunColor: "#c8d8f2",
+    // moonlight, not realism: with a near-black hemisphere sky every vertical
+    // face at street level collapsed into one silhouette
+    sun: 1.6, hemi: 1.7, hemiSky: "#7089ad", hemiGround: "#544d40", sunColor: "#dbe6fb",
     themes: { witness: "#c98500", sign: "#199e70", discourse: "#3987e5", controversy: "#e66767", love: "#d55181", passion: "#9085e9", resurrection: "#2fb457" },
   },
 };

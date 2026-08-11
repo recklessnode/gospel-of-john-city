@@ -272,3 +272,57 @@ street level. Colour now reads at both altitudes.
 
 Geometry accumulates in a `Parts` helper and is merged per material, so a forty-piece
 temple costs four draw calls rather than forty.
+
+### Review round (agent policy: build inline, review out-of-line)
+
+**Fable 5 — mechanical audit.** All PASS: plan parity holds; all 62 blocks resolve
+to a kit (25 house / 20 hall / 16 forum / 1 temple — Abraham Controversy); zero
+footprint overlaps across 1,891 pairs (tightest margin 2.78u) and zero road
+intrusions (tightest 1.17u); no NaN geometry; 372 meshes total, max 6 per block.
+It caught one real defect: the kits were stacking roof slabs and parapets **on top
+of** `h.h` instead of inside it, so short houses rendered up to 18% too tall —
+quietly corrupting the "height = Greek word count" claim the page makes. Fixed;
+correlation is now 1.0000, worst deviation 0.0%. It also found two dead materials
+left from the cylinder era.
+
+**Opus 5 — visual QA** on all 16 screenshots. 16 findings; two were verified false
+before acting, which was worth the check:
+
+- *"Buildings are cut in half by the city wall"* — **false**. Measured: no block is
+  within 34.8 units of a wall segment, and the 14 towers clear by 32.6. The padded
+  convex hull guarantees this (8 sample points at r+46 per hood, so the hull's
+  distance to any centre is ≥ 0.924·(r+46)). It was a misread of the oblique
+  top-down. Acting on it would have meant a wall-clearance pass in the plan — a
+  change to hood positions requiring coordinated edits across all three renderers.
+- *"A harbour block overhangs the sea"* — **false**. Tightest is Shepherd's
+  Commission: reach 599.7 vs shoreline 608.0.
+
+Fixed from the rest: world labels painting over the legend (z-index, plus the
+legend and walk bar are now reserved boxes that labels are culled out of, not
+merely painted under); collision culling extended from door signs to every label
+class with a priority order (district → gate → ward → I AM → sign); door signs now
+raycast for occlusion, so a sign no longer hovers in front of the city wall
+labelling a building you cannot see; the civic-hall pediment floated behind its own
+entablature; door awnings floated ~1 unit off the wall (now pulled in and
+bracketed); `archOnFace` extruded doorways **outward**, so every door was a black
+slab stuck on the façade rather than a recess; forum awnings hung 15 units up as
+thin slivers; the landmark gold hoop was a torus around a square building sitting
+below its parapet (now a gold cornice frame); ACES tone mapping added because the
+light palette was clipping roofs and road to flat white; the camera near plane
+raised 0.5 → 2 and polygon offset applied to the ground decals, which is what the
+"z-fighting speckle" actually was; theme mix raised to 72% with painted architraves
+so colour reads at street level, not just from orbit; the house kit was identical
+everywhere and read as a face (two symmetric slits + awning + arch) — slits are now
+seeded per block, 1–3 of them, off-centre, and string courses no longer cut across
+the door head; label plates for gate/sea text on pale sky and stone.
+
+Dark mode took two passes. Raising the stone and wall values did nothing on its own
+because ACES tone mapping cancelled the lift; the actual culprit was the hemisphere
+sky colour being near-black, so every vertical face at street level collapsed into
+one silhouette. Night is now lit as moonlight rather than realism.
+
+**Deferred to M2b** (recorded, not forgotten): harbour furniture — bollards, steps,
+boats — which is the payoff of the whole walk and is still a bare ramp; and the
+reviewer's note that `resurrection #008300` and `sign #1baf7a` are hard to tell
+apart. That palette is shared with the 2D map and validated, so it is Ronald's and
+PaulDz's call, not a unilateral fix.

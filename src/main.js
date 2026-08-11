@@ -25,10 +25,12 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xd6e2eb, 900, 3000);
-const camera = new THREE.PerspectiveCamera(55, 1, 0.5, 7000);
+const camera = new THREE.PerspectiveCamera(55, 1, 2, 6000);
 
 let theme = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
 document.documentElement.setAttribute("data-theme", theme);
@@ -87,45 +89,77 @@ function labelItems() {
   if (!walk) DISTRICTS.forEach(d => {
     const x = d.wards.reduce((s, w) => s + w.cx, 0) / d.wards.length;
     const z = d.wards.reduce((s, w) => s + w.cy, 0) / d.wards.length;
-    items.push({ text: DN[d.id] || d.short, cls: "lbl district", pos: [x, 150, z] });
+    items.push({ text: DN[d.id] || d.short, cls: "lbl district", pos: [x, 150, z], collide: true });
   });
 
+  const wardItems = [];
   WARDS.forEach(w => {
     const hmax = Math.max(...w.hoods.map(h => h.h));
-    items.push({ text: w.short, cls: "lbl ward", pos: [w.cx, hmax + 26, w.cy], maxDepth: MAXD });
+    wardItems.push({ text: w.short, cls: "lbl ward", pos: [w.cx, hmax + 26, w.cy], maxDepth: MAXD, collide: true });
   });
 
+  const iamItems = [], signItems = [];
   if (walk || cam.dist < 520) {
     const ex = camera.position.x, ez = camera.position.z;
-    // nearest signs are pushed first, so they win the overlap contests
-    ALL.slice()
-      .sort((a, b) => ((a.x - ex) ** 2 + (a.y - ez) ** 2) - ((b.x - ex) ** 2 + (b.y - ez) ** 2))
-      .forEach(h => {
-        if (h.doorAng == null) return;
-        const nx = Math.cos(h.doorAng), nz = Math.sin(h.doorAng);
-        const ax = h.x + nx * (h.r + 1.2), az = h.y + nz * (h.r + 1.2);
-        if (nx * (ax - ex) + nz * (az - ez) > 0) return;          // sign faces away
-        const dH = Math.min(11, (h.h || 20) * 0.7);
-        items.push({ text: h.short, cls: "sign", collide: true,
-          pos: [ax, Math.min((h.h || 20) + 3, dH + 8), az], maxDepth: walk ? 340 : 1500 });
-      });
+    // nearest first, so the closest sign wins the overlap contest
+    const near = ALL.slice()
+      .sort((a, b) => ((a.x - ex) ** 2 + (a.y - ez) ** 2) - ((b.x - ex) ** 2 + (b.y - ez) ** 2));
+    let tested = 0;
+    for (const h of near) {
+      if (h.doorAng == null) continue;
+      const nx = Math.cos(h.doorAng), nz = Math.sin(h.doorAng);
+      const ax = h.x + nx * (h.r + 1.2), az = h.y + nz * (h.r + 1.2);
+      if (nx * (ax - ex) + nz * (az - ez) > 0) continue;          // sign faces away
+      const dH = Math.min(11, (h.h || 20) * 0.7);
+      const pos = [ax, Math.min((h.h || 20) + 3, dH + 8), az];
+      // a sign hovering in front of the city wall labels a building you cannot
+      // see. Only the nearest handful are worth a ray.
+      if (tested < 20) { tested++; if (occluded(pos)) continue; }
+      signItems.push({ text: h.short, cls: "sign", collide: true, pos, maxDepth: walk ? 340 : 1500 });
+    }
     if (ck("ck3-iam")) OBELISKS.forEach(o =>
-      items.push({ text: "✦ " + o.s.label, cls: "lbl iam", pos: [o.x, o.hgt + 8, o.y], maxDepth: MAXD }));
+      iamItems.push({ text: "✦ " + o.s.label, cls: "lbl iam", pos: [o.x, o.hgt + 8, o.y], maxDepth: MAXD, collide: true }));
   }
 
-  GATES.forEach((g, i) => items.push({ text: i === 0 ? "CITY GATE" : "WATER GATE", cls: "lbl gate", pos: [g.x, 34, g.y], maxDepth: MAXD }));
-  items.push({ text: "WEST GATE · 1:1", cls: "lbl gate", pos: [gatePt[0], 24, gatePt[1]], maxDepth: MAXD });
-  items.push({ text: "THE HARBOR · 21:25", cls: "lbl gate", pos: [portPt[0], 20, portPt[1]], maxDepth: MAXD });
-  items.push({ text: "SEA OF TIBERIAS", cls: "lbl sea", maxDepth: MAXD,
+  const gateItems = [];
+  GATES.forEach((g, i) => gateItems.push({ text: i === 0 ? "CITY GATE" : "WATER GATE", cls: "lbl gate", pos: [g.x, 34, g.y], maxDepth: MAXD, collide: true }));
+  gateItems.push({ text: "WEST GATE · 1:1", cls: "lbl gate", pos: [gatePt[0], 24, gatePt[1]], maxDepth: MAXD, collide: true });
+  gateItems.push({ text: "THE HARBOR · 21:25", cls: "lbl gate", pos: [portPt[0], 20, portPt[1]], maxDepth: MAXD, collide: true });
+  gateItems.push({ text: "SEA OF TIBERIAS", cls: "lbl sea", maxDepth: MAXD, collide: true,
     pos: [CX + 740 * Math.cos(0.17), 2, CY + 740 * Math.sin(0.17)] });
-  return items;
+
+  // priority order: districts, then gates, wards, I AM sayings, door signs
+  return items.concat(gateItems, wardItems, iamItems, signItems);
+}
+
+/* ---------- label occlusion + reserved UI boxes ---------- */
+const occRay = new THREE.Raycaster();
+const occDir = new THREE.Vector3();
+function occluded(pos) {
+  occDir.set(pos[0] - camera.position.x, pos[1] - camera.position.y, pos[2] - camera.position.z);
+  const dist = occDir.length();
+  if (dist < 4) return false;
+  occRay.set(camera.position, occDir.normalize());
+  occRay.far = dist - 3;
+  return occRay.intersectObjects(city.occluders, false).length > 0;
+}
+function reservedBoxes() {
+  const stage = document.getElementById("stage").getBoundingClientRect();
+  const out = [];
+  for (const id of ["legend3d", "walkbar"]) {
+    const el = document.getElementById(id);
+    if (!el || !el.offsetParent) continue;
+    const r = el.getBoundingClientRect();
+    out.push([r.left - stage.left - 6, r.top - stage.top - 6, r.width + 12, r.height + 12]);
+  }
+  return out;
 }
 
 /* ---------- render ---------- */
 function render() {
   updateCamera();
   renderer.render(scene, camera);
-  labels.update(labelItems(), camera, canvas.clientWidth, canvas.clientHeight);
+  labels.update(labelItems(), camera, canvas.clientWidth, canvas.clientHeight, reservedBoxes());
 }
 
 /* ---------- picking ---------- */

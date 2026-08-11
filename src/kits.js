@@ -33,7 +33,7 @@ export function makeKitMaterials(themeName) {
   };
   const mix = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
   for (const k in pal.themes) {
-    mats["body:" + k] = lam(mix(pal.stone, pal.themes[k], 0.60));
+    mats["body:" + k] = lam(mix(pal.stone, pal.themes[k], 0.72));
     mats["roof:" + k] = lam(mix(pal.roofTile, pal.themes[k], 0.72));
     mats["accent:" + k] = lam(pal.themes[k]);
   }
@@ -46,7 +46,7 @@ export function makeKitMaterials(themeName) {
     mats.wallTop.color.set(pal.wallTop);
     mats.gold.color.set(pal.gold); mats.gold.emissive.set(pal.goldDark);
     for (const k in pal.themes) {
-      mats["body:" + k].color.copy(mix(pal.stone, pal.themes[k], 0.60));
+      mats["body:" + k].color.copy(mix(pal.stone, pal.themes[k], 0.72));
       mats["roof:" + k].color.copy(mix(pal.roofTile, pal.themes[k], 0.72));
       mats["accent:" + k].color.set(pal.themes[k]);
     }
@@ -89,7 +89,7 @@ class Parts {
     s.lineTo(r, 0); s.closePath();
     const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false });
     g.rotateY(Math.PI / 2);                            // shape faces +X, extrudes along +X
-    g.translate(ax, y0, z);
+    g.translate(ax - depth + 0.05, y0, z);   // recessed into the wall, not stuck on it
     this.push(key, g);
   }
   /* a pediment over the +X front, its base at y0 */
@@ -142,9 +142,14 @@ export function kitFor(h) {
 function house(P, h, body, accent, roof) {
   const a = h.r * 0.78;
   const hh = Math.max(3, h.h - 2.5);        // roof slab + parapet bring it back to h.h
+  // a stable per-block seed, so houses differ from each other but never flicker
+  let seed = 0; for (const c of String(h.id || h.short || "")) seed = (seed * 31 + c.charCodeAt(0)) % 9973;
+  const rnd = k => ((Math.sin((seed + k * 57.3) * 12.9898) * 43758.5453) % 1 + 1) % 1;
+  const dW = Math.min(5.5, a * 0.9), dH = Math.min(9, hh * 0.6);
   P.box(body, a * 2, hh, a * 2, 0, hh / 2, 0);
   for (let y = 9; y < hh - 3; y += 9)                                  // storey string courses
-    P.box("stone2", a * 2.1, 0.7, a * 2.1, 0, y, 0);
+    if (y < dH - 1 || y > dH + 3)                                      // never across the door head
+      P.box("stone2", a * 2.1, 0.7, a * 2.1, 0, y, 0);
   P.box(roof, a * 2.15, 0.9, a * 2.15, 0, hh + 0.45, 0);
   for (const [dx, dz, w, d] of [[a, 0, 0.6, a * 2.1], [-a, 0, 0.6, a * 2.1],
                                 [0, a, a * 2.1, 0.6], [0, -a, a * 2.1, 0.6]])
@@ -153,11 +158,16 @@ function house(P, h, body, accent, roof) {
   const rise = Math.min(hh, hh * 0.85) / n, run = (a * 1.5) / n;
   for (let i = 0; i < n; i++)
     P.box("stone2", run, rise, 2.6, -a * 0.75 + run * (i + 0.5), rise * (i + 0.5), -a - 1.3);
-  const dW = Math.min(5.5, a * 0.9), dH = Math.min(9, hh * 0.6);
   P.archOnFace("opening", dW, dH, a);
-  P.box(accent, 1.1, 0.5, dW + 2.6, a + 1.5, dH + 1.3, 0);             // awning over the door
-  for (const z of [-a * 0.55, a * 0.55])                               // window slits
-    P.box("opening", 0.4, 2.4, 1.2, a + 0.05, Math.min(hh - 3, dH + 5.5), z);
+  P.box(accent, 1.4, 0.5, dW + 2.6, a + 0.6, dH + 1.3, 0);             // awning over the door
+  for (const bz of [-(dW / 2 + 0.7), dW / 2 + 0.7])                    // brackets, so it is held up
+    P.box("stone2", 1.2, 0.5, 0.5, a + 0.55, dH + 0.85, bz);
+  const nWin = 1 + Math.floor(rnd(1) * 3);                             // 1-3 slits, off-centre
+  for (let i = 0; i < nWin; i++) {
+    const z = (i - (nWin - 1) / 2) * a * 0.62 + (rnd(i + 2) - 0.5) * a * 0.25;
+    const wy = Math.min(hh - 2.5, dH + 4.5 + rnd(i + 5) * 3.5);
+    P.box("opening", 0.4, 2.4, 1.2, a - 0.35, wy, z);
+  }
 }
 
 /* Civic hall: podium, portico of four columns, pediment. */
@@ -170,8 +180,9 @@ function hall(P, h, body, accent, roof) {
   for (let i = 0; i < 4; i++)
     P.column("stone", rad, colH, a * 0.86, -a * 0.72 + (a * 1.44) * (i / 3), 2);
   const eY = 2 + colH;
-  P.box("stone", 2.6, 1.6, a * 1.9, a * 0.86, eY + 0.8, 0);            // entablature
-  P.pediment("stone", a * 0.95, a * 0.5, a * 0.62, eY + 1.6);
+  P.box(accent, 2.8, 0.7, a * 1.9, a * 0.86, eY + 0.35, 0);            // painted architrave
+  P.box("stone", 2.6, 1.2, a * 1.9, a * 0.86, eY + 1.3, 0);            // entablature
+  P.pediment("stone", a * 0.9, a * 0.5, a * 0.86 + 1.3 - 1.8, eY + 1.6);   // front face flush with the architrave
   P.box(roof, a * 1.9, 1, a * 1.94, -a * 0.09, hh + 0.5, 0);
   const dW = Math.min(6, a * 0.8), dH = Math.min(10, bodyH * 0.6);
   P.archOnFace("opening", dW, dH, a * 0.82, 2);
@@ -199,13 +210,14 @@ function forum(P, h, body, accent, roof) {
   for (let i = 0; i < nFront; i++)                                     // front colonnade
     P.column("stone", rad, colH, front, -side + (side * 2) * (i / (nFront - 1)), pod);
   const eY = pod + colH + 0.9;
-  P.box("stone", 2.2, 1.8, a * 1.9, front, eY, 0);
+  P.box(accent, 2.4, 0.7, a * 1.9, front, eY - 0.75, 0);               // painted architrave
+  P.box("stone", 2.2, 1.4, a * 1.9, front, eY + 0.1, 0);
   P.box("stone", (front - back) + 2.2, 1.8, 2.2, (front + back) / 2, eY, side);
   P.box("stone", (front - back) + 2.2, 1.8, 2.2, (front + back) / 2, eY, -side);
-  P.pediment("stone", a * 0.62, a * 0.34, front - 0.4, eY + 0.9);
+  P.pediment("stone", a * 0.62, a * 0.34, front + 1.1 - 1.8, eY + 0.9);
   for (let i = 0; i < nFront - 1; i++) {                               // awnings between columns
     const z0 = -side + (side * 2) * (i / (nFront - 1)), z1 = -side + (side * 2) * ((i + 1) / (nFront - 1));
-    P.box(accent, 3.0, 0.4, (z1 - z0) * 0.72, front + 1.4, eY - 1.7, (z0 + z1) / 2);
+    P.box(accent, 3.6, 0.9, (z1 - z0) * 0.72, front + 1.5, pod + colH * 0.42, (z0 + z1) / 2);
   }
   P.box(roof, rearW * 2 + 1, 1.1, a * 2.1, -a + rearW, pod + hh + 0.55, 0);
   const dW = Math.min(7, a * 0.7), dH = Math.min(12, hh * 0.5);

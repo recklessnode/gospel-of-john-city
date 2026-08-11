@@ -89,10 +89,10 @@ export function buildCity(scene, plan, themeName) {
   /* ---------- materials (shared; theme swap mutates their colors) ---------- */
   const M = {
     ground: new THREE.MeshLambertMaterial({ color: pal.ground, side: THREE.DoubleSide }),
-    sea: new THREE.MeshLambertMaterial({ color: pal.sea, side: THREE.DoubleSide }),
+    sea: new THREE.MeshLambertMaterial({ color: pal.sea, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
     district: new THREE.MeshBasicMaterial({ color: pal.districtHex, transparent: true, opacity: pal.districtOpacity, side: THREE.DoubleSide, depthWrite: false }),
-    road: new THREE.MeshLambertMaterial({ color: pal.road, side: THREE.DoubleSide }),
-    quay: new THREE.MeshLambertMaterial({ color: pal.quay, side: THREE.DoubleSide }),
+    road: new THREE.MeshLambertMaterial({ color: pal.road, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),
+    quay: new THREE.MeshLambertMaterial({ color: pal.quay, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     roadEdge: new THREE.LineBasicMaterial({ color: pal.roadEdge }),
     seam: new THREE.LineBasicMaterial({ color: pal.roadSeam, transparent: true, opacity: pal.seamOpacity }),
     gold: new THREE.MeshStandardMaterial({ color: pal.gold, metalness: 0.65, roughness: 0.38, emissive: pal.goldDark, emissiveIntensity: 0.12 }),
@@ -202,9 +202,15 @@ export function buildCity(scene, plan, themeName) {
   /* ---------- the wall: crenellated circuit with towers ---------- */
   const wallGroup = buildWall(WALL_SEGS, kitMats, { height: WALL_H, thickness: WALL_T, centre: [CX, CY] });
   root.add(wallGroup);
+  const occluders = [];
+  wallGroup.traverse(o => { if (o.isMesh) occluders.push(o); });
 
   /* ---------- gates: flanking towers and an arch you walk under ---------- */
-  GATES.forEach(g => root.add(buildGate(g, kitMats, { gap: GATE_GAP, height: WALL_H })));
+  GATES.forEach(g => {
+    const gg = buildGate(g, kitMats, { gap: GATE_GAP, height: WALL_H });
+    root.add(gg);
+    gg.traverse(o => { if (o.isMesh) occluders.push(o); });
+  });
 
   /* ---------- the buildings ---------- */
   const buildings = [];
@@ -212,12 +218,17 @@ export function buildCity(scene, plan, themeName) {
   function addBuilding(h) {
     const { group, kit } = buildBlock(h, kitMats);
     root.add(group);
-    group.traverse(o => { if (o.isMesh) pickables.push(o); });
+    group.traverse(o => { if (o.isMesh) { pickables.push(o); occluders.push(o); } });
     if (h.landmark || h.center) {          // landmarks keep their gold crown
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(h.r * 0.82, 0.5, 6, 44), M.gold);
-      ring.rotation.x = Math.PI / 2;
-      ring.position.set(h.x, h.h + 1.4, h.y);
-      root.add(ring);
+      const b = h.r * 0.78 + 0.5, frame = new THREE.Group();   // a gold cornice on the parapet
+      for (const [w, d, x, z] of [[b * 2, 0.7, 0, b], [b * 2, 0.7, 0, -b], [0.7, b * 2, b, 0], [0.7, b * 2, -b, 0]]) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(w, 0.9, d), M.gold);
+        bar.position.set(x, 0, z);
+        frame.add(bar);
+      }
+      frame.position.set(h.x, h.h + 0.5, h.y);
+      frame.rotation.y = -h.doorAng;
+      root.add(frame);
     }
     buildings.push({ hood: h, group, kit });
   }
@@ -276,6 +287,6 @@ export function buildCity(scene, plan, themeName) {
     selRing.scale.set(h.r + 1.6, h.r + 1.6, 1.6);
   }
 
-  return { root, buildings, pickables, obeliskGroup, themeRoads, washes,
+  return { root, buildings, pickables, occluders, obeliskGroup, themeRoads, washes,
     applyTheme, setSelected, sun, hemi };
 }

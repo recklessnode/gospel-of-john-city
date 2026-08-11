@@ -44,9 +44,11 @@
     text-shadow: 0 0 3px var(--surface-1), 0 0 3px var(--surface-1), 0 0 5px var(--surface-1); }
   #labels .lbl.district { font-size: 15px; letter-spacing: .06em; }
   #labels .lbl.ward { font-size: 11.5px; }
-  #labels .lbl.gate { font-size: 10.5px; letter-spacing: .05em; }
+  #labels .lbl.gate, #labels .lbl.sea { font-size: 10.5px; letter-spacing: .05em;
+    background: color-mix(in srgb, var(--panel) 82%, transparent); border: 1px solid var(--border);
+    border-radius: 3px; padding: 1px 5px; text-shadow: none; }
   #labels .lbl.iam { font-size: 9.5px; color: var(--gold); }
-  #labels .lbl.sea { font-size: 11px; color: var(--ink-2); opacity: .8; }
+  #labels .lbl.sea { color: var(--ink-2); }
   #labels .sign { transform: translate(-50%, -100%); font-size: 11px; color: var(--ink-1);
     background: var(--panel); border: 1px solid var(--border); border-radius: 3px;
     padding: 2px 6px; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
@@ -94,10 +96,10 @@
   #walkbar .verse { font-size: 12px; color: var(--ink-2); min-width: 170px; text-align: left; }
   #walkbar .verse b { display: block; font-size: 13px; color: var(--ink-1); }
   #walkbar button { border: 1px solid var(--border); background: var(--page); color: var(--ink-1); border-radius: 8px; font: inherit; padding: 5px 11px; cursor: pointer; }
-  #legend3d { position: absolute; top: 12px; left: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; box-shadow: var(--shadow); font-size: 12px; color: var(--ink-2); max-width: 215px; }
+  #legend3d { position: absolute; top: 12px; left: 12px; z-index: 25; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; box-shadow: var(--shadow); font-size: 12px; color: var(--ink-2); max-width: 215px; }
   #legend3d .grp-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 3px; }
   #legend3d label { display: flex; align-items: center; gap: 7px; }
-  #hint3d { position: absolute; bottom: 14px; right: 16px; font-size: 11px; color: var(--muted); pointer-events: none; }
+  #hint3d { position: absolute; bottom: 14px; right: 16px; z-index: 25; font-size: 11px; color: var(--muted); pointer-events: none; }
   @media (max-width: 900px) { #hint3d, #legend3d { display: none; } }
 </style>
 </head>

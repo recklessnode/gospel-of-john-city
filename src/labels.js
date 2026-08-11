@@ -13,8 +13,10 @@ export function createLabels(container) {
 
   /* items: {text, cls, pos:[x,y,z], maxDepth, collide} — already in draw order
      (nearest first for signs, so earlier entries win overlap contests). */
-  function update(items, camera, W, H) {
-    const rects = [];
+  function update(items, camera, W, H, reserved = []) {
+    // the legend and walk bar own their screen space: labels are culled out of
+    // them rather than painted over them
+    const rects = reserved.slice();
     let n = 0;
     for (const it of items) {
       v.set(it.pos[0], it.pos[1], it.pos[2]);
