@@ -67,6 +67,16 @@ artifact previews + offline use).
    spreadsheet rows; manual nodes use `m<ref>`.
 4. **The pericope 7:53–8:11** ("Mercy Annex") stays outside the city wall — it's a
    later insertion and that placement is a deliberate scholarly statement.
+5. **Nothing in the city is invented.** Every building, landmark and piece of
+   civic furniture must be grounded in the text or in PaulDz's structural work —
+   a block is a pericope, a stela is an "I AM" saying, the wall and gates are
+   where the plan puts them. Confirmed by Ronald 2026-08-10, when a plaza he had
+   already approved was dropped rather than built: it had been proposed to
+   justify a hairpin in the road, and once the hairpin was fixed at its cause the
+   plaza would have been scenery with nothing behind it. Decorative geometry that
+   *serves* real content is fine (paving, kerbs, awnings, merlons); a named place
+   that isn't in John is not. When a kit needs something to fill space, scale or
+   repeat what is already there rather than inventing a new landmark.
 
 ## Conventions
 

@@ -382,3 +382,17 @@ All three renderers stay in lockstep — parity re-verified after every step, an
 earned its keep: it caught the drift the moment plan.js was patched and app3d.js was
 not (23 wall segments vs 21). The 2D map's layout shifts slightly as a consequence of
 the Way changing; it renders clean, and the spiral reads better than before.
+
+**Ronald confirmed the principle**, so it is now invariant 5 in CLAUDE.md rather
+than a one-off call: *nothing in the city is invented*. Every building, landmark
+and piece of civic furniture has to be grounded in the text or in PaulDz's
+structural work — a block is a pericope, a stela is an "I AM" saying. Decorative
+geometry that serves real content is fine (paving, kerbs, awnings, merlons); a
+named place that is not in John is not. This has teeth for M2b: the harbour is
+currently a bare quay and the temptation is to furnish it, but boats and a
+charcoal fire are in John 21 and a market stall is not.
+
+**Commits:**
+- `96ce9a3` — M2a: building kits, crenellated wall, arched gates
+- `ecc9c05` — M2a review fixes (labels, doorways, tone mapping, night)
+- `255d4bb` — road entry straightened, held to the ring, gates squared to the road
