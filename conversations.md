@@ -326,3 +326,8 @@ boats — which is the payoff of the whole walk and is still a bare ramp; and th
 reviewer's note that `resurrection #008300` and `sign #1baf7a` are hard to tell
 apart. That palette is shared with the 2D map and validated, so it is Ronald's and
 PaulDz's call, not a unilateral fix.
+
+**Commits:**
+- `47be0b4`..`dd77e12` — carried in from session 2
+- `96ce9a3` — M2a: building kits, crenellated wall, arched gates
+- `ecc9c05` — M2a review fixes (labels, doorways, tone mapping, night)
