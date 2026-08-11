@@ -8,9 +8,9 @@
 
 import * as THREE from "three";
 import { PAL, SUN } from "./palette.js";
+import { makeKitMaterials, buildBlock, buildWall, buildGate } from "./kits.js";
 
 const WALL_H = 16, WALL_T = 3.2;
-const TOWER_H = 30, TOWER_W = 13;
 
 /* --- flat polygon (plan points) laid on the ground at height y --- */
 function flatMesh(points, y, material) {
@@ -38,38 +38,6 @@ function ribbonMesh(left, right, y, material) {
   geo.setIndex(idx);
   geo.computeVertexNormals();
   return new THREE.Mesh(geo, material);
-}
-
-/* --- an arched doorway hugging the wall of a round building --- */
-function doorGeometry(r, dW, dH) {
-  const dA = dW / r / 2, rise = dW * 0.25, rr = r + 0.09, N = 14;
-  const pos = [], idx = [];
-  for (let i = 0; i <= N; i++) {
-    const f = i / N, phi = -dA + 2 * dA * f;
-    const top = dH + rise * Math.sqrt(Math.max(0, 1 - (2 * f - 1) ** 2));
-    pos.push(rr * Math.cos(phi), 0, rr * Math.sin(phi));
-    pos.push(rr * Math.cos(phi), top, rr * Math.sin(phi));
-    if (i < N) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  geo.setIndex(idx);
-  geo.computeVertexNormals();
-  return geo;
-}
-
-/* --- outline of that doorway, for the landmarks' gold trim --- */
-function doorOutline(r, dW, dH) {
-  const dA = dW / r / 2, rise = dW * 0.25, rr = r + 0.14, N = 14;
-  const pts = [];
-  pts.push(new THREE.Vector3(rr * Math.cos(-dA), 0, rr * Math.sin(-dA)));
-  for (let i = 0; i <= N; i++) {
-    const f = i / N, phi = -dA + 2 * dA * f;
-    const top = dH + rise * Math.sqrt(Math.max(0, 1 - (2 * f - 1) ** 2));
-    pts.push(new THREE.Vector3(rr * Math.cos(phi), top, rr * Math.sin(phi)));
-  }
-  pts.push(new THREE.Vector3(rr * Math.cos(dA), 0, rr * Math.sin(dA)));
-  return new THREE.BufferGeometry().setFromPoints(pts);
 }
 
 function dotTexture() {
@@ -127,15 +95,10 @@ export function buildCity(scene, plan, themeName) {
     quay: new THREE.MeshLambertMaterial({ color: pal.quay, side: THREE.DoubleSide }),
     roadEdge: new THREE.LineBasicMaterial({ color: pal.roadEdge }),
     seam: new THREE.LineBasicMaterial({ color: pal.roadSeam, transparent: true, opacity: pal.seamOpacity }),
-    wall: new THREE.MeshLambertMaterial({ color: pal.wall }),
-    wallTop: new THREE.MeshLambertMaterial({ color: pal.wallTop }),
-    door: new THREE.MeshLambertMaterial({ color: 0x000000, transparent: true, opacity: 0.55 }),
     gold: new THREE.MeshStandardMaterial({ color: pal.gold, metalness: 0.65, roughness: 0.38, emissive: pal.goldDark, emissiveIntensity: 0.12 }),
-    goldLine: new THREE.LineBasicMaterial({ color: pal.gold }),
-    themes: {},
-    annex: new THREE.MeshLambertMaterial({ color: pal.themes.controversy, transparent: true, opacity: 0.85 }),
   };
-  for (const k in pal.themes) M.themes[k] = new THREE.MeshLambertMaterial({ color: pal.themes[k] });
+  const kit = makeKitMaterials(themeName);
+  const kitMats = kit.mats;
 
   /* ---------- ground + sea ---------- */
   const groundPts = [];
@@ -236,85 +199,30 @@ export function buildCity(scene, plan, themeName) {
     root.add(p);
   }
 
-  /* ---------- the wall ---------- */
-  const wallGroup = new THREE.Group();
-  for (const [a, b] of WALL_SEGS) {
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const L = Math.hypot(dx, dy);
-    const seg = new THREE.Mesh(new THREE.BoxGeometry(L, WALL_H, WALL_T), M.wall);
-    seg.position.set((a[0] + b[0]) / 2, WALL_H / 2, (a[1] + b[1]) / 2);
-    seg.rotation.y = -Math.atan2(dy, dx);
-    seg.castShadow = true; seg.receiveShadow = true;
-    wallGroup.add(seg);
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(L, 1.1, WALL_T + 0.9), M.wallTop);
-    ridge.position.set(seg.position.x, WALL_H + 0.5, seg.position.z);
-    ridge.rotation.y = seg.rotation.y;
-    ridge.castShadow = true;
-    wallGroup.add(ridge);
-  }
+  /* ---------- the wall: crenellated circuit with towers ---------- */
+  const wallGroup = buildWall(WALL_SEGS, kitMats, { height: WALL_H, thickness: WALL_T, centre: [CX, CY] });
   root.add(wallGroup);
 
-  /* ---------- gates: two towers and a lintel you walk under ---------- */
-  GATES.forEach(g => {
-    const rot = -Math.atan2(g.uy, g.ux);
-    for (const s of [-1, 1]) {
-      const t = new THREE.Mesh(new THREE.BoxGeometry(TOWER_W, TOWER_H, TOWER_W), M.wall);
-      t.position.set(g.x + g.ux * GATE_GAP * s, TOWER_H / 2, g.y + g.uy * GATE_GAP * s);
-      t.rotation.y = rot;
-      t.castShadow = true; t.receiveShadow = true;
-      root.add(t);
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(TOWER_W + 1.6, 1.4, TOWER_W + 1.6), M.wallTop);
-      cap.position.set(t.position.x, TOWER_H + 0.7, t.position.z);
-      cap.rotation.y = rot;
-      cap.castShadow = true;
-      root.add(cap);
-    }
-    const span = 2 * (GATE_GAP - 4) + TOWER_W;
-    const lintel = new THREE.Mesh(new THREE.BoxGeometry(span, 6, 6), M.wall);
-    lintel.position.set(g.x, 24, g.y);
-    lintel.rotation.y = rot;
-    lintel.castShadow = true;
-    root.add(lintel);
-    const lcap = new THREE.Mesh(new THREE.BoxGeometry(span, 1.2, 7), M.wallTop);
-    lcap.position.set(g.x, 27.6, g.y);
-    lcap.rotation.y = rot;
-    lcap.castShadow = true;
-    root.add(lcap);
-  });
+  /* ---------- gates: flanking towers and an arch you walk under ---------- */
+  GATES.forEach(g => root.add(buildGate(g, kitMats, { gap: GATE_GAP, height: WALL_H })));
 
   /* ---------- the buildings ---------- */
   const buildings = [];
   const pickables = [];
-  function addBuilding(h, mat) {
-    const grp = new THREE.Group();
-    grp.position.set(h.x, 0, h.y);
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(h.r, h.r, h.h, 26), mat);
-    body.position.y = h.h / 2;
-    body.castShadow = true; body.receiveShadow = true;
-    body.userData.hood = h;
-    grp.add(body);
-    pickables.push(body);
-
-    const dW = Math.min(6.5, h.r * 0.75), dH = Math.min(11, h.h * 0.7);
-    const door = new THREE.Mesh(doorGeometry(h.r, dW, dH), M.door);
-    door.rotation.y = -h.doorAng;
-    grp.add(door);
-
-    const landmark = !!h.landmark || !!h.center;
-    if (landmark) {
-      const trim = new THREE.Line(doorOutline(h.r, dW, dH), M.goldLine);
-      trim.rotation.y = -h.doorAng;
-      grp.add(trim);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(h.r * 0.94, 0.42, 6, 44), M.gold);
+  function addBuilding(h) {
+    const { group, kit } = buildBlock(h, kitMats);
+    root.add(group);
+    group.traverse(o => { if (o.isMesh) pickables.push(o); });
+    if (h.landmark || h.center) {          // landmarks keep their gold crown
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(h.r * 0.82, 0.5, 6, 44), M.gold);
       ring.rotation.x = Math.PI / 2;
-      ring.position.y = h.h + 0.25;
-      grp.add(ring);
+      ring.position.set(h.x, h.h + 1.4, h.y);
+      root.add(ring);
     }
-    root.add(grp);
-    buildings.push({ hood: h, group: grp, body, mat });
+    buildings.push({ hood: h, group, kit });
   }
-  HOODS.forEach(h => addBuilding(h, M.themes[h.theme] || M.themes.discourse));
-  addBuilding(AX, M.annex);
+  HOODS.forEach(addBuilding);
+  addBuilding(AX);
 
   /* selection ring — one object, moved to whatever is selected */
   const selRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 6, 48), M.gold);
@@ -354,15 +262,10 @@ export function buildCity(scene, plan, themeName) {
     M.quay.color.set(pal.quay);
     M.roadEdge.color.set(pal.roadEdge);
     M.seam.color.set(pal.roadSeam); M.seam.opacity = pal.seamOpacity;
-    M.wall.color.set(pal.wall);
-    M.wallTop.color.set(pal.wallTop);
     M.gold.color.set(pal.gold); M.gold.emissive.set(pal.goldDark);
-    M.goldLine.color.set(pal.gold);
-    M.annex.color.set(pal.themes.controversy);
-    M.door.opacity = name === "dark" ? 0.7 : 0.55;
-    for (const k in pal.themes) M.themes[k].color.set(pal.themes[k]);
     const tc = { life: pal.themes.sign, light: pal.themes.witness };
     for (const key in themeRoads) themeRoads[key].material.color.set(tc[key]);
+    kit.applyTheme(name);
   }
   applyTheme(themeName);
 
@@ -374,5 +277,5 @@ export function buildCity(scene, plan, themeName) {
   }
 
   return { root, buildings, pickables, obeliskGroup, themeRoads, washes,
-    applyTheme, setSelected, sun, hemi, materials: M };
+    applyTheme, setSelected, sun, hemi };
 }

@@ -33,6 +33,7 @@ scripts/build.py                  injects JSON + app code at /*__DATA__*/ and /*
 
 src/plan.js      the city plan — pure math, no DOM, no Three.js
 src/scene.js     the plan built as Three.js geometry
+src/kits.js      procedural building kits, the crenellated wall and the gates
 src/palette.js   day/night palettes + the sun direction
 src/labels.js    billboarded DOM labels with nearest-first collision culling
 src/main.js      cameras, picking, panel, walk UI, day/night, main loop
@@ -103,4 +104,25 @@ door signs, Enter-to-explore, day/night, and the detail panel.
 **M1 is done** — `city3d-three.html` reproduces the canvas view on WebGL with real
 shadows and raycast picking. The canvas renderer (`scripts/app3d.js` →
 `city3d.html`) stays as the classic/fallback view until Ronald signs off; the two
-pages cross-link in the header. **M2 (building kits) is next.**
+pages cross-link in the header.
+
+**M2a is done** — four kits (house / hall / forum / temple) chosen by size tier and
+ward, plus a crenellated wall with towers and arched gates. Rules that matter when
+adding kits:
+
+- A kit is built in a local frame with **+X facing the road**; the group is rotated
+  by `-h.doorAng` and placed at `(h.x, h.y)`. Put the door on +X.
+- A kit must **fit inside the hood's circle of radius `h.r`** — that circle is the
+  only space the layout guarantees is free. Half-side `a = h.r * 0.78`.
+- **Height must stay `h.h`.** It encodes the Greek word count, which the page
+  subtitle promises; a kit that overshoots breaks the skyline's meaning.
+- Colour keys are `body:<theme>` (stone 60% toward the theme hue), `roof:<theme>`
+  (72% — from orbit you see roofs, so the coding has to live there) and
+  `accent:<theme>` (pure theme colour, for awnings and banners). Anything new must
+  be registered in **both** the material set and `applyTheme`, or it will be stuck
+  in day colours at night.
+- Geometry accumulates in `Parts` and is merged per material, so a 40-piece temple
+  costs four draw calls. Don't add loose meshes per block.
+
+**M2b is next:** stepped pools, gardens + tombs, the Praetorium fortress, harbour
+quay + boats, and I AM stelae replacing the obelisks.

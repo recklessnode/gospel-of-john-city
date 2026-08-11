@@ -213,3 +213,62 @@ resumed it. Both fixed, both now covered by `scripts/smoke.mjs`:
   pause/resume toggle no matter what has focus. Fixed in both 3D views.
 
 - `c83d146` — smoke.mjs accepts a live URL
+
+---
+
+## 2026-08-10 — Session 3: PaulDz's chiasm request + Phase 2 M2a (building kits)
+
+**Participants:** Ronald + Claude (Opus 5, Claude Code)
+
+**Crash recovery:** the machine hard-rebooted mid-session. Nothing was lost — the
+working tree was clean and `dd77e12` was already on origin, so M2a started from a
+known-good state. (Worth remembering: `gh`'s *active account* had flipped to
+`praeluceo` after the reboot, which fails with "Resource not accessible by personal
+access token" on anything write-shaped. `gh auth switch --user recklessnode` fixes
+it — this repo belongs to recklessnode.)
+
+### PaulDz's feedback → issue #1
+
+PaulDz asked for the chiasms *inside* a block to be visible — John 4:1–42 is a
+single mega-complex building today, but it contains six chiasms (Water, Husbands,
+Worship, The Christ?, Harvest, Outcome) — and for the **centre of each chiasm to be
+highlighted**. He also liked the Book of Signs Metropolis and the city as a whole.
+
+Filed as **issue #1** with his structure recorded verbatim, plus the survey of where
+we stand: chiasms are modelled only at *ward* level today (a hood carries a `chiasm`
+tag and a `center` flag, and the panel draws the ward's ladder), there is no
+intra-block layer at all, and `n18` (Samaritan Well Forum) carries no `details`.
+The issue proposes a `chiasms` array on a hood, deriving the centre rather than
+hand-tagging it, and rendering in three places cheapest-first: detail-panel ladders,
+then 2D interior courts, then — the natural home — a 3D forum with one interior
+court per theme, each with a marked centre. Four questions are logged for PaulDz
+rather than silently normalised: Theme 3's `Cʺ` after `B′` breaks the mirror,
+Theme 4 ends `A` not `A′`, Theme 5 looks like two chiasms in one theme, and it is
+unclear whether 4:1–6 should show as an unchiasmed forecourt.
+
+### M2a — the kits
+
+`src/kits.js`: four kits chosen by size tier and ward — **courtyard house** (<150
+gw: flat roof, parapet, exterior stair, string courses, window slits), **civic
+hall** (150–249: podium, four-column portico, pediment, hanging banners), **agora
+forum** (≥250: colonnades round an open court, rear hall, awnings between the
+columns), **Herodian temple platform** (Temple Citadel ward, ≥250: stepped ashlar
+podium, grand stair, peristyle, gold façade band, sanctuary above). Plus a
+**crenellated wall** with merlons, towers at ~105-unit intervals and arrow slits,
+and **real arched gates** — thirteen voussoirs springing at head height, so you walk
+under an arch instead of a flat lintel.
+
+Three constraints shaped every kit: the footprint must stay inside the hood's circle
+of radius `h.r` (the only space the layout guarantees is free), the height must stay
+`h.h` (it encodes the Greek word count, which the page subtitle promises), and the
+door goes on local +X, since the group is rotated by `-doorAng` to face the road.
+
+**Colour was the thing that nearly broke.** First pass tinted walls 42% toward the
+theme hue and the city went muddy — from orbit the seven-theme legend stopped
+reading, which would have made the map lie. Fix: walls 60% toward the theme, and
+**roofs 72%** — from above you are mostly looking at roofs, so that is where the
+coding has to live — with awnings and banners left at the pure theme colour for
+street level. Colour now reads at both altitudes.
+
+Geometry accumulates in a `Parts` helper and is merged per material, so a forty-piece
+temple costs four draw calls rather than forty.
