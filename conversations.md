@@ -331,3 +331,54 @@ PaulDz's call, not a unilateral fix.
 - `47be0b4`..`dd77e12` — carried in from session 2
 - `96ce9a3` — M2a: building kits, crenellated wall, arched gates
 - `ecc9c05` — M2a review fixes (labels, doorways, tone mapping, night)
+
+### The Prologue hairpin and the gate alignment (Ronald's feedback)
+
+Ronald asked two things about the road: is the extreme U-turn at The Cosmic Poem
+intentional or an artifact, does side-of-road mean anything — and separately, that
+the road should straighten to meet each gate face-on and only resume meandering
+once through.
+
+**Side of the road means nothing.** `r = BASE_R ± (42 + rnd·26)` alternates purely by
+build index, and build index is narrative order, so it flips every pericope.
+Verified: hoods #0/2/4/6 inside, #1/3/5/7 outside. It is an anti-collision zigzag,
+not a statement. (Which makes it an unused channel — it *could* carry meaning
+later, e.g. chiasm A-side vs A′-side.)
+
+**The hairpin was an artifact, with a specific cause.** The Way's control points are
+the ward centroids. Multi-hood wards average the inside/outside zigzag and land near
+the ring (r ≈ 300–325); The Cosmic Poem is the only single-hood ward inside the wall,
+so its "centroid" was just Hymn to the Word's position — which had drawn the inside
+slot, at r = 269. The road dived 193 units from the gate to reach it and the spline
+hairpinned back out at 111°. Fixed by holding non-outside ward control points to a
+band around the ring (bearing untouched — only the radius is tamed). Worst bend is
+now 81°, and it is at t≈0.89 where the Way genuinely leaves the ring for the harbour.
+
+**The gate skew was not the road's fault.** Measured first: CITY GATE 43.7°,
+WATER GATE 13.9°. Making the entry radial *did not fix it* — the skew got worse
+(48°) because the gate is wherever the Way crosses the **wall hull**, and the hull is
+a 21-vertex polygon whose edge there sits ~45° off the road's normal. No amount of
+road shaping fixes a wall that is not perpendicular to it. So the gate is now built
+**square to the road** — which is what real gatehouses do — and the wall is cut wider
+along its own edge (24 units at the City Gate, 21 at the Water Gate) to clear the
+skewed opening. You now walk straight through the arch at both gates.
+
+The entry also got the shape Ronald described: a short curve outside the wall, then
+three control points sharing a bearing so the stretch spanning the wall is straight.
+
+**One regression caught and fixed:** the approach outside the wall lengthened the
+Way, and the walk maps verse position linearly along arc length — so you reached
+John 1:27 *before* entering the city. The plan now publishes `gateT` (where the Way
+crosses the wall, as a fraction of arc length) and both 3D views anchor verse 1 at
+the gate; the approach reads "Approaching the West Gate". This is what the code
+comment always claimed ("gate = verse 1") but the implementation did not do.
+
+**The plaza was not built.** Ronald approved marking the switchback with a plaza so
+the loop had a reason — but straightening removed the loop, and building civic
+furniture to justify a bend that no longer exists would be inventing content. Left
+undone deliberately; say the word if a plaza is wanted for its own sake.
+
+All three renderers stay in lockstep — parity re-verified after every step, and it
+earned its keep: it caught the drift the moment plan.js was patched and app3d.js was
+not (23 wall segments vs 21). The 2D map's layout shifts slightly as a consequence of
+the Way changing; it renders clean, and the spiral reads better than before.

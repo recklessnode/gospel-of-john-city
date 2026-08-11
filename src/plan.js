@@ -117,9 +117,31 @@ export function buildPlan(JOHN) {
 
   /* the Way: catmull-rom through the ward centers, gate → harbor */
   const ordered = WARDS.slice().sort((a, b) => a.mid - b.mid);
-  const gatePt = wayPoint(-0.008, 462);
+  /* The entrance runs in on a radial line. The old tail swept tangentially and
+     met the wall at a 44 degree skew — you entered the city sideways, and the
+     spline's recovery from it was the hairpin at the Prologue. The last three
+     control points share a bearing, so the stretch spanning the wall (r ~ 460)
+     is straight and the gate is taken face-on; the two before it curve the
+     approach outside the wall. */
+  const T_IN = -0.008;
+  const gatePt = wayPoint(T_IN, 462);
   const portPt = wayPoint(1.028, 545);
-  const wayPts = [wayPoint(-0.02, 470), gatePt].concat(ordered.map(w => [w.cx, w.cy]), [portPt]);
+  /* Ward centroids are the Way's control points, but a ward's centroid is only
+     as steady as its membership: multi-hood wards average the inside/outside
+     zigzag and land near the ring, while The Cosmic Poem — the one single-hood
+     ward inside the wall — inherited that hood's inside offset and sat 46 units
+     off it. The road dived to reach it and hairpinned back out. Control points
+     are now held to a band around the ring; the bearing (the narrative order) is
+     untouched, only the radius is tamed. */
+  const ringPt = w => {
+    if (w.district.outside) return [w.cx, w.cy];          // the harbour is meant to be out there
+    const dx = w.cx - CX, dy = w.cy - CY, r = Math.hypot(dx, dy) || 1;
+    const clamped = Math.max(BASE_R - 25, Math.min(BASE_R + 25, r));
+    return [CX + dx / r * clamped, CY + dy / r * clamped];
+  };
+  const wayPts = [wayPoint(-0.036, 575),
+                  wayPoint(T_IN, 500), gatePt, wayPoint(T_IN, 415)]
+    .concat(ordered.map(ringPt), [portPt]);
   const WAY = catmullSample(wayPts, 24);           // ~350 points
 
   /* arc-length table: gate = verse 1, port = verse 879 */
@@ -192,7 +214,22 @@ export function buildPlan(JOHN) {
       }))));
 
   /* wall segments, gapped where the Way crosses */
-  const WALL_SEGS = [], GATES = [];
+    /* A gate is a hole in the wall, but you walk through it along the *road*, and
+     the wall hull is a coarse polygon whose edge here sits ~45 degrees off the
+     road's normal. Shaping the road cannot fix that — so the gate is built
+     square to the road (real gatehouses are), and the wall is cut wide enough
+     along its own edge to clear the skewed opening. */
+  const wayDirAt = q => {
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < WAY.length; i++) {
+      const d = (q[0] - WAY[i][0]) ** 2 + (q[1] - WAY[i][1]) ** 2;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    const a = WAY[Math.max(0, bi - 3)], b = WAY[Math.min(WAY.length - 1, bi + 3)];
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+    return [dx / L, dy / L];
+  };
+const WALL_SEGS = [], GATES = [];
   for (let i = 0; i < wallHull.length; i++) {
     const a = wallHull[i], b = wallHull[(i + 1) % wallHull.length];
     let q = null;
@@ -203,10 +240,13 @@ export function buildPlan(JOHN) {
     if (!q) { WALL_SEGS.push([a, b]); continue; }
     const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
     const ux = dx / L, uy = dy / L;
+    const [rx, ry] = wayDirAt(q);
+    const cross = Math.abs(ux * ry - uy * rx);                 // how obliquely the road meets the wall
+    const gap = Math.max(16, Math.min(40, ROAD_HALF / Math.max(0.3, cross) + 10));
     const t = (q[0] - a[0]) * ux + (q[1] - a[1]) * uy;
-    if (t - GATE_GAP > 4) WALL_SEGS.push([a, [a[0] + ux * (t - GATE_GAP), a[1] + uy * (t - GATE_GAP)]]);
-    if (L - (t + GATE_GAP) > 4) WALL_SEGS.push([[a[0] + ux * (t + GATE_GAP), a[1] + uy * (t + GATE_GAP)], b]);
-    GATES.push({ x: q[0], y: q[1], ux, uy });
+    if (t - gap > 4) WALL_SEGS.push([a, [a[0] + ux * (t - gap), a[1] + uy * (t - gap)]]);
+    if (L - (t + gap) > 4) WALL_SEGS.push([[a[0] + ux * (t + gap), a[1] + uy * (t + gap)], b]);
+    GATES.push({ x: q[0], y: q[1], ux, uy, rx, ry, gap });
   }
   { // order gates along the way (entrance first)
     const arc = g => {
@@ -288,8 +328,21 @@ export function buildPlan(JOHN) {
     return out;
   }));
 
+  /* Where the Way crosses the wall, as a fraction of its arc length. The walk
+     now spends its first stretch approaching from outside, and John 1:1 belongs
+     at the gate, not at the start of the approach road. */
+  let gateT = 0;
+  if (GATES.length) {
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < WAY.length; i++) {
+      const d = (GATES[0].x - WAY[i][0]) ** 2 + (GATES[0].y - WAY[i][1]) ** 2;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    gateT = wayLen[bi] / wayTotal;
+  }
+
   return {
-    JOHN, TOTAL, HOODS, WARDS, DISTRICTS, byId, MAXG, AX,
+    JOHN, TOTAL, HOODS, WARDS, DISTRICTS, byId, MAXG, AX, gateT,
     WAY, wayAt, wayTotal, gatePt, portPt, wayPoint, hullOf,
     WALL_SEGS, GATES, wallHull, themeRoadPts, OBELISKS, SEA_POLY, QUAY_POLY, QUAY_W,
     CX, CY, ROAD_HALF, GATE_GAP,

@@ -99,9 +99,22 @@ function catmullSample(pts, per) {
   return out;
 }
 const ordered = WARDS.slice().sort((a, b) => a.mid - b.mid);
-const gatePt = wayPoint(-0.008, 462);
+/* The entrance runs in on a radial line so the wall stretch is straight, and
+   ward control points are held to a band around the ring — the single-hood
+   Cosmic Poem ward used to sit 46 units inside it and hairpinned the road.
+   Identical to src/plan.js; verify_parity.mjs holds them together. */
+const T_IN = -0.008;
+const gatePt = wayPoint(T_IN, 462);
 const portPt = wayPoint(1.028, 545);
-const wayPts = [wayPoint(-0.02, 470), gatePt].concat(ordered.map(w => [w.cx, w.cy]), [portPt]);
+const ringPt = w => {
+  if (w.district.outside) return [w.cx, w.cy];
+  const dx = w.cx - CX, dy = w.cy - CY, r = Math.hypot(dx, dy) || 1;
+  const clamped = Math.max(315 - 25, Math.min(315 + 25, r));
+  return [CX + dx / r * clamped, CY + dy / r * clamped];
+};
+const wayPts = [wayPoint(-0.036, 575),
+                wayPoint(T_IN, 500), gatePt, wayPoint(T_IN, 415)]
+  .concat(ordered.map(ringPt), [portPt]);
 const WAY = catmullSample(wayPts, 24);           // ~350 points
 // verse value along the way: gate = verse 1, port = verse 879 (linear by arc length)
 const wayLen = []; let acc = 0;
@@ -123,6 +136,10 @@ function wayAt(t) { // t in [0,1] by arc length -> {x, y, dirx, diry}
   const L = Math.hypot(dx, dy) || 1;
   return { x, y, dx: dx / L, dy: dy / L };
 }
+
+/* where the Way crosses the wall, as a fraction of arc length — John 1:1 belongs
+   at the gate, not at the start of the approach road (set after GATES is built) */
+let GATE_T = 0;
 
 /* ---------- road clearance: the Way is a hard corridor ----------
    Buildings are pushed off the roadway (frozen from phase-1 ward centroids),
@@ -188,7 +205,22 @@ function segInt(p1, p2, p3, p4) {
   return [p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1])];
 }
 const GATE_GAP = 16;
+/* A gate is a hole in the wall, but you walk through it along the *road*, and
+   the wall hull is a coarse polygon whose edge here sits ~45 degrees off the
+   road's normal. Shaping the road cannot fix that — so the gate is built square
+   to the road (real gatehouses are), and the wall is cut wide enough along its
+   own edge to clear the skewed opening. Identical to src/plan.js. */
 const WALL_SEGS = [], GATES = [];
+const wayDirAt = q => {
+  let bi = 0, bd = Infinity;
+  for (let i = 0; i < WAY.length; i++) {
+    const d = (q[0] - WAY[i][0]) ** 2 + (q[1] - WAY[i][1]) ** 2;
+    if (d < bd) { bd = d; bi = i; }
+  }
+  const a = WAY[Math.max(0, bi - 3)], b = WAY[Math.min(WAY.length - 1, bi + 3)];
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+  return [dx / L, dy / L];
+};
 (function buildWallWithGates() {
   for (let i = 0; i < wallHull.length; i++) {
     const a = wallHull[i], b = wallHull[(i + 1) % wallHull.length];
@@ -200,10 +232,13 @@ const WALL_SEGS = [], GATES = [];
     if (!q) { WALL_SEGS.push([a, b]); continue; }
     const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
     const ux = dx / L, uy = dy / L;
+    const [rx, ry] = wayDirAt(q);
+    const cross = Math.abs(ux * ry - uy * rx);                 // how obliquely the road meets the wall
+    const gap = Math.max(16, Math.min(40, ROAD_HALF / Math.max(0.3, cross) + 10));
     const t = (q[0] - a[0]) * ux + (q[1] - a[1]) * uy;
-    if (t - GATE_GAP > 4) WALL_SEGS.push([a, [a[0] + ux * (t - GATE_GAP), a[1] + uy * (t - GATE_GAP)]]);
-    if (L - (t + GATE_GAP) > 4) WALL_SEGS.push([[a[0] + ux * (t + GATE_GAP), a[1] + uy * (t + GATE_GAP)], b]);
-    GATES.push({ x: q[0], y: q[1], ux, uy });
+    if (t - gap > 4) WALL_SEGS.push([a, [a[0] + ux * (t - gap), a[1] + uy * (t - gap)]]);
+    if (L - (t + gap) > 4) WALL_SEGS.push([[a[0] + ux * (t + gap), a[1] + uy * (t + gap)], b]);
+    GATES.push({ x: q[0], y: q[1], ux, uy, rx, ry, gap });
   }
   // order gates along the way (entrance first)
   const arc = g => {
@@ -215,6 +250,14 @@ const WALL_SEGS = [], GATES = [];
     return bi;
   };
   GATES.sort((a, b) => arc(a) - arc(b));
+  if (GATES.length) {
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < WAY.length; i++) {
+      const d = (GATES[0].x - WAY[i][0]) ** 2 + (GATES[0].y - WAY[i][1]) ** 2;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    GATE_T = wayLen[bi] / wayTotal;
+  }
 })();
 
 /* ---------- shoreline + quay ----------
@@ -552,20 +595,22 @@ function addPrism(cx, cz, hw, ux, uy, hgt, colorFn, yBase = 0) {
   ctx.fillStyle = colorFn(1.12, fog); ctx.fill();
 }
 function addGate(g, label) {
+  // square to the road, not the wall edge (see the gate note in the plan section)
+  const gux = g.rx != null ? -g.ry : g.ux, guy = g.rx != null ? g.rx : g.uy;
   const depth = Math.hypot(g.x - V.ex, 14 - V.ey, g.y - V.ez);
   R.push({
     depth,
     draw() {
       const wallColor = (lit, fog) => shade(P().wall, lit, fog);
       // two flanking towers just outside the road gap
-      const t1x = g.x - g.ux * GATE_GAP, t1y = g.y - g.uy * GATE_GAP;
-      const t2x = g.x + g.ux * GATE_GAP, t2y = g.y + g.uy * GATE_GAP;
-      addPrism(t1x, t1y, 6.5, g.ux, g.uy, 30, wallColor);
-      addPrism(t2x, t2y, 6.5, g.ux, g.uy, 30, wallColor);
+      const t1x = g.x - gux * GATE_GAP, t1y = g.y - guy * GATE_GAP;
+      const t2x = g.x + gux * GATE_GAP, t2y = g.y + guy * GATE_GAP;
+      addPrism(t1x, t1y, 6.5, gux, guy, 30, wallColor);
+      addPrism(t2x, t2y, 6.5, gux, guy, 30, wallColor);
       // lintel spanning the road, high enough to walk under
-      const px = -g.uy, py = g.ux;
-      const L1 = [g.x - g.ux * (GATE_GAP - 4), g.y - g.uy * (GATE_GAP - 4)];
-      const L2 = [g.x + g.ux * (GATE_GAP - 4), g.y + g.uy * (GATE_GAP - 4)];
+      const px = -guy, py = gux;
+      const L1 = [g.x - gux * (GATE_GAP - 4), g.y - guy * (GATE_GAP - 4)];
+      const L2 = [g.x + gux * (GATE_GAP - 4), g.y + guy * (GATE_GAP - 4)];
       const Y0 = 21, Y1 = 27;
       const quads = [
         // front + back faces (across the road direction)
@@ -968,7 +1013,10 @@ function enterCurrent() {
   if (h) { playing = false; playbtn.textContent = "▶"; openHood(h); }
 }
 enterbtn.addEventListener("click", enterCurrent);
-function verseAt(t) { return Math.max(1, Math.min(TOTAL, Math.round(t * (TOTAL - 1) + 1))); }
+function verseAt(t) {   // the approach outside the wall is pre-1:1
+  const u = GATE_T >= 1 ? t : Math.max(0, (t - GATE_T) / (1 - GATE_T));
+  return Math.max(1, Math.min(TOTAL, Math.round(u * (TOTAL - 1) + 1)));
+}
 function chapterVerseOf(v) {
   let ch = 1;
   for (let c = 1; c <= 21; c++) { if (JOHN.chapterOffsets[c] < v) ch = c; }
@@ -979,7 +1027,7 @@ function syncWalkUI() {
   walkpos.value = Math.round(cam.walkT * 1000);
   const v = verseAt(cam.walkT);
   const h = hoodOfVerse(v);
-  walkinfo.innerHTML = `<b>${h ? h.short : (v < 5 ? "West Gate" : "The Way")}</b>John ${chapterVerseOf(v)}${h ? " · " + h.ward.short : ""}`;
+  walkinfo.innerHTML = `<b>${cam.walkT < GATE_T ? "Approaching the West Gate" : (h ? h.short : "The Way")}</b>John ${chapterVerseOf(v)}${h ? " · " + h.ward.short : ""}`;
 }
 walkpos.addEventListener("input", () => { cam.walkT = walkpos.value / 1000; playing = false; playbtn.textContent = "▶"; syncWalkUI(); needRender = true; });
 function togglePlay() {

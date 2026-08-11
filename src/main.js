@@ -314,7 +314,10 @@ pacectl.addEventListener("input", () => {
   pace = +pacectl.value;
   paceval.textContent = (pace % 1 ? pace.toFixed(2).replace(/0$/, "") : pace) + "×";
 });
-const verseAt = t => Math.max(1, Math.min(TOTAL, Math.round(t * (TOTAL - 1) + 1)));
+const verseAt = t => {   // the approach outside the wall is pre-1:1
+  const u = plan.gateT >= 1 ? t : Math.max(0, (t - plan.gateT) / (1 - plan.gateT));
+  return Math.max(1, Math.min(TOTAL, Math.round(u * (TOTAL - 1) + 1)));
+};
 function chapterVerseOf(v) {
   let ch = 1;
   for (let c = 1; c <= 21; c++) { if (JOHN.chapterOffsets[c] < v) ch = c; }
@@ -324,7 +327,7 @@ const hoodOfVerse = v => HOODS.find(h => h.v0 <= v && v <= h.v1);
 function syncWalkUI() {
   walkpos.value = Math.round(cam.walkT * 1000);
   const v = verseAt(cam.walkT), h = hoodOfVerse(v);
-  walkinfo.innerHTML = `<b>${h ? h.short : (v < 5 ? "West Gate" : "The Way")}</b>John ${chapterVerseOf(v)}${h ? " · " + h.ward.short : ""}`;
+  walkinfo.innerHTML = `<b>${cam.walkT < plan.gateT ? "Approaching the West Gate" : (h ? h.short : "The Way")}</b>John ${chapterVerseOf(v)}${h ? " · " + h.ward.short : ""}`;
 }
 function enterCurrent() {
   const h = hoodOfVerse(verseAt(cam.walkT));

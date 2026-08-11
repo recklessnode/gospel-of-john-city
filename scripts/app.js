@@ -153,9 +153,20 @@ function catmullSample(pts, per) {
 function buildWay() {
   const AX = JOHN.annex;
   const ordered = WARDS.slice().sort((a, b) => a.mid - b.mid);
-  const gate = wayPoint(-0.008, 462);
+  const T_IN = -0.008;
+  const gate = wayPoint(T_IN, 462);
   const port = wayPoint(1.028, 545);
-  WAYPTS = [wayPoint(-0.02, 470), gate].concat(ordered.map(w => [w.cx, w.cy]), [port]);
+  // radial entry + ring-clamped ward control points — identical to app3d.js and
+  // src/plan.js, so the three views stay the same city (verify_parity.mjs)
+  const ringPt = w => {
+    if (w.district.outside) return [w.cx, w.cy];
+    const dx = w.cx - CX, dy = w.cy - CY, r = Math.hypot(dx, dy) || 1;
+    const clamped = Math.max(315 - 25, Math.min(315 + 25, r));
+    return [CX + dx / r * clamped, CY + dy / r * clamped];
+  };
+  WAYPTS = [wayPoint(-0.036, 575),
+            wayPoint(T_IN, 500), gate, wayPoint(T_IN, 415)]
+    .concat(ordered.map(ringPt), [port]);
   WAYPTS.gate = gate; WAYPTS.port = port;
   const WAY = catmullSample(WAYPTS, 24);
   const CLEAR = ROAD_HALF + 4.5;

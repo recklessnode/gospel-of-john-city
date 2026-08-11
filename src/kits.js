@@ -306,6 +306,10 @@ export function buildWall(WALL_SEGS, mats, { height, thickness, centre }) {
 
 /* ---------- gates: flanking towers and a real arch to walk under ---------- */
 export function buildGate(gate, mats, { gap, height }) {
+  // square to the ROAD, not to the wall edge — you walk through a gate, and the
+  // hull edge here can sit ~45 degrees off the road's normal
+  const nx = gate.rx != null ? -gate.ry : gate.ux;
+  const ny = gate.rx != null ? gate.rx : gate.uy;
   const towerW = 13, towerH = height + 14;
   const P = new Parts();
   for (const s of [-1, 1]) {
@@ -331,7 +335,7 @@ export function buildGate(gate, mats, { gap, height }) {
   const row = new Parts();
   row.merlons("wallTop", R * 2 + 2, 2.8, 2.4, depth + 1.2, towerH + 1.2);
   P.merge(row);
-  const M = mat4(gate.x, gate.y, -Math.atan2(gate.uy, gate.ux));
+  const M = mat4(gate.x, gate.y, -Math.atan2(ny, nx));
   for (const list of P.byMat.values()) for (const g of list) g.applyMatrix4(M);
   return P.toGroup(mats);
 }
