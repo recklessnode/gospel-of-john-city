@@ -11,7 +11,7 @@ const page = await ctx.newPage();
 const errors = [];
 page.on("pageerror", e => errors.push(String(e)));
 page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text()); });
-await page.goto(/^https?:/.test(target) ? target : "file://" + resolve(target));
+await page.goto((/^https?:/.test(target) ? target : "file://" + resolve(target)) + "?debug");
 await page.waitForTimeout(1200);
 
 const checks = [];
@@ -77,6 +77,20 @@ await page.click("#themebtn");
 await page.waitForTimeout(300);
 const after = await page.getAttribute("html", "data-theme");
 ok("day/night toggles", before !== after, `${before} → ${after}`);
+// walk free-look must follow the grab cursor: drag right => you turn left
+if (await page.evaluate(() => !!window.__city)) {
+  await page.click('#modeseg button[data-mode="walk"]');
+  await page.waitForTimeout(200);
+  const before = await page.evaluate(() => window.__city.cam.lookYaw);
+  await page.mouse.move(640, 450);
+  await page.mouse.down();
+  for (let i = 1; i <= 6; i++) await page.mouse.move(640 + i * 25, 450);
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const after = await page.evaluate(() => window.__city.cam.lookYaw);
+  ok("walk look follows the grab, not against it", after < before - 0.05, `lookYaw ${before.toFixed(2)} -> ${after.toFixed(2)}`);
+}
+
 await page.click('#modeseg button[data-mode="orbit"]');
 await page.waitForTimeout(300);
 

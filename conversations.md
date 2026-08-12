@@ -464,3 +464,42 @@ record.
 **Open for PaulDz:** the six centreless chiasms, and whether the section-level chiasms
 (IX over 13:1–17:26, X over 18:1–19:42) should be drawn on the map as arcs — that would be
 a new visual claim, so it was deliberately not smuggled in with this feature.
+
+### Walk mode: inverted look, and jutter (Ronald's feedback)
+
+Two reports: the citywalk still had inverted controls, and the motion was juddery.
+
+**Inverted look.** The earlier fix corrected orbit shift-drag pan but not the *walk*
+free-look, which was still FPS-style (drag right → turn right) while the cursor is a grab
+hand and every other drag in the app is grab semantics. Walk look now matches: drag right
+and the street swings right, i.e. you turn left. Both axes, both 3D views.
+`smoke.mjs` now guards the direction (via a `?debug` handle) so it cannot silently flip
+back a third time.
+
+**Jutter — measured rather than guessed, and the first two guesses were wrong.**
+Baseline during playback: 63 ms median, 77 of 106 frames over 33 ms. Idle in walk mode was
+a clean 16.7 ms, so the cost was per-rendered-frame.
+
+- *Guess 1, the label/occlusion work:* turning labels off changed nothing. Wrong.
+- *Guess 2, the shadow map:* the sun never moves and the city never changes shape, but the
+  renderer was re-drawing all 370-odd meshes into a 2048² depth buffer every frame. Freezing
+  it after the first render (`shadowMap.autoUpdate = false`) is correct and worth keeping —
+  63 → 54 ms — but it was not the main cost either.
+- *Actual measurement:* `renderer.render` costs **8 ms** (402 draw calls, 34K triangles).
+  The rest is rasterisation and compositing — which under headless swiftshader is software,
+  so **these numbers do not transfer to Ronald's machine** and any further micro-optimising
+  here would be optimising the test harness.
+
+So the fix is one that self-tunes instead of assuming which resource is scarce: **adaptive
+resolution**. Frame time is smoothed, and pixel ratio steps between 0.75 and the device
+maximum with hysteresis and a 900 ms cooldown so it settles rather than oscillates. On a
+high-DPI laptop that is up to a 7× fill-rate reduction when needed, and it costs nothing on
+a machine that is already fast. Headless: 63 → 42 ms, scaler settling at 0.75.
+
+Also fixed: walk speed was **frame-rate dependent** (`walkT += k` per frame), so on a slow
+frame you moved less and the pace slider meant different things on different machines —
+which reads as jutter even when frame delivery is even. Now delta-timed with a 50 ms clamp
+so a stall cannot teleport you. Applied to both 3D views.
+
+Added `?debug` on the Three.js page, which exposes the renderer, scene and a `quality()`
+readout — so a machine-specific report can be gathered instead of guessed at.

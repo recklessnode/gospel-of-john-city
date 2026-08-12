@@ -70,6 +70,23 @@ function updateCamera() {
   camera.updateMatrixWorld();
 }
 
+/* Adaptive resolution. Walking renders every frame, and what is scarce differs by
+   machine — fill rate on an integrated GPU, rasterisation in software. Rather than
+   guess, watch the frame time and trade pixels for smoothness, with hysteresis and
+   a cooldown so it settles instead of oscillating. */
+const DPR_MAX = Math.min(2, window.devicePixelRatio || 1);
+let dpr = DPR_MAX, frameAvg = 16.7, lastAdapt = 0;
+function adaptQuality(dt, now) {
+  frameAvg += (dt - frameAvg) * 0.1;
+  if (now - lastAdapt < 900) return;
+  if (frameAvg > 26 && dpr > 0.75) { dpr = Math.max(0.75, dpr - 0.25); }
+  else if (frameAvg < 13 && dpr < DPR_MAX) { dpr = Math.min(DPR_MAX, dpr + 0.25); }
+  else return;
+  lastAdapt = now;
+  renderer.setPixelRatio(dpr);
+  resize();
+}
+
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false);
@@ -157,9 +174,16 @@ function reservedBoxes() {
 }
 
 /* ---------- render ---------- */
+let shadowsDrawn = false;
 function render() {
   updateCamera();
   renderer.render(scene, camera);
+  // The sun never moves and the city never changes shape, so the shadow map is
+  // the same every frame — but the renderer re-drew all 370-odd meshes into a
+  // 2048x2048 depth buffer on every one of them. Draw it once and freeze it.
+  // (Depth only: day/night changes the light's colour and intensity, not where
+  // the shadows fall, so the frozen map stays correct.)
+  if (!shadowsDrawn) { renderer.shadowMap.autoUpdate = false; shadowsDrawn = true; }
   labels.update(labelItems(), camera, canvas.clientWidth, canvas.clientHeight, reservedBoxes());
 }
 
@@ -275,8 +299,10 @@ canvas.addEventListener("pointermove", ev => {
       cam.pitch = Math.max(0.10, Math.min(1.55, cam.pitch + dy * 0.004));
     }
   } else {
-    cam.lookYaw = Math.max(-2.7, Math.min(2.7, cam.lookYaw + dx * 0.0045));
-    cam.lookPitch = Math.max(-0.7, Math.min(0.7, cam.lookPitch - dy * 0.0035));
+    // grab semantics, like every other drag in the app (and like the grab cursor
+    // promises): drag right and the street swings right, i.e. you turn left
+    cam.lookYaw = Math.max(-2.7, Math.min(2.7, cam.lookYaw - dx * 0.0045));
+    cam.lookPitch = Math.max(-0.7, Math.min(0.7, cam.lookPitch + dy * 0.0035));
   }
   dragging.x = ev.clientX; dragging.y = ev.clientY;
   needRender = true;
@@ -408,10 +434,18 @@ document.addEventListener("keydown", ev => {
   if (ev.key === "PageDown") { cam.lookPitch = Math.max(-0.7, cam.lookPitch - 0.06); ev.preventDefault(); needRender = true; }
 });
 
+/* A diagnostic handle, off unless asked for: city3d-three.html?debug exposes the
+   renderer and scene so frame cost can be measured from outside. */
+if (location.search.includes("debug")) window.__city = { renderer, scene, camera, cam, city, quality: () => ({ dpr, frameAvg: +frameAvg.toFixed(1) }) };
+
 /* ---------- main loop ---------- */
-function loop() {
+let lastFrame = 0;
+function loop(now) {
+  const dt = lastFrame ? Math.min(50, now - lastFrame) : 16.7;   // clamp, so a stall
+  lastFrame = now;                                               // cannot teleport you
   if (playing && mode === "walk") {
-    cam.walkT += 0.00035 * pace;
+    adaptQuality(dt, now);
+    cam.walkT += 0.00035 * pace * (dt / 16.667);
     if (cam.walkT >= 1) { cam.walkT = 1; playing = false; playbtn.textContent = "▶"; }
     syncWalkUI();
     needRender = true;

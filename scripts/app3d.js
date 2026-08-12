@@ -962,8 +962,9 @@ canvas.addEventListener("pointermove", ev => {
     }
   } else {
     // free look while walking
-    cam.lookYaw = Math.max(-2.7, Math.min(2.7, cam.lookYaw + dx * 0.0045));
-    cam.lookPitch = Math.max(-0.7, Math.min(0.7, cam.lookPitch - dy * 0.0035));
+    // grab semantics, matching the rest of the app and the grab cursor
+    cam.lookYaw = Math.max(-2.7, Math.min(2.7, cam.lookYaw - dx * 0.0045));
+    cam.lookPitch = Math.max(-0.7, Math.min(0.7, cam.lookPitch + dy * 0.0035));
   }
   dragging.x = ev.clientX; dragging.y = ev.clientY;
   needRender = true;
@@ -1100,9 +1101,12 @@ document.addEventListener("keydown", ev => {
 });
 
 /* ---------- main loop ---------- */
-function loop() {
+let lastFrame = 0;
+function loop(now) {
+  const dt = lastFrame ? Math.min(50, now - lastFrame) : 16.7;
+  lastFrame = now;
   if (playing && mode === "walk") {
-    cam.walkT += 0.00035 * pace;
+    cam.walkT += 0.00035 * pace * (dt / 16.667);
     if (cam.walkT >= 1) { cam.walkT = 1; playing = false; playbtn.textContent = "▶"; }
     syncWalkUI();
     needRender = true;
