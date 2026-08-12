@@ -9,6 +9,7 @@ import { buildPlan } from "./plan.js";
 import { buildCity } from "./scene.js";
 import { createLabels } from "./labels.js";
 import { PAL } from "./palette.js";
+import * as ChiasmUI from "./chiasm-ui.js";
 
 const JOHN = window.JOHN;
 const plan = buildPlan(JOHN);
@@ -226,6 +227,7 @@ function openHood(h) {
     html += `<h3>Inside this block</h3>` + h.details.map(d =>
       `<div class="detail-item"><span>${d.desc}</span><span class="g">${d.greek != null ? d.greek + " gw" : ""}</span></div>`).join("");
   }
+  html += ChiasmUI.renderHood(h.id, {});
   if (h.ward) {
     const chi = h.ward.hoods.filter(x => x.chiasm);
     if (chi.length) {
@@ -240,6 +242,7 @@ function openHood(h) {
   panelBody.innerHTML = html;
   panelBody.querySelectorAll("[data-open]").forEach(r =>
     r.addEventListener("click", () => openHood(byId[r.dataset.open])));
+  ChiasmUI.bind(panelBody, { onOpenHood: id => openHood(byId[id]) });
   panel.classList.add("open");
 }
 

@@ -22,6 +22,10 @@
     --water: #d7e8ef;
     --water-ink: #7fa8b8;
     --gold: #b8860b;
+    /* --gold on white is 3.3:1 — fine for a 1.6px border, not for 12px bold
+       type. --gold-ink is the same hue at 4.8:1 or better, for centre TEXT. */
+    --gold-ink: #845e06;
+    --gold-wash: rgba(184,134,11,0.10);
     --gold-fill: #eda100;
     --district-wash: rgba(11,11,11,0.028);
     --t-witness: #eda100;
@@ -50,6 +54,8 @@
     --water: #16303a;
     --water-ink: #4e7889;
     --gold: #d9a419;
+    --gold-ink: #d9a419;
+    --gold-wash: rgba(217,164,25,0.15);
     --gold-fill: #c98500;
     --district-wash: rgba(255,255,255,0.035);
     --t-witness: #c98500;
@@ -204,10 +210,76 @@
     display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2);
     padding: 5px 8px; border-radius: 7px; cursor: pointer; border: 1px solid transparent;
   }
+  .ladder .rung .chi-text { flex: 1 1 auto; min-width: 0; }
   .ladder .rung:hover { border-color: var(--border); }
+  .ladder .rung:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
   .ladder .rung.current { background: var(--page); border-color: var(--border); color: var(--ink-1); }
   .ladder .tag { font-weight: 700; width: 34px; text-align: center; flex: none; white-space: nowrap; }
-  .ladder .rung.center .tag { color: var(--gold); }
+  /* ---- chiasm reader (src/chiasm-ui.js): the block's own chiasms ---- */
+  .ladder .rung.lvl1 { margin-left: 18px; }
+  .ladder .rung.lvl2 { margin-left: 36px; }
+  .ladder .rung.plain { cursor: default; opacity: .85; }
+  /* One box per ladder — the top-level centre. A nested sub-chiasm's centre keeps
+     the gold diamond in its tag and nothing else, so the block's own centre stays
+     the only boxed row. A centre the algorithm inferred from the fold (band) or
+     one the source spread over a group (pivot-group) gets the wash without the
+     border: a derived centre must not wear a marked centre's badge. */
+  .ladder .rung.center .tag { color: var(--gold-ink); }
+  .ladder .rung.center-top { border-color: var(--gold); background: var(--gold-wash); color: var(--ink-1); }
+  .ladder .rung.center-top[data-chi-centre="band"],
+  .ladder .rung.center-top[data-chi-centre="pivot-group"] { border-color: transparent; }
+  .ladder .rung.center-sub { border-color: transparent; background: none; }
+  .ladder .rung.center-edge { border-color: var(--gold); border-style: dashed; }
+  .chi-centre-chip {
+    flex: none; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--gold-ink); border: 1px solid var(--gold); border-radius: 10px; padding: 1px 6px;
+  }
+  .chi-unit { margin-bottom: 10px; }
+  .chi-unit.collapsed .ladder { display: none; }
+  .chi-head, .chi-arc {
+    appearance: none; -webkit-appearance: none; background: none; border: 0; width: 100%;
+    font-family: inherit; text-align: left; cursor: pointer;
+    border-left: 3px solid transparent; border-radius: 7px;
+  }
+  .chi-head:focus-visible, .chi-arc:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .chi-head {
+    display: flex; gap: 8px; align-items: center;
+    font-size: 12px; color: var(--ink-1); padding: 4px 7px;
+  }
+  .chi-head:hover { background: var(--page); }
+  .chi-unit:not(.collapsed) > .chi-head {
+    background: var(--page); border-left-color: var(--gold);
+    position: sticky; top: 0; z-index: 2;
+  }
+  .chi-head .tag { font-weight: 700; flex: none; white-space: nowrap; }
+  .chi-head .chi-title {
+    flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .chi-chev { flex: none; color: var(--muted); transform: rotate(90deg); transition: transform .12s; }
+  .chi-unit.collapsed .chi-chev { transform: none; }
+  .chi-head .chi-pat {
+    flex: 0 0 auto; max-width: 42%; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; font-size: 10.5px; letter-spacing: .04em; color: var(--muted);
+  }
+  .chi-arc {
+    display: flex; gap: 6px; align-items: center; font-size: 11.5px; color: var(--muted);
+    font-style: italic; margin: 6px 0; padding: 3px 7px;
+  }
+  .chi-arc:hover { color: var(--ink-2); background: var(--page); }
+  .chi-unit:not(.collapsed) > .chi-arc { color: var(--ink-2); background: var(--page); border-left-color: var(--baseline); }
+  .chi-group { font-size: 11.5px; font-weight: 600; color: var(--ink-2); margin: 12px 0 4px; }
+  .chi-fore { font-style: italic; }
+  /* the block's rung in its section's own chiasm (source sections IX and X) */
+  .chi-sec {
+    display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: var(--ink-2);
+    padding: 6px 8px; margin-bottom: 10px; border-radius: 7px;
+    background: var(--page); border: 1px solid var(--border);
+  }
+  .chi-sec.is-centre { border-color: var(--gold); background: var(--gold-wash); }
+  .chi-sec .tag { font-weight: 700; width: 34px; text-align: center; flex: none; }
+  .chi-sec.is-centre .tag { color: var(--gold-ink); }
+  .chi-sec .chi-text { flex: 1 1 auto; min-width: 0; }
+  .chi-sec .chi-sec-where { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
   .themechip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; margin-bottom: 12px; }
   /* ---- index view ---- */
   #indexview { position: absolute; inset: 0; overflow: auto; padding: 22px 26px; display: none; background: var(--page); }
