@@ -10,7 +10,7 @@ https://recklessnode.github.io/gospel-of-john-city/ (2D) and `/city3d.html` (3D)
 ```bash
 npm install                     # once: three + esbuild + playwright
 npm run build                   # verify parity → bundle src/ → assemble all three pages
-npm run verify                  # plan parity check alone (fast, no browser)
+npm run verify                  # plan parity + chiasm integrity/join (fast, no browser)
 npm run bundle                  # esbuild only
 node scripts/shots.mjs city3d-three.html shots [--dark]   # walkthrough screenshots
 node scripts/smoke.mjs city3d-three.html                  # interaction checks
@@ -25,7 +25,10 @@ works — it just warns and skips `city3d-three.html` when the bundle is missing
 
 ```
 data/John gospel as a city.xlsx   source data (John Stats outline is authoritative)
+data/chiasms-source.md            PaulDz's chiasm structure of the whole gospel, from
+                                  Malina & Rohrbaugh (1998) — the provenance record
 scripts/build_data.py             extracts/curates → data/john-data.json
+scripts/build_chiasms.py          data/chiasms-source.md → data/chiasms.json
 index.template.html + scripts/app.js     → index.html   (2D: city / linear / index)
 city3d.template.html + scripts/app3d.js  → city3d.html  (3D canvas renderer, classic)
 city3d.template.html + src/ (bundled)    → city3d-three.html (3D Three.js, Phase 2)
@@ -35,6 +38,8 @@ src/plan.js      the city plan — pure math, no DOM, no Three.js
 src/scene.js     the plan built as Three.js geometry
 src/kits.js      procedural building kits, the crenellated wall and the gates
 src/palette.js   day/night palettes + the sun direction
+src/chiasm-ui.js the chiasm ladder, shared by all three pages (ESM for the Three.js
+                 bundle; also bundled as an IIFE global for the injected pages)
 src/labels.js    billboarded DOM labels with nearest-first collision culling
 src/main.js      cameras, picking, panel, walk UI, day/night, main loop
 ```
@@ -89,6 +94,10 @@ artifact previews + offline use).
   *build* time — the built HTML is committed afterwards, so the stamp trails the
   history by one commit, the same convention as conversations.md. The timestamp is
   the reliable "did this change" signal.
+- **Chiasm centres are derived, never hand-tagged** (`src/chiasm-ui.js` consumes what
+  `scripts/build_chiasms.py` derives). Where the source marks no centre, the UI says so
+  in words rather than picking a plausible middle rung — six chiasms are legitimately
+  centreless and that is data, not a bug.
 - **agents.md** documents the model-mix policy (build inline, review with
   independent agents; cheapest capable model wins).
 - Word counts shown in UI come from the sheet by row — formatting `fmt()` handles

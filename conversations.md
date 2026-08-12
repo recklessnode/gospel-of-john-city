@@ -409,3 +409,58 @@ One wrinkle worth knowing: the hash names HEAD at *build* time, and the built HT
 is committed afterwards, so the stamp trails the history by one commit — the same
 convention conversations.md already uses. The **timestamp** is the reliable signal
 that something changed; the hash tells you which source state produced it.
+
+---
+
+## 2026-08-12 — Session 4: the chiasm feature (issue #1), built by workflow
+
+**Participants:** Ronald + Claude (Opus 5 orchestrating; Opus 5 + Fable 5 agents)
+
+**PaulDz answered, and the scope changed.** He confirmed all four open questions — the
+`C″` that breaks Theme 3's mirror is correct (a triple C); Theme 4 ending `A` was a typo;
+Theme 5 is two chiasms under one theme; the transition/introduction verses do belong as
+an unchiasmed forecourt — and then attached the **chiasm structure of the whole gospel**
+(996 lines, 58 pericopes, transcribed from Malina & Rohrbaugh, *Social-Science Commentary
+on the Gospel of John*, Fortress 1998). So this was never a John 4 feature; John 4 was the
+worked example. That file is now `data/chiasms-source.md` — under invariant 5 it is the
+grounding for everything the feature displays.
+
+He also asked two much larger questions, which were split out rather than allowed to ride
+along: **#2** (trace Koester's theological themes through the city as routes) and **#3**
+(make the district → ward → neighbourhood hierarchy legible). Worth recording for #2: the
+mechanism is already half-built — the city draws two theme routes today and a route is
+just an ordered list of blocks — so the blocker is not code. A theme route is a claim
+about the text and has to come from PaulDz or a citable source, exactly as the chiasms did.
+
+**Built by a six-agent workflow** (Ronald's call), Opus for design/UI/judgement and Fable
+for the exacting parse and mechanical audits: design → parse → join → UI → parallel audits
+→ fix. ~1M subagent tokens over about two hours, on branch `chiasms-issue-1`.
+
+Result: **106 source units → 84 chiasms + 16 sub-chiasms over 62 blocks.** Per block:
+6 blocks have none, 43 have one, 9 have two, one has four, two have six, one has seven.
+No source unit went unmatched. Centre kinds: unpaired 38, pivot 31, band 3, pivot-single 3,
+enclosed 2, pivot-group 1, and **6 with none** — the source genuinely marks no centre, and
+the UI says *"No centre is marked in the source for this pattern"* rather than picking a
+plausible middle rung. That honesty is the whole point of invariant 5.
+
+The irregular cases PaulDz flagged all land correctly: 4:1–42 Theme 3's `Cʺ` stays a third
+member of base C (and is exactly why C′ is not mistaken for the centre); 7:1–9's
+`C1/C2/C′1/C′2` resolves to a four-rung centre panel; 8:13–19 highlights **B Judging**
+among the five top-level headers he asked us to keep, with each header's lowercase run
+getting its own centre.
+
+**Verified independently, not taken on trust:** `npm run verify` (plan parity + a new
+chiasm integrity/join check), `npm run build`, smoke tests on both 3D pages, a hand
+spot-check of the triple-C unit against the source line by line, and the QA screenshots
+read directly. Integration is deliberately small — two lines in `scripts/app.js` and
+`scripts/app3d.js`, three in `src/main.js`, one shared `src/chiasm-ui.js` — and no layout
+code was touched.
+
+**Cost noted:** the corpus adds ~197 KB minified to every page (index.html 79 KB → 267 KB
+raw). Gzipped, which is how Pages serves it, that is 56 KB for the 2D map — acceptable, so
+it was left alone rather than optimised. The full-fat JSON stays on disk as the provenance
+record.
+
+**Open for PaulDz:** the six centreless chiasms, and whether the section-level chiasms
+(IX over 13:1–17:26, X over 18:1–19:42) should be drawn on the map as arcs — that would be
+a new visual claim, so it was deliberately not smuggled in with this feature.
