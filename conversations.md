@@ -503,3 +503,68 @@ so a stall cannot teleport you. Applied to both 3D views.
 
 Added `?debug` on the Three.js page, which exposes the renderer, scene and a `quality()`
 readout — so a machine-specific report can be gathered instead of guessed at.
+
+### PaulDz's radial-city graphic, and student-authored routes (issue #2)
+
+PaulDz commented on #2 with an annotated radial city plan — Prologue at the hub, Book of
+Signs as the left/blue half, Book of Glory as the right/yellow half, Epilogue outside the
+wall by the airport — and a question rather than a request: could a *student* plot their
+own roads, subways and paths through the city, with the wedges between the major roads
+serving as wards and neighborhoods?
+
+**Measured before replying, rather than eyeballing the picture.** Running the plan and
+taking bearings from the centre showed his graphic and our city already agree on almost
+everything:
+
+| his graphic | our plan, measured |
+|---|---|
+| Signs on the left/west | Signs Metropolis spans bearings 102°–261° |
+| Glory on the right/east | Glory District spans 262°–327° |
+| Epilogue outside the wall, SE | Harbor of Tiberias at 334°–344°, r 518–572; wall runs r 403–461 |
+| wedges = wards containing neighborhoods | already `4 districts → 13 wards → 61 hoods`, laid out in ward order so wards are already contiguous arcs |
+
+So the disagreement is about **shape**, not content.
+
+**The one real difference is a hole we had not named.** Nothing in our city sits inside
+radius 206 — roughly a quarter of the walled area is blank, because angle encodes narrative
+order and every block is pinned to the ring. PaulDz puts the Prologue there. The
+corroborating detail: *both* existing theme roads already start at the Prologue block (1:4
+announces life and light), so they radiate from a hub that isn't there, and have to travel
+out to the rim first to do it.
+
+The trade, stated plainly in the reply: our plan organises by **time** (good for the Way,
+bad for themes, which must zigzag around the rim); his organises by **structure** (good for
+themes, but chapter order becomes a spiral). Reconcilable cheaply by keeping the ring and
+filling the hub — Prologue at centre, radial avenues along the 13 ward boundaries so the
+wedges *become* the wards, Way still running the ring. Invariant 5 holds: the hub is a block
+we already have, the wedges are wards we already have, the avenues are boundaries already in
+the data. Nothing invented. It also answers #3 nearly for free — containment shown by
+construction instead of by a pale wash.
+
+**On student authoring, the invariant-5 question was the one worth getting right.** The
+rule governs the *city*, not the student: a student's route is a reading, and readings are
+the point — what matters is that the map never launders a reading into a fact. Proposed
+three visibly distinct tiers: **sourced** (Malina & Rohrbaugh, or a Koester list PaulDz
+signs off) drawn solid and cited; **editorial** (our two roads) dotted with the verse
+warrant; **student** in its own channel, always attributed, never written into repo data.
+
+His street/subway/walkway metaphor turns out to carry real interpretive weight, and it also
+solves the "ten routes would be visual mud" problem from the issue body: a **street** route
+claims continuity (the passages between stops are part of the argument), a **subway** claims
+connection without continuity (1:4 and 8:12 belong together whatever lies between), a
+**path** claims a local link inside one ward. Three channels, so several can be shown at
+once — and choosing the mode is itself an interpretive act the student must defend.
+
+No server needed: routes live in the browser, export as a file, and encode into the URL — a
+twelve-stop route is a handful of bytes, so handing work in is pasting a link. The payoff is
+**"walk this route"**, pointing the existing walk camera at the student's stop list instead
+of chapter order.
+
+Sequencing proposed: route model + editor + share links now (independent of any replan, and
+it unblocks the original Koester ask since sourced routes use the same model); hub + radial
+avenues next; a full symmetrical-disc replan only if that proves the metaphor.
+
+Three questions left with him, because they are his to answer and not the software's:
+whether the Prologue at the hub is a *claim* (which would make radial distance mean
+something, and needs a rule) or a convenience; whether the narrative Way survives as a
+spine; and which themes are streets versus subways.
