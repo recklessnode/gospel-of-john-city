@@ -43,6 +43,17 @@ export function catmullSample(pts, per) {
   return out;
 }
 
+/* Decimate a sampled curve for point-drawn roads, ALWAYS keeping the endpoint.
+   Stepping `i += n` over a curve silently drops the tail unless the last index
+   happens to be a multiple of n — which left the Light & Witness road stopping
+   30 plan units short of its final stop. Both 3D views share this. */
+export function everyNth(pts, n) {
+  const out = [];
+  for (let i = 0; i < pts.length; i += n) out.push(pts[i]);
+  if (out[out.length - 1] !== pts[pts.length - 1]) out.push(pts[pts.length - 1]);
+  return out;
+}
+
 function segInt(p1, p2, p3, p4) {
   const d = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0]);
   if (Math.abs(d) < 1e-9) return null;

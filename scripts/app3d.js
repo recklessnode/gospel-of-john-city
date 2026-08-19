@@ -306,6 +306,13 @@ const QUAY_POLY = (() => {
 })();
 
 /* theme road samples */
+/* keeps the endpoint — see everyNth in src/plan.js (invariant 1: kept in lockstep) */
+function everyNth(pts, n) {
+  const out = [];
+  for (let i = 0; i < pts.length; i += n) out.push(pts[i]);
+  if (out[out.length - 1] !== pts[pts.length - 1]) out.push(pts[pts.length - 1]);
+  return out;
+}
 const themeRoadPts = {};
 for (const key in JOHN.themeRoads) {
   const stops = JOHN.themeRoads[key].stops.map(id => byId[id]).filter(Boolean).map(h => [h.x, h.y]);
@@ -800,8 +807,8 @@ function render() {
   for (const key in themeRoadPts) {
     if (!document.getElementById("ck3-" + key).checked) continue;
     ctx.fillStyle = trColors[key];
-    for (let i = 0; i < themeRoadPts[key].length; i += 3) {
-      const p = project(themeRoadPts[key][i][0], 1.4, themeRoadPts[key][i][1]);
+    for (const q of everyNth(themeRoadPts[key], 3)) {
+      const p = project(q[0], 1.4, q[1]);
       if (!p) continue;
       const rr = Math.max(0.8, 2.6 * FOCAL / p[2] * 3);
       ctx.beginPath(); ctx.arc(p[0], p[1], Math.min(4, rr), 0, Math.PI * 2); ctx.fill();

@@ -9,6 +9,7 @@
 import * as THREE from "three";
 import { PAL, SUN } from "./palette.js";
 import { makeKitMaterials, buildBlock, buildWall, buildGate } from "./kits.js";
+import { everyNth } from "./plan.js";
 
 const WALL_H = 16, WALL_T = 3.2;
 
@@ -188,7 +189,7 @@ export function buildCity(scene, plan, themeName) {
   const trColor = { life: pal.themes.sign, light: pal.themes.witness };
   for (const key in themeRoadPts) {
     const pts = [];
-    for (let i = 0; i < themeRoadPts[key].length; i += 3) pts.push(themeRoadPts[key][i][0], 1.4, themeRoadPts[key][i][1]);
+    for (const q of everyNth(themeRoadPts[key], 3)) pts.push(q[0], 1.4, q[1]);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
     // screen-space dots (like the canvas view's capped 4px markers) — with size
