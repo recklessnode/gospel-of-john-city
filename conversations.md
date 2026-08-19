@@ -568,3 +568,78 @@ Three questions left with him, because they are his to answer and not the softwa
 whether the Prologue at the hub is a *claim* (which would make radial distance mean
 something, and needs a rule) or a convenience; whether the narrative Way survives as a
 spine; and which themes are streets versus subways.
+
+### PaulDz's way types and theme lists — measuring John, then banding it (issue #2)
+
+Two more comments on #2. The first is one line and settles a question: *"That is where the
+Prologue goes. The Prologue is John 1:1-13."* The second is a full specification — six Roman
+way types (*via, vicus, clivus, semita, angiportus, ambitus*) with descriptions, exhaustive
+verse lists for 34 themes, and a direct request: **"please choose which topic or theme is
+assigned as which size way through the city."** His rule: the more text a theme takes, the
+larger its way.
+
+**Data first, in the same shape as the chiasm work.** His comment is transcribed verbatim to
+`data/themes-source.md` as the provenance record. Three Fable agents parsed the lists in
+parallel into structured JSON, and three more independently audited each parse against the
+source — bolded names counted, every bullet's refs traced both directions, every ref checked
+against John's real per-chapter verse totals. All three came back clean: **269 refs, none
+dropped, none invented.**
+
+**Measuring a theme needed a per-verse number the spreadsheet doesn't have.** It counts Greek
+words per pericope, so `scripts/verse_weights.py` spreads each block's total across its
+verses. One real bug found while building it: three blocks *split a single verse between
+them* (7:14a/b, 16:4a/b, 19:16a/b), so weights must accumulate rather than overwrite —
+without that the totals came up 44 words short. They now reconcile to 13,355 exactly. The
+apportionment makes every Greek figure an estimate, which is stated in CLAUDE.md and in
+everything shown to PaulDz; verse counts are exact.
+
+**The assignment was made by threshold, not by taste.** Two Opus agents proposed complete
+mappings from different angles (a disciplined-size reading, and one weighing each road's
+character), and a third judged them and produced a final. Then the important step: the result
+was re-expressed as **verse-count floors** — `40 / 28 / 11 / 6 / 3 / 0` in
+`data/way-types.json` — and those floors reproduce the judged mapping **exactly, key for
+key**. So nothing is hand-tagged. `verify_themes.mjs` (now in `npm run verify`) checks the
+bands are ordered, that every way is what the thresholds derive, and that no two bands overlap
+in verse count — which is what *proves* the mapping was derived rather than placed.
+
+Result: **via 2 · vicus 2 · clivus 10 · semita 10 · angiportus 7 · ambitus 3.**
+
+**What the measurement found that the reviewers were right to flag:**
+
+- *His six-type list is not a size ranking.* Both proposals reached this independently: it is
+  two groups of three, and neither group is internally ordered. The 3/3 grouping is his and is
+  load-bearing; the order inside each triple is ours. The contested pair is **semita vs
+  angiportus** — if he meant the alley above the sidewalk, **ten assignments flip.**
+- *The compilation asymmetry, which is the most important finding.* His four classical lists
+  are exhaustive; his six modern-concern lists are curated ("the verses most frequently turned
+  to"). A rule that measures text quantity reads that difference in **method** as a difference
+  in **weight** — 11 of the 12 largest themes come from the classical lists, 20 of the 22
+  smallest from the modern ones. That shapes the entire city and it is not a fact about John.
+- *Depth is not reach.* Signs is largest on both his measures (2395 words) but touches 11 of 61
+  blocks, because a sign is a narrative sitting in one place. Belief is smaller (1319) but
+  touches 35 blocks across 18 chapters. Proposed: his rule sets the **width**, reach sets the
+  **length** — put to him rather than assumed.
+- *John 3:16 gets a maintenance gap.* Smallest theme measured, so the rule hands the most
+  quoted sentence in the Bible two to three feet of weed-choked dirt. Nobody would quietly
+  promote it — the moment one theme is hand-placed the city stops being derivable — so it went
+  to him as a choice between accepting it with intent (the *ambitus* was legally required, a
+  firebreak) and stating a floor rule.
+- *One ref has nowhere to go:* 8:20, under Glory through Humiliation, lands in no block,
+  because invariant 4 detaches 7:53–8:11. Reported, not rehomed.
+
+**On the Prologue, the data said something better than the question deserved.** Malina &
+Rohrbaugh — the source PaulDz himself transcribed — put the Prologue at **1:1–18**, which is
+where our block and ward come from. But their chiasm for it is A B C D C′ B′ A′ with **D =
+1:12–13, "Children of God (new life)"** as the unpaired centre. So his 1:13 boundary lands
+exactly on the end of the centre rung. The hub of the city would not merely be the Prologue,
+it would be **the centre of the Prologue** — and that centre is becoming children of God,
+which is what 20:31 says the whole gospel is for. Whether he wants the block *split* there or
+was pointing at the centre is his call, so it was asked, not assumed.
+
+**Nothing is drawn yet, deliberately.** The two biggest open questions — the semita/angiportus
+order and the compilation asymmetry — would each send the rendering back to the start, so the
+assignment went to him before any geometry was built. An error of mine caught by the judge in
+passing: the brief I gave the agents said Belief spans 21 of 21 chapters; it is 18. Corrected
+before it reached him, and not passed off as his.
+
+Commits: 2a71182 (measurement + verifier), 56ebae0 (way bands).
