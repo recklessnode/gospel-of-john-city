@@ -1,5 +1,6 @@
 {
  "source": "data/themes-source.md",
+ "wayTypes": "data/way-types.json",
  "note": "Greek word counts are apportioned from per-block totals in john-data.json and are estimates; verse counts are exact.",
  "themes": [
   {
@@ -42,7 +43,8 @@
     20,
     21
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "via"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -172,7 +174,8 @@
     19,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "via"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -281,7 +284,8 @@
     17,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "vicus"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -340,7 +344,8 @@
     19,
     21
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "vicus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -386,7 +391,8 @@
     17,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "The Holy Spirit",
@@ -430,7 +436,8 @@
     16,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -487,7 +494,8 @@
     15,
     18
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "Key Metaphors and Teachings",
@@ -506,7 +514,8 @@
    "chapters": [
     10
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -546,7 +555,8 @@
     13,
     17
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "Key Metaphors and Teachings",
@@ -584,7 +594,8 @@
     12,
     13
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -648,7 +659,8 @@
     14,
     15
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -691,7 +703,8 @@
     15,
     17
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "4. Relational Intimacy and Love",
@@ -729,7 +742,8 @@
     20,
     21
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "5. Comfort in Anxiety and Grief",
@@ -753,7 +767,8 @@
     16,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "clivus"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -797,7 +812,8 @@
     16,
     17
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -838,7 +854,8 @@
     9,
     12
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "2. Truth vs. Relativism",
@@ -869,7 +886,8 @@
     17,
     18
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "1. Identity and Self-Worth",
@@ -893,7 +911,8 @@
     3,
     11
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "Key Metaphors and Teachings",
@@ -913,7 +932,8 @@
     1,
     3
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -970,7 +990,8 @@
     15,
     16
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "1. Identity and Self-Worth",
@@ -994,7 +1015,8 @@
     10,
     17
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
@@ -1014,7 +1036,8 @@
     14,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
@@ -1031,7 +1054,8 @@
    "chapters": [
     6
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "6. The Role of the Holy Spirit in Daily Life",
@@ -1049,7 +1073,8 @@
    "chapters": [
     16
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "semita"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -1089,7 +1114,8 @@
     10,
     15
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "6. The Role of the Holy Spirit in Daily Life",
@@ -1113,7 +1139,8 @@
     15,
     16
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -1155,7 +1182,8 @@
     13,
     15
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -1173,7 +1201,8 @@
    "chapters": [
     1
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "5. Comfort in Anxiety and Grief",
@@ -1193,7 +1222,8 @@
     6,
     7
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "6. The Role of the Holy Spirit in Daily Life",
@@ -1213,7 +1243,8 @@
     7,
     20
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "5. Comfort in Anxiety and Grief",
@@ -1234,7 +1265,8 @@
     14,
     16
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "angiportus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -1272,7 +1304,8 @@
    "chapters": [
     8
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "ambitus"
   },
   {
    "group": "The Mechanics of Salvation and Evidence",
@@ -1309,7 +1342,8 @@
    "chapters": [
     15
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "ambitus"
   },
   {
    "group": "The Nature and Identity of Jesus",
@@ -1383,7 +1417,8 @@
    "chapters": [
     3
    ],
-   "malformed": []
+   "malformed": [],
+   "way": "ambitus"
   },
   {
    "group": "The Nature and Identity of Jesus",

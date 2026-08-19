@@ -93,9 +93,34 @@ for (const t of TH.themes) {
   if (blocks.join() !== [...t.blocks].join()) fail(`${t.key}: blocks drifted (${t.blocks.length} stored, ${blocks.length} recomputed)`);
 }
 
+/* ---------- 5. way bands are derivable, not hand-tagged ---------- */
+const WAYS = JSON.parse(readFileSync(join(ROOT, "data/way-types.json"), "utf8")).types;
+for (let i = 1; i < WAYS.length; i++)
+  if (WAYS[i].minVerses >= WAYS[i - 1].minVerses)
+    fail(`way bands out of order: ${WAYS[i - 1].key} minVerses ${WAYS[i - 1].minVerses} <= ${WAYS[i].key} ${WAYS[i].minVerses}`);
+for (const t of TH.themes) {
+  if (t.parent) {
+    if (t.way) fail(`${t.key}: sub-entries must not carry a way (its verses are already inside ${t.parent}'s)`);
+    continue;
+  }
+  const want = WAYS.find(w => t.verses >= w.minVerses);
+  if (!t.way) fail(`${t.key}: no way assigned`);
+  else if (t.way !== want.key) fail(`${t.key}: way "${t.way}" is not what the bands derive (${want.key}, ${t.verses} verses)`);
+}
+// the bands must partition monotonically: no way's smallest theme may be smaller than
+// a lesser way's largest. This is what proves the mapping was derived, not hand-placed.
+const tops2 = TH.themes.filter(t => !t.parent);
+for (let i = 1; i < WAYS.length; i++) {
+  const hi = tops2.filter(t => t.way === WAYS[i - 1].key).map(t => t.verses);
+  const lo = tops2.filter(t => t.way === WAYS[i].key).map(t => t.verses);
+  if (hi.length && lo.length && Math.min(...hi) <= Math.max(...lo))
+    fail(`${WAYS[i - 1].key}/${WAYS[i].key} bands overlap in verse count`);
+}
+
 /* ---------- report ---------- */
 const tops = TH.themes.filter(t => !t.parent);
 console.log(`themes: ${TH.themes.length} (${tops.length} top-level, ${TH.themes.length - tops.length} sub-entries), ${refTotal} refs`);
+console.log("ways: " + WAYS.map(w => `${w.key} ${tops.filter(t => t.way === w.key).length}`).join(" · "));
 if (orphanRefs.length) console.log(`refs in no block (expected: 8:20 only — invariant 4): ${[...new Set(orphanRefs)].join(", ")}`);
 if (problems.length) {
   console.error(`\n${problems.length} problem(s):`);

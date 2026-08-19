@@ -17,6 +17,7 @@ sys.path.insert(0, HERE)
 from verse_weights import load, hoods, abs_index, weights, chapter_verse  # noqa: E402
 
 OUT = os.path.join(HERE, "..", "data", "themes.json")
+WAYS = os.path.join(HERE, "..", "data", "way-types.json")
 CHAPTER_TOTALS = {1: 51, 2: 25, 3: 36, 4: 54, 5: 47, 6: 71, 7: 53, 8: 59, 9: 41, 10: 42,
                   11: 57, 12: 50, 13: 38, 14: 31, 15: 27, 16: 33, 17: 26, 18: 40,
                   19: 42, 20: 31, 21: 25}
@@ -76,9 +77,20 @@ def main(paths):
         t["malformed"] = bad
         t["refs"] = refs
 
+    # way type is DERIVED from verse count, never hand-tagged: change a threshold in
+    # data/way-types.json and the whole city re-bands. Sub-entries get no way of their
+    # own — their verses are already inside their parent's, so drawing both would
+    # measure the same text twice.
+    ways = json.load(open(WAYS, encoding="utf-8"))["types"]
+    for t in themes:
+        if t.get("parent"):
+            continue
+        t["way"] = next(w["key"] for w in ways if t["verses"] >= w["minVerses"])
+
     themes.sort(key=lambda t: -t["greek"])
     doc = {
         "source": "data/themes-source.md",
+        "wayTypes": "data/way-types.json",
         "note": ("Greek word counts are apportioned from per-block totals in john-data.json "
                  "and are estimates; verse counts are exact."),
         "themes": themes,
@@ -88,9 +100,11 @@ def main(paths):
 
     top = [t for t in themes if not t.get("parent")]
     print(f"{len(themes)} themes ({len(top)} top-level, {len(themes)-len(top)} sub-entries)")
-    print(f"{'greek':>7} {'vs':>4} {'blk':>4}  theme")
-    for t in top:
-        print(f"{t['greek']:>7} {t['verses']:>4} {len(t['blocks']):>4}  {t['label'][:58]}")
+    for w in ways:
+        band = [t for t in top if t["way"] == w["key"]]
+        print(f"\n{w['label'].upper()} — {w['gloss']} ({len(band)})")
+        for t in band:
+            print(f"  {t['greek']:>6} {t['verses']:>4}v {len(t['blocks']):>3}b  {t['label'][:58]}")
     bad = [(t['key'], t['malformed']) for t in themes if t['malformed']]
     if bad:
         print("\nMALFORMED REFS:", bad)

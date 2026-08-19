@@ -1,0 +1,19 @@
+{
+ "note": "PaulDz's six Roman way types (issue #2, 2026-08-18), ordered largest to smallest, with the band each occupies. A theme's way is DERIVED from its verse count by minVerses — never hand-tagged — so the mapping can be re-derived, argued with, and moved by changing a threshold. The order and the band edges are our proposal, awaiting PaulDz; his own list is grouped 3/3 (main streets, then small ways) and is not internally ranked.",
+ "status": "proposed — not yet confirmed by PaulDz",
+ "rankedBy": "verse count (exact); Greek word count (apportioned, an estimate) is a corroborating check only",
+ "types": [
+  { "key": "via", "minVerses": 40, "label": "Via", "gloss": "The Grand Downtown Highway",
+    "desc": "The widest, grandest street; colonnades, triumphal arches, processions, and the great sewer running beneath." },
+  { "key": "vicus", "minVerses": 28, "label": "Vicus", "gloss": "The Everyday Avenue",
+    "desc": "Bustling and stone-paved, lined with apartment blocks and shops that spill into the road; crossed on raised stepping stones." },
+  { "key": "clivus", "minVerses": 11, "label": "Clivus", "gloss": "The Hilly Street",
+    "desc": "A steep climbing road to the temples and palaces; paving grooved for traction, heavy gutters that roar in the rain." },
+  { "key": "semita", "minVerses": 6, "label": "Semita", "gloss": "The Footpath or Sidewalk",
+    "desc": "A raised stone walkway beside a greater street, set above the traffic on a heavy kerb. The pedestrian safe zone." },
+  { "key": "angiportus", "minVerses": 3, "label": "Angiportus", "gloss": "The Dark Alley",
+    "desc": "A cramped unpaved lane between tall blocks, dark even at noon; avoided at night." },
+  { "key": "ambitus", "minVerses": 0, "label": "Ambitus", "gloss": "The Maintenance Gap",
+    "desc": "Two to three feet between adjacent buildings, required by law as a firebreak and for repairs; used by builders, not travellers." }
+ ]
+}
