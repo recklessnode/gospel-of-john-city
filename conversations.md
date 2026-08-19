@@ -643,3 +643,25 @@ passing: the brief I gave the agents said Belief spans 21 of 21 chapters; it is 
 before it reached him, and not passed off as his.
 
 Commits: 2a71182 (measurement + verifier), 56ebae0 (way bands).
+
+**A design pass, and a bug it found on the way.** A fourth Opus agent designed how the six
+way types are drawn — widths, sections, surfaces, kerbs, 2D and 3D treatments, dark-mode
+rules — in `docs/theme-ways-design.md`. It anchors the scale off the existing road
+(`2 × ROAD_HALF = 18` units read as a real via ⇒ **1 plan unit ≈ 0.65 m**), which makes the
+*ambitus* 1.2 units = 2.6 Roman feet, exactly PaulDz's "two to three feet". Its collision
+answer is one focus way plus up to three pins, with URL state so a reading can be reviewed by
+link, and exhaustiveness kept in a table rather than in geometry.
+
+While reading the rendering code it noticed that both 3D views decimate the sampled curve
+with `i += 3`, which drops the tail unless the last index is a multiple of 3. Measured before
+believing it: **the Light & Witness road was stopping 30 plan units short of its final stop**,
+the Life & Water road 5.6. A shared `everyNth()` in `plan.js` (mirrored into `app3d.js` per
+invariant 1) now always keeps the endpoint. Commit 8f3b2d7; smoke 14/12 checks, verify clean.
+
+The design's own first-slice recommendation is deliberately ruthless about what *not* to
+build — no width interpolation inside a band, no per-theme hue, no re-layout to make room for
+ways, no ways for the 17 children — and it flags that the two hand-authored roads in
+`john-data.json` (`life`, `light`) are hand-picked stop lists that the sourced themes now
+supersede. Nothing rendered yet: the two open questions on #2 (the semita/angiportus order,
+and the compilation asymmetry) change the *data* rather than the code, so the design survives
+either answer, but the sizes it draws would move.
