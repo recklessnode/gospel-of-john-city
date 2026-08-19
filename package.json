@@ -5,7 +5,7 @@
   "type": "module",
   "description": "The Gospel of John rendered as a city — 2D map + 3D ancient city",
   "scripts": {
-    "verify": "node scripts/verify_parity.mjs && node scripts/verify_chiasms.mjs",
+    "verify": "node scripts/verify_parity.mjs && node scripts/verify_chiasms.mjs && node scripts/verify_themes.mjs",
     "bundle": "npm run bundle:three && npm run bundle:chiasm",
     "bundle:three": "esbuild src/main.js --bundle --format=iife --minify --target=es2019 --outfile=build/city3d-three.bundle.js",
     "bundle:chiasm": "esbuild src/chiasm-ui.js --bundle --format=iife --global-name=ChiasmUI --minify --target=es2019 --outfile=build/chiasm-ui.iife.js",

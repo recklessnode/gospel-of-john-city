@@ -1,0 +1,1425 @@
+{
+ "source": "data/themes-source.md",
+ "note": "Greek word counts are apportioned from per-block totals in john-data.json and are estimates; verse counts are exact.",
+ "themes": [
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "The \"Signs\" (Miracles that authenticate Jesus)",
+   "key": "signs",
+   "refs": [
+    "2:1-11",
+    "4:46-54",
+    "5:1-15",
+    "6:1-14",
+    "6:16-21",
+    "9:1-41",
+    "11:1-44",
+    "21:1-14",
+    "20:30-31"
+   ],
+   "verses": 156,
+   "greek": 2395,
+   "blocks": [
+    "n12",
+    "n20",
+    "n22",
+    "n28",
+    "n29",
+    "n57",
+    "n70",
+    "n71",
+    "n72",
+    "n96",
+    "n98"
+   ],
+   "chapters": [
+    2,
+    4,
+    5,
+    6,
+    9,
+    11,
+    20,
+    21
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Belief and Eternal Life",
+   "key": "belief-eternal-life",
+   "refs": [
+    "1:7",
+    "1:12",
+    "1:50",
+    "2:11",
+    "2:22-23",
+    "3:12",
+    "3:15-16",
+    "3:18",
+    "3:36",
+    "4:21",
+    "4:39",
+    "4:41-42",
+    "4:48",
+    "4:50",
+    "4:53",
+    "5:24",
+    "5:38",
+    "5:44",
+    "5:46-47",
+    "6:29-30",
+    "6:35-36",
+    "6:40",
+    "6:47",
+    "6:64",
+    "6:69",
+    "7:5",
+    "7:31",
+    "7:38-39",
+    "7:48",
+    "8:24",
+    "8:30-31",
+    "8:45-46",
+    "9:18",
+    "9:35-38",
+    "10:25-26",
+    "10:37-38",
+    "10:42",
+    "11:15",
+    "11:25-27",
+    "11:40",
+    "11:42",
+    "11:45",
+    "11:48",
+    "12:11",
+    "12:36-39",
+    "12:42",
+    "12:44",
+    "12:46",
+    "13:19",
+    "14:1",
+    "14:10-12",
+    "14:29",
+    "16:9",
+    "16:27",
+    "16:30-31",
+    "17:8",
+    "17:20-21",
+    "19:35",
+    "20:8",
+    "20:25",
+    "20:27",
+    "20:29",
+    "20:31"
+   ],
+   "verses": 86,
+   "greek": 1319,
+   "blocks": [
+    "n3",
+    "n9",
+    "n12",
+    "n13",
+    "n14",
+    "n16",
+    "n18",
+    "n20",
+    "n24",
+    "n25",
+    "n30",
+    "n33",
+    "n34",
+    "n36",
+    "n44",
+    "n46",
+    "n47",
+    "n51",
+    "n54",
+    "n57",
+    "n67",
+    "n68",
+    "n71",
+    "n72",
+    "n73",
+    "n74",
+    "n77",
+    "n78",
+    "n79",
+    "n82",
+    "n83",
+    "m16_4b-33",
+    "n88",
+    "n93",
+    "n96"
+   ],
+   "chapters": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    16,
+    17,
+    19,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Raising Lazarus",
+   "key": "signs-raising-lazarus",
+   "parent": "signs",
+   "refs": [
+    "11:1-44"
+   ],
+   "verses": 44,
+   "greek": 665,
+   "blocks": [
+    "n70",
+    "n71",
+    "n72"
+   ],
+   "chapters": [
+    11
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Healing the man born blind",
+   "key": "signs-man-born-blind",
+   "parent": "signs",
+   "refs": [
+    "9:1-41"
+   ],
+   "verses": 41,
+   "greek": 622,
+   "blocks": [
+    "n57"
+   ],
+   "chapters": [
+    9
+   ],
+   "malformed": []
+  },
+  {
+   "group": "Key Metaphors and Teachings",
+   "label": "Life (Eternal Life, Living Water, Bread of Life)",
+   "key": "life",
+   "refs": [
+    "1:4",
+    "3:15-16",
+    "3:36",
+    "4:10-14",
+    "4:36",
+    "5:21",
+    "5:24-26",
+    "5:29",
+    "5:39-40",
+    "6:27",
+    "6:33",
+    "6:35",
+    "6:40",
+    "6:47-48",
+    "6:51",
+    "6:53-54",
+    "6:63",
+    "6:68",
+    "8:12",
+    "10:10",
+    "10:28",
+    "11:25-26",
+    "12:25",
+    "12:50",
+    "14:6",
+    "17:2-3",
+    "20:31"
+   ],
+   "verses": 39,
+   "greek": 609,
+   "blocks": [
+    "n3",
+    "n14",
+    "n16",
+    "n18",
+    "n24",
+    "n25",
+    "n30",
+    "n33",
+    "n34",
+    "n48",
+    "n62",
+    "n67",
+    "n72",
+    "n77",
+    "n79",
+    "n83",
+    "n88",
+    "n96"
+   ],
+   "chapters": [
+    1,
+    3,
+    4,
+    5,
+    6,
+    8,
+    10,
+    11,
+    12,
+    14,
+    17,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Witness and Testimony",
+   "key": "witness-testimony",
+   "refs": [
+    "1:7-8",
+    "1:15",
+    "1:19",
+    "1:32",
+    "1:34",
+    "3:11",
+    "3:26",
+    "3:28",
+    "3:32-33",
+    "4:39",
+    "5:31-40",
+    "8:13-18",
+    "10:25",
+    "12:17",
+    "15:26-27",
+    "18:23",
+    "18:37",
+    "19:35",
+    "21:24"
+   ],
+   "verses": 36,
+   "greek": 555,
+   "blocks": [
+    "n3",
+    "n5",
+    "n6",
+    "n14",
+    "n16",
+    "n18",
+    "n25",
+    "n49",
+    "n67",
+    "n76",
+    "n87",
+    "n91",
+    "n92",
+    "n93",
+    "n102"
+   ],
+   "chapters": [
+    1,
+    3,
+    4,
+    5,
+    8,
+    10,
+    12,
+    15,
+    18,
+    19,
+    21
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "The Divinity of Christ (The Logos / Word)",
+   "key": "divinity-of-christ",
+   "refs": [
+    "1:1-3",
+    "1:14",
+    "1:18",
+    "5:17-18",
+    "5:21-23",
+    "8:19",
+    "8:58",
+    "10:30-33",
+    "10:38",
+    "12:41",
+    "14:7-11",
+    "17:5",
+    "17:21-22",
+    "20:28"
+   ],
+   "verses": 27,
+   "greek": 398,
+   "blocks": [
+    "n3",
+    "n22",
+    "n24",
+    "n49",
+    "n54",
+    "n67",
+    "n78",
+    "n83",
+    "n88",
+    "n96"
+   ],
+   "chapters": [
+    1,
+    5,
+    8,
+    10,
+    12,
+    14,
+    17,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Holy Spirit",
+   "label": "The Person and Work of the Holy Spirit (Paraclete / Comforter)",
+   "key": "holy-spirit-person-work",
+   "refs": [
+    "1:32-33",
+    "3:5-8",
+    "3:34",
+    "4:24",
+    "6:63",
+    "7:39",
+    "14:16-17",
+    "14:26",
+    "15:26",
+    "16:7-15",
+    "20:22"
+   ],
+   "verses": 24,
+   "greek": 367,
+   "blocks": [
+    "n6",
+    "n14",
+    "n16",
+    "n18",
+    "n33",
+    "n46",
+    "n83",
+    "n87",
+    "m16_4b-33",
+    "n96"
+   ],
+   "chapters": [
+    1,
+    3,
+    4,
+    6,
+    7,
+    14,
+    15,
+    16,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "The \"I AM\" Statements",
+   "key": "i-am-statements",
+   "refs": [
+    "4:26",
+    "8:24",
+    "8:28",
+    "8:58",
+    "13:19",
+    "18:5-6",
+    "18:8",
+    "6:35",
+    "6:41",
+    "6:48",
+    "6:51",
+    "8:12",
+    "9:5",
+    "10:7",
+    "10:9",
+    "10:11",
+    "10:14",
+    "11:25",
+    "14:6",
+    "15:1",
+    "15:5"
+   ],
+   "verses": 22,
+   "greek": 343,
+   "blocks": [
+    "n18",
+    "n30",
+    "n48",
+    "n51",
+    "n54",
+    "n57",
+    "n62",
+    "n72",
+    "n82",
+    "n83",
+    "n84",
+    "n90"
+   ],
+   "chapters": [
+    4,
+    6,
+    8,
+    9,
+    10,
+    11,
+    13,
+    14,
+    15,
+    18
+   ],
+   "malformed": []
+  },
+  {
+   "group": "Key Metaphors and Teachings",
+   "label": "The Good Shepherd (Knowing His Sheep)",
+   "key": "good-shepherd",
+   "refs": [
+    "10:1-18",
+    "10:26-29"
+   ],
+   "verses": 22,
+   "greek": 319,
+   "blocks": [
+    "n62",
+    "n67"
+   ],
+   "chapters": [
+    10
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "Glory through Humiliation (The Cross as Glorification)",
+   "key": "glory-through-humiliation",
+   "refs": [
+    "2:4",
+    "7:30",
+    "7:39",
+    "8:20",
+    "8:28",
+    "12:16",
+    "12:23-24",
+    "12:27-28",
+    "12:31-33",
+    "13:1",
+    "13:31-32",
+    "17:1-5"
+   ],
+   "verses": 21,
+   "greek": 304,
+   "blocks": [
+    "n12",
+    "n44",
+    "n46",
+    "n51",
+    "n76",
+    "n77",
+    "n82",
+    "n88"
+   ],
+   "chapters": [
+    2,
+    7,
+    8,
+    12,
+    13,
+    17
+   ],
+   "malformed": []
+  },
+  {
+   "group": "Key Metaphors and Teachings",
+   "label": "Light vs. Darkness",
+   "key": "light-vs-darkness",
+   "refs": [
+    "1:4-5",
+    "1:7-9",
+    "3:19-21",
+    "8:12",
+    "9:4-5",
+    "11:9-10",
+    "12:35-36",
+    "12:46",
+    "13:30"
+   ],
+   "verses": 17,
+   "greek": 261,
+   "blocks": [
+    "n3",
+    "n14",
+    "n48",
+    "n57",
+    "n71",
+    "n77",
+    "n79",
+    "n82"
+   ],
+   "chapters": [
+    1,
+    3,
+    8,
+    9,
+    11,
+    12,
+    13
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Healing the invalid at Bethesda",
+   "key": "signs-bethesda-invalid",
+   "parent": "signs",
+   "refs": [
+    "5:1-15"
+   ],
+   "verses": 15,
+   "greek": 227,
+   "blocks": [
+    "n22"
+   ],
+   "chapters": [
+    5
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "The Miraculous Catch of Fish (Post-Resurrection)",
+   "key": "signs-catch-of-fish",
+   "parent": "signs",
+   "refs": [
+    "21:1-14"
+   ],
+   "verses": 14,
+   "greek": 226,
+   "blocks": [
+    "n98"
+   ],
+   "chapters": [
+    21
+   ],
+   "malformed": []
+  },
+  {
+   "group": "Key Metaphors and Teachings",
+   "label": "Abiding in Christ (The Vine and Branches)",
+   "key": "abiding-in-christ",
+   "refs": [
+    "6:56",
+    "8:31",
+    "14:23",
+    "15:1-11",
+    "15:16"
+   ],
+   "verses": 15,
+   "greek": 224,
+   "blocks": [
+    "n30",
+    "n54",
+    "n83",
+    "n84",
+    "n86"
+   ],
+   "chapters": [
+    6,
+    8,
+    14,
+    15
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Feeding the 5,000",
+   "key": "signs-feeding-5000",
+   "parent": "signs",
+   "refs": [
+    "6:1-14"
+   ],
+   "verses": 14,
+   "greek": 203,
+   "blocks": [
+    "n28"
+   ],
+   "chapters": [
+    6
+   ],
+   "malformed": []
+  },
+  {
+   "group": "4. Relational Intimacy and Love",
+   "label": "Intimacy with God (Abiding / Dwelling)",
+   "key": "abiding-intimacy",
+   "refs": [
+    "14:20-21",
+    "14:23",
+    "15:4-10",
+    "17:21-23",
+    "17:26"
+   ],
+   "verses": 14,
+   "greek": 202,
+   "blocks": [
+    "n83",
+    "n84",
+    "n88"
+   ],
+   "chapters": [
+    14,
+    15,
+    17
+   ],
+   "malformed": []
+  },
+  {
+   "group": "4. Relational Intimacy and Love",
+   "label": "Jesus' Friendship and Empathy with Individuals",
+   "key": "jesus-friendship",
+   "refs": [
+    "11:3",
+    "11:5",
+    "11:36",
+    "13:1",
+    "13:23",
+    "15:14-15",
+    "19:26-27",
+    "20:17",
+    "21:7",
+    "21:20"
+   ],
+   "verses": 12,
+   "greek": 188,
+   "blocks": [
+    "n70",
+    "n72",
+    "n82",
+    "n86",
+    "n93",
+    "n96",
+    "n98",
+    "n99"
+   ],
+   "chapters": [
+    11,
+    13,
+    15,
+    19,
+    20,
+    21
+   ],
+   "malformed": []
+  },
+  {
+   "group": "5. Comfort in Anxiety and Grief",
+   "label": "Grief, Empathy, and Mourning",
+   "key": "grief-mourning",
+   "refs": [
+    "11:33-35",
+    "11:38",
+    "16:20-22",
+    "20:11-15"
+   ],
+   "verses": 12,
+   "greek": 187,
+   "blocks": [
+    "n72",
+    "m16_4b-33",
+    "n96"
+   ],
+   "chapters": [
+    11,
+    16,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Turning water to wine",
+   "key": "signs-water-to-wine",
+   "parent": "signs",
+   "refs": [
+    "2:1-11"
+   ],
+   "verses": 11,
+   "greek": 172,
+   "blocks": [
+    "n12"
+   ],
+   "chapters": [
+    2
+   ],
+   "malformed": []
+  },
+  {
+   "group": "2. Truth vs. Relativism",
+   "label": "Cultural Alienation (The World's Hatred/Opposition)",
+   "key": "cultural-alienation",
+   "refs": [
+    "7:7",
+    "15:18-19",
+    "16:1-4",
+    "17:14-16"
+   ],
+   "verses": 10,
+   "greek": 164,
+   "blocks": [
+    "n36",
+    "n87",
+    "m16_4b-33",
+    "n88"
+   ],
+   "chapters": [
+    7,
+    15,
+    16,
+    17
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Healing the official's son",
+   "key": "signs-officials-son",
+   "parent": "signs",
+   "refs": [
+    "4:46-54"
+   ],
+   "verses": 9,
+   "greek": 152,
+   "blocks": [
+    "n20"
+   ],
+   "chapters": [
+    4
+   ],
+   "malformed": []
+  },
+  {
+   "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
+   "label": "Spiritual Blindness (Cognitive dissonance and refusing to see)",
+   "key": "spiritual-blindness",
+   "refs": [
+    "3:19-21",
+    "9:39-41",
+    "12:37-40"
+   ],
+   "verses": 10,
+   "greek": 152,
+   "blocks": [
+    "n14",
+    "n57",
+    "n78"
+   ],
+   "chapters": [
+    3,
+    9,
+    12
+   ],
+   "malformed": []
+  },
+  {
+   "group": "2. Truth vs. Relativism",
+   "label": "Absolute Truth vs. Cultural Relativism",
+   "key": "absolute-truth",
+   "refs": [
+    "1:14",
+    "1:17",
+    "8:31-32",
+    "14:6",
+    "17:17",
+    "17:19",
+    "18:37-38"
+   ],
+   "verses": 9,
+   "greek": 139,
+   "blocks": [
+    "n3",
+    "n54",
+    "n83",
+    "n88",
+    "n92"
+   ],
+   "chapters": [
+    1,
+    8,
+    14,
+    17,
+    18
+   ],
+   "malformed": []
+  },
+  {
+   "group": "1. Identity and Self-Worth",
+   "label": "Being a \"Child of God\" (Spiritual Adoption and Belonging)",
+   "key": "child-of-god",
+   "refs": [
+    "1:12-13",
+    "3:3",
+    "3:5-8",
+    "11:52"
+   ],
+   "verses": 8,
+   "greek": 129,
+   "blocks": [
+    "n3",
+    "n14",
+    "n73"
+   ],
+   "chapters": [
+    1,
+    3,
+    11
+   ],
+   "malformed": []
+  },
+  {
+   "group": "Key Metaphors and Teachings",
+   "label": "Being Born Again (Spiritual Rebirth)",
+   "key": "born-again",
+   "refs": [
+    "1:12-13",
+    "3:3-8"
+   ],
+   "verses": 8,
+   "greek": 127,
+   "blocks": [
+    "n3",
+    "n14"
+   ],
+   "chapters": [
+    1,
+    3
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "I AM (Unpredicated/Divine Name)",
+   "key": "i-am-divine-name",
+   "parent": "i-am-statements",
+   "refs": [
+    "4:26",
+    "8:24",
+    "8:28",
+    "8:58",
+    "13:19",
+    "18:5-6",
+    "18:8"
+   ],
+   "verses": 8,
+   "greek": 126,
+   "blocks": [
+    "n18",
+    "n51",
+    "n54",
+    "n82",
+    "n90"
+   ],
+   "chapters": [
+    4,
+    8,
+    13,
+    18
+   ],
+   "malformed": []
+  },
+  {
+   "group": "6. The Role of the Holy Spirit in Daily Life",
+   "label": "Direct Access in Prayer (Praying in Jesus' Name)",
+   "key": "prayer-jesus-name",
+   "refs": [
+    "14:13-14",
+    "15:7",
+    "15:16",
+    "16:23-24",
+    "16:26-27"
+   ],
+   "verses": 8,
+   "greek": 118,
+   "blocks": [
+    "n83",
+    "n84",
+    "n86",
+    "m16_4b-33"
+   ],
+   "chapters": [
+    14,
+    15,
+    16
+   ],
+   "malformed": []
+  },
+  {
+   "group": "1. Identity and Self-Worth",
+   "label": "Security and Assurance (Safety in Salvation)",
+   "key": "security-assurance",
+   "refs": [
+    "6:37",
+    "6:39-40",
+    "10:27-29",
+    "17:11-12"
+   ],
+   "verses": 8,
+   "greek": 116,
+   "blocks": [
+    "n30",
+    "n67",
+    "n88"
+   ],
+   "chapters": [
+    6,
+    10,
+    17
+   ],
+   "malformed": []
+  },
+  {
+   "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
+   "label": "Honest Doubt and Demanding Evidence",
+   "key": "honest-doubt",
+   "refs": [
+    "14:8",
+    "20:24-29"
+   ],
+   "verses": 7,
+   "greek": 109,
+   "blocks": [
+    "n83",
+    "n96"
+   ],
+   "chapters": [
+    14,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
+   "label": "Questioning Faith (Struggling with hard teachings)",
+   "key": "questioning-faith",
+   "refs": [
+    "6:60-66"
+   ],
+   "verses": 7,
+   "greek": 108,
+   "blocks": [
+    "n33"
+   ],
+   "chapters": [
+    6
+   ],
+   "malformed": []
+  },
+  {
+   "group": "6. The Role of the Holy Spirit in Daily Life",
+   "label": "Conviction and Truth",
+   "key": "conviction-truth",
+   "refs": [
+    "16:8-11",
+    "16:13-15"
+   ],
+   "verses": 7,
+   "greek": 103,
+   "blocks": [
+    "m16_4b-33"
+   ],
+   "chapters": [
+    16
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Walking on water",
+   "key": "signs-walking-on-water",
+   "parent": "signs",
+   "refs": [
+    "6:16-21"
+   ],
+   "verses": 6,
+   "greek": 96,
+   "blocks": [
+    "n29"
+   ],
+   "chapters": [
+    6
+   ],
+   "malformed": []
+  },
+  {
+   "group": "4. Relational Intimacy and Love",
+   "label": "The Greatest Sacrifice (Laying down life for friends)",
+   "key": "greatest-sacrifice",
+   "refs": [
+    "10:11",
+    "10:15",
+    "10:17-18",
+    "15:13"
+   ],
+   "verses": 5,
+   "greek": 74,
+   "blocks": [
+    "n62",
+    "n86"
+   ],
+   "chapters": [
+    10,
+    15
+   ],
+   "malformed": []
+  },
+  {
+   "group": "6. The Role of the Holy Spirit in Daily Life",
+   "label": "The Helper/Comforter (Active Guidance)",
+   "key": "helper-comforter",
+   "refs": [
+    "14:16-17",
+    "14:26",
+    "15:26",
+    "16:7"
+   ],
+   "verses": 5,
+   "greek": 73,
+   "blocks": [
+    "n83",
+    "n87",
+    "m16_4b-33"
+   ],
+   "chapters": [
+    14,
+    15,
+    16
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "Bread of Life",
+   "key": "bread-of-life",
+   "parent": "i-am-statements",
+   "refs": [
+    "6:35",
+    "6:41",
+    "6:48",
+    "6:51"
+   ],
+   "verses": 4,
+   "greek": 63,
+   "blocks": [
+    "n30"
+   ],
+   "chapters": [
+    6
+   ],
+   "malformed": []
+  },
+  {
+   "group": "4. Relational Intimacy and Love",
+   "label": "The Command to Love One Another",
+   "key": "love-one-another",
+   "refs": [
+    "13:34-35",
+    "15:12",
+    "15:17"
+   ],
+   "verses": 4,
+   "greek": 61,
+   "blocks": [
+    "n82",
+    "n86"
+   ],
+   "chapters": [
+    13,
+    15
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "The Incarnation (\"Tabernacling\" among us)",
+   "key": "incarnation",
+   "refs": [
+    "1:9-11",
+    "1:14"
+   ],
+   "verses": 4,
+   "greek": 56,
+   "blocks": [
+    "n3"
+   ],
+   "chapters": [
+    1
+   ],
+   "malformed": []
+  },
+  {
+   "group": "5. Comfort in Anxiety and Grief",
+   "label": "Rest and Spiritual Sustenance",
+   "key": "rest-sustenance",
+   "refs": [
+    "6:35",
+    "7:37-38"
+   ],
+   "verses": 3,
+   "greek": 48,
+   "blocks": [
+    "n30",
+    "n46"
+   ],
+   "chapters": [
+    6,
+    7
+   ],
+   "malformed": []
+  },
+  {
+   "group": "6. The Role of the Holy Spirit in Daily Life",
+   "label": "Spiritual Empowerment",
+   "key": "spiritual-empowerment",
+   "refs": [
+    "7:38-39",
+    "20:22"
+   ],
+   "verses": 3,
+   "greek": 48,
+   "blocks": [
+    "n46",
+    "n96"
+   ],
+   "chapters": [
+    7,
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "5. Comfort in Anxiety and Grief",
+   "label": "Overcoming Anxiety, Trouble, and Fear",
+   "key": "overcoming-anxiety",
+   "refs": [
+    "14:1",
+    "14:27",
+    "16:33"
+   ],
+   "verses": 3,
+   "greek": 44,
+   "blocks": [
+    "n83",
+    "m16_4b-33"
+   ],
+   "chapters": [
+    14,
+    16
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "Light of the World",
+   "key": "light-of-the-world",
+   "parent": "i-am-statements",
+   "refs": [
+    "8:12",
+    "9:5"
+   ],
+   "verses": 2,
+   "greek": 36,
+   "blocks": [
+    "n48",
+    "n57"
+   ],
+   "chapters": [
+    8,
+    9
+   ],
+   "malformed": []
+  },
+  {
+   "group": "2. Truth vs. Relativism",
+   "label": "Deception and the Father of Lies",
+   "key": "father-of-lies",
+   "refs": [
+    "8:44-45"
+   ],
+   "verses": 2,
+   "greek": 35,
+   "blocks": [
+    "n54"
+   ],
+   "chapters": [
+    8
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Mechanics of Salvation and Evidence",
+   "label": "Verses explaining the purpose of the signs",
+   "key": "signs-purpose",
+   "parent": "signs",
+   "refs": [
+    "20:30-31"
+   ],
+   "verses": 2,
+   "greek": 31,
+   "blocks": [
+    "n96"
+   ],
+   "chapters": [
+    20
+   ],
+   "malformed": []
+  },
+  {
+   "group": "1. Identity and Self-Worth",
+   "label": "Chosen and Appointed (Value not based on performance)",
+   "key": "chosen-appointed",
+   "refs": [
+    "15:16",
+    "15:19"
+   ],
+   "verses": 2,
+   "greek": 31,
+   "blocks": [
+    "n86",
+    "n87"
+   ],
+   "chapters": [
+    15
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "Door of the Sheep",
+   "key": "door-of-the-sheep",
+   "parent": "i-am-statements",
+   "refs": [
+    "10:7",
+    "10:9"
+   ],
+   "verses": 2,
+   "greek": 29,
+   "blocks": [
+    "n62"
+   ],
+   "chapters": [
+    10
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "Good Shepherd",
+   "key": "i-am-good-shepherd",
+   "parent": "i-am-statements",
+   "refs": [
+    "10:11",
+    "10:14"
+   ],
+   "verses": 2,
+   "greek": 29,
+   "blocks": [
+    "n62"
+   ],
+   "chapters": [
+    10
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "The True Vine",
+   "key": "true-vine",
+   "parent": "i-am-statements",
+   "refs": [
+    "15:1",
+    "15:5"
+   ],
+   "verses": 2,
+   "greek": 29,
+   "blocks": [
+    "n84"
+   ],
+   "chapters": [
+    15
+   ],
+   "malformed": []
+  },
+  {
+   "group": "4. Relational Intimacy and Love",
+   "label": "God's Overarching Love for the Cosmos",
+   "key": "love-for-cosmos",
+   "refs": [
+    "3:16"
+   ],
+   "verses": 1,
+   "greek": 17,
+   "blocks": [
+    "n14"
+   ],
+   "chapters": [
+    3
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "Resurrection and the Life",
+   "key": "resurrection-and-the-life",
+   "parent": "i-am-statements",
+   "refs": [
+    "11:25"
+   ],
+   "verses": 1,
+   "greek": 16,
+   "blocks": [
+    "n72"
+   ],
+   "chapters": [
+    11
+   ],
+   "malformed": []
+  },
+  {
+   "group": "The Nature and Identity of Jesus",
+   "label": "The Way, the Truth, and the Life",
+   "key": "way-truth-life",
+   "parent": "i-am-statements",
+   "refs": [
+    "14:6"
+   ],
+   "verses": 1,
+   "greek": 14,
+   "blocks": [
+    "n83"
+   ],
+   "chapters": [
+    14
+   ],
+   "malformed": []
+  }
+ ]
+}

@@ -27,8 +27,12 @@ works — it just warns and skips `city3d-three.html` when the bundle is missing
 data/John gospel as a city.xlsx   source data (John Stats outline is authoritative)
 data/chiasms-source.md            PaulDz's chiasm structure of the whole gospel, from
                                   Malina & Rohrbaugh (1998) — the provenance record
+data/themes-source.md             PaulDz's Roman way types + exhaustive theme verse
+                                  lists (issue #2, 2026-08-18) — the provenance record
 scripts/build_data.py             extracts/curates → data/john-data.json
 scripts/build_chiasms.py          data/chiasms-source.md → data/chiasms.json
+scripts/verse_weights.py          per-verse Greek apportionment (blocks → verses)
+scripts/build_themes.py           parsed theme sections → data/themes.json, measured
 index.template.html + scripts/app.js     → index.html   (2D: city / linear / index)
 city3d.template.html + scripts/app3d.js  → city3d.html  (3D canvas renderer, classic)
 city3d.template.html + src/ (bundled)    → city3d-three.html (3D Three.js, Phase 2)
@@ -94,6 +98,12 @@ artifact previews + offline use).
   *build* time — the built HTML is committed afterwards, so the stamp trails the
   history by one commit, the same convention as conversations.md. The timestamp is
   the reliable "did this change" signal.
+- **Theme extents are measured, never estimated by eye.** `data/themes.json` is
+  generated from `data/themes-source.md` and carries, per theme, an exact verse count
+  and an *apportioned* Greek word count — per-block totals spread evenly across their
+  verses by `scripts/verse_weights.py`, because the spreadsheet counts words per
+  pericope, not per verse. Greek totals are therefore estimates and must be labelled as
+  such wherever shown. `npm run verify` re-derives the whole join and fails on drift.
 - **Chiasm centres are derived, never hand-tagged** (`src/chiasm-ui.js` consumes what
   `scripts/build_chiasms.py` derives). Where the source marks no centre, the UI says so
   in words rather than picking a plausible middle rung — six chiasms are legitimately
