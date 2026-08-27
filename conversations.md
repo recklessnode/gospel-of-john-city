@@ -665,3 +665,26 @@ ways, no ways for the 17 children — and it flags that the two hand-authored ro
 supersede. Nothing rendered yet: the two open questions on #2 (the semita/angiportus order,
 and the compilation asymmetry) change the *data* rather than the code, so the design survives
 either answer, but the sizes it draws would move.
+
+### Divine Fire split out into its own repository
+
+Ronald had pushed a `divine-fire-synthesis` branch here (two commits, 2026-08-25): a 524-line
+first-principles synthesis connecting divine Word, fire, holiness, clean/unclean distinctions
+and judgment across the Hebrew Bible, Second Temple literature, rabbinic tradition and the New
+Testament, plus the 299-line conversation it was distilled from. Docs only, no code, branched
+cleanly off `main` at 672d283.
+
+**Moved to [recklessnode/divine-fire-synthesis](https://github.com/recklessnode/divine-fire-synthesis)**
+(private) on 2026-08-26, with both commits replayed onto a fresh history — original author,
+dates and messages preserved, and both files verified byte-identical to the branch.
+
+The reason for separating them is invariant 5. This project runs on *nothing in the city is
+invented*: every building, landmark and route traces to the text or to a citable source. The
+synthesis is openly constructive — it reasons from first principles and says so in its own
+first paragraph. Those are two different standards of evidence, and keeping them in one
+repository would eventually have let the looser one leak into the stricter one. The new repo
+carries a CLAUDE.md saying so, and stating that nothing in it may be cited as a source for
+city content: if a conclusion there belongs in the city, it has to arrive by the city's own
+route, sourced to citable authors.
+
+The branch is left in place here as a record; it is superseded, not lost.
