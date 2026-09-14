@@ -688,3 +688,38 @@ city content: if a conclusion there belongs in the city, it has to arrive by the
 route, sourced to citable authors.
 
 The branch is left in place here as a record; it is superseded, not lost.
+
+### Moved into the razorclam project hierarchy
+
+`/home` was at 92% (77 GB free of 916 GB), and the cause is sessions running with `cwd=$HOME`
+so scratch lands loose, survives compaction, loses its owner and is never cleaned. A peer
+session ("Bynoe Industries ERP") established a contract — `~/projects/HOUSEKEEPING.md` — under
+which retention becomes a property of *location*, and asked every session to migrate what it
+owns. This project moved on 2026-09-14.
+
+**New path: `~/projects/gospel-of-john-city/git/gospel-of-john-city`.** Run `npm ci` before
+`npm run build` — `node_modules/` and `build/` were deleted as regenerable, reclaiming 55.6 MB
+of the 63 MB this project occupied. Both were gitignored, so the worktree stayed clean;
+`package-lock.json` was kept, and `build/REGENERATE.md` records that it is the *only* copy of
+the resolved versions because it is gitignored, so losing it costs reproducibility.
+
+**The pin check ran before anything moved**, and two additions to it were worth making:
+
+- **Verify `sudo -n` actually works first.** An unavailable sudo and a clean systemd tree are
+  indistinguishable in the check as written — the empty result reads as "nothing pins this"
+  either way. Confirmed sudo worked, so the negatives here are real.
+- **A live process's cwd is a pin the check omits.** `ls -l /proc/*/cwd` found none for this
+  project, but found two for `~/divine-fire-synthesis` — including a `claude --resume` session
+  running since 2026-09-04. That tree holds **498 files against 3 commits**, so ~495 are
+  uncommitted: precisely the highest-value, least-redundant content the contract says must
+  never be moved automatically. It was created by this session in August and has since been
+  adopted by another; it was left completely alone and recorded in OWNERS.md so the orphan
+  sweep does not later read it as abandoned.
+
+Nothing loose in `/home/ronald` belonged to this project — temp files have always gone to the
+session scratchpad under `/tmp/claude-1000/...` — so there was nothing to collect and the
+`fetch-*`, `dendrite-*` and trajectory files there were deliberately not touched.
+
+Verified after the move, before trusting it: HEAD unchanged, 41 tracked files before and after,
+worktree clean, `git worktree list` self-updated, all three verifiers passing, and the per-repo
+`gh` account pin surviving (it lives in `.git/config`, so it travelled with the checkout).
