@@ -144,11 +144,40 @@ function measureWays(keys) {
     widths, ascending: widths.every((v, i) => !i || widths[i - 1] <= v), ptOpp, ptBad, ptHood };
 }
 
+/* Runs IN THE PAGE: reads the way key back and recomputes what it should say. */
+function measureKey(keys) {
+  const key = document.getElementById("waykey"), status = window.JOHN_WAYS.status, types = window.JOHN_WAYS.types;
+  const band = k => { const i = types.findIndex(t => t.key === k), lo = types[i].minVerses; return i === 0 ? `≥ ${lo}` : `${lo}–${types[i - 1].minVerses - 1}`; };
+  const rows = [...key.querySelectorAll(".wk-row")].map(r => {
+    const k = r.dataset.way, t = window.JOHN_WAYTHEMES.themes.find(x => x.key === k);
+    const facts = r.querySelector(".wk-facts").textContent, m = /\(band ([^)]*)\)/.exec(facts);
+    const pinchIds = [...new Set([...r.querySelectorAll("[data-pinch]")].flatMap(e => e.dataset.pinch.split("|")))].sort();
+    const bridgeIds = [...document.querySelectorAll(`#map .way-bridge[data-way="${k}"]`)].map(e => e.dataset.bridge).sort();
+    const x = r.querySelector(".wk-x");
+    return { k, label: t.label, est: facts.includes("(est.)"), bandShown: m ? m[1] : null, bandWant: band(t.way),
+      stubNote: !!r.querySelector(".wk-stub"), isStub: !!document.querySelector(`#map g.way[data-way="${k}"][data-stub]`),
+      pinchIds, bridgeIds, xName: x ? (x.getAttribute("aria-label") || x.textContent) : "" };
+  });
+  // case-insensitive: "Proposed" typed anywhere is the same second home for the status
+  const text = document.body.innerText.toLowerCase();
+  const count = (h, n) => h.split(n.toLowerCase()).length - 1;
+  const proposedOutside = count(text, "proposed") - count(text, status) * count(status, "proposed");
+  const statusEl = key.querySelector(".wk-status"), firstRow = key.querySelector(".wk-row");
+  const kb = key.getBoundingClientRect(), zb = document.getElementById("zoomctl").getBoundingClientRect();
+  const hits = (a, b) => a.width && b.width && !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+  return { visible: !key.hidden && kb.width > 0, role: key.getAttribute("role"), hasStatus: key.textContent.includes(status),
+    statusFirst: !!(statusEl && firstRow && (statusEl.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING)),
+    rowKeys: rows.map(r => r.k), rows, proposedOutside,
+    hintDisplay: getComputedStyle(document.getElementById("hint")).display,
+    inView: kb.left >= 0 && kb.top >= 0 && kb.right <= innerWidth + 0.5 && kb.bottom <= innerHeight + 0.5, hitsZoom: hits(kb, zb) };
+}
+
 const b = await chromium.launch();
 const checks = [];
 const ok = (cfg, name, pass, detail = "") => checks.push({ cfg, name, pass: !!pass, detail });
 
 for (const cfg of CONFIGS) {
+ try {
   const ctx = await b.newContext({ viewport: { width: cfg.width, height: cfg.height }, colorScheme: cfg.scheme });
   const page = await ctx.newPage();
   const errors = [];
@@ -284,7 +313,61 @@ for (const cfg of CONFIGS) {
     ok(cfg.name, `${tag} ways painted narrowest first`, M.ascending, `widths ${M.widths.join(",")}`);
     ok(cfg.name, `${tag} way layers never take the pointer`, M.ptOpp > 0 && M.ptBad === 0,
       M.ptOpp ? `${M.ptBad} of ${M.ptOpp} probes hit a way layer; ${M.ptHood} bridged-block probes reached the block` : "unmeasured: no probe point on the map");
+    const K = await page.evaluate(measureKey, keys);
+    ok(cfg.name, `${tag} key is shown, as a labelled region`, K.visible && K.role === "region", `visible ${K.visible}, role ${K.role}`);
+    ok(cfg.name, `${tag} key states the status verbatim (from the page's own data)`, K.hasStatus);
+    ok(cfg.name, `${tag} key states the status BEFORE any way row`, K.statusFirst);
+    ok(cfg.name, `${tag} key: one row per shown way, in order`, JSON.stringify(K.rowKeys) === JSON.stringify(keys), `rows [${K.rowKeys}]`);
+    for (const r of K.rows) {
+      const L = `[${r.k}]`;
+      ok(cfg.name, `${L} key row labels the Greek count an estimate`, r.est);
+      ok(cfg.name, `${L} key row's band = the range the types' floors give`, r.bandShown === r.bandWant, `shown "${r.bandShown}", want "${r.bandWant}"`);
+      ok(cfg.name, `${L} key row notes a stub exactly when drawn as one`, r.stubNote === r.isStub, `note ${r.stubNote}, stub ${r.isStub}`);
+      ok(cfg.name, `${L} key row names exactly the blocks drawn as bridges`, JSON.stringify(r.pinchIds) === JSON.stringify(r.bridgeIds), `named [${r.pinchIds}] bridged [${r.bridgeIds}]`);
+      ok(cfg.name, `${L} remove button names the theme`, r.xName.includes(r.label), `"${r.xName}"`);
+    }
+    ok(cfg.name, `${tag} "proposed" appears only inside the status string`, K.proposedOutside === 0, `${K.proposedOutside} stray`);
+    ok(cfg.name, `${tag} the hint yields to the key`, K.hintDisplay === "none", `hint display ${K.hintDisplay}`);
+    ok(cfg.name, `${tag} key inside the viewport, clear of the zoom buttons`, K.inView && !K.hitsZoom, `in view ${K.inView}, overlaps zoom ${K.hitsZoom}`);
     if (shots) await page.screenshot({ path: `${shots}/${keys.join("+")}-${cfg.name}.png` });
+  }
+
+  // key behaviour: rejects are shown as inert text, the cap holds, × edits the URL, views hide it
+  {
+    const tops = JSON.parse(DISK.themes).themes.filter(t => !t.parent), child = JSON.parse(DISK.themes).themes.find(t => t.parent);
+    const k0 = FIXTURES[0][0], k1 = FIXTURES[0][1] || tops.find(t => t.key !== k0).key;
+    const load = async q => { await page.goto(url + "?ways=" + q); await page.waitForTimeout(500); };
+    const drawn = () => page.evaluate(() => [...document.querySelectorAll("#map .way")].map(e => e.dataset.way));
+    const rejects = () => page.evaluate(() => [...document.querySelectorAll("#waykey .wk-reject")].map(e => e.textContent));
+    await load(`nope,${k0}`);
+    const r1 = await rejects(), d1 = await drawn();
+    ok(cfg.name, "unknown key: the known one is drawn, the unknown one is named", d1.length === 1 && d1[0] === k0 && r1.some(t => t.includes("nope")), `drawn [${d1}] notes ${JSON.stringify(r1)}`);
+    await load(`%3Cb%3Ex%3C%2Fb%3E,${k0}`);
+    const inj = await page.evaluate(() => ({ b: document.querySelectorAll("#waykey b").length,
+      text: [...document.querySelectorAll("#waykey .wk-reject")].map(e => e.textContent).join(" ") }));
+    ok(cfg.name, "a crafted key is shown as text, never as markup", inj.b === 0 && inj.text.includes("<b>"), `<b> elements ${inj.b}; note "${inj.text}"`);
+    await load(`${k0},${k0}`);
+    ok(cfg.name, "a duplicate key draws once and is noted", (await drawn()).length === 1 && (await rejects()).some(t => t.includes("twice")));
+    await load(tops.slice(0, 5).map(t => t.key).join(","));
+    ok(cfg.name, "more than the cap: the cap is drawn and the rest is noted", (await drawn()).length === 4 && (await rejects()).some(t => t.includes("At most")));
+    await load(`${child.key},${k0}`);
+    ok(cfg.name, "a sub-entry is not drawn; the note names its parent", !(await drawn()).includes(child.key) &&
+      (await rejects()).some(t => t.includes(tops.find(t => t.key === child.parent).label)));
+    await load(`${k0},${k1}`);
+    const before = (await drawn()).length;
+    const clickedX = await page.click(`#waykey .wk-row[data-way="${k0}"] .wk-x`, { timeout: 2000 }).then(() => true, () => false);
+    ok(cfg.name, "× button present and clickable", clickedX);
+    await page.waitForTimeout(400);
+    const after = await drawn();
+    const inUrl = await page.evaluate(() => (new URLSearchParams(location.search).get("ways") || "").split(",").filter(Boolean));
+    ok(cfg.name, "× removes that way from the map and from the URL", after.length === before - 1 && !after.includes(k0) &&
+      JSON.stringify(inUrl) === JSON.stringify(after.slice().sort((a, b) => [k0, k1].indexOf(a) - [k0, k1].indexOf(b))), `map [${after}] url [${inUrl}]`);
+    for (const v of ["linear", "index"]) {
+      await page.click(`#viewseg button[data-view="${v}"]`, { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250);
+      ok(cfg.name, `key hidden in the ${v} view`, await page.evaluate(() => document.getElementById("waykey").hidden));
+    }
+    await page.click(`#viewseg button[data-view="organic"]`, { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(400);
+    ok(cfg.name, "key back on the map view", await page.evaluate(() => !document.getElementById("waykey").hidden));
   }
   // a pinch exists in the data, so the bridge assertions must have had something to measure
   ok(cfg.name, "bridge assertions measured at least one bridge", !pinched.length || bridgesMeasured > 0,
@@ -294,6 +377,10 @@ for (const cfg of CONFIGS) {
 
   ok(cfg.name, "no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
   await ctx.close();
+ } catch (e) {
+  // a failure keeps its evidence: record it and keep every result already collected
+  ok(cfg.name, "harness ran to completion", false, String(e && e.message || e).split("\n")[0]);
+ }
 }
 
 await b.close();

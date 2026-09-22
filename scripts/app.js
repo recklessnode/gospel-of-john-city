@@ -667,6 +667,120 @@ function applyWays() {
   const on = new Set(shown.flatMap(t => t.blocks));
   svg.querySelectorAll(".hood[data-hood]").forEach(e =>
     e.classList.toggle("dimmed", shown.length > 0 && !on.has(e.dataset.hood)));
+  renderKey();
+  syncChrome();
+}
+
+/* ---------- THEME WAYS: the key ---------- */
+/* Built with DOM calls and textContent only — never an innerHTML template — so a crafted
+   ?ways= key is shown as inert text. Every figure is read from the data or computed by the
+   same functions the node gate checks; none is typed here. */
+function dom(tag, cls, text, parent) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : (many || one + "s")}`;
+const blockName = id => (byId[id] || (JOHN.annex && JOHN.annex.id === id ? JOHN.annex : null) || { short: id }).short;
+
+// the band a type occupies, from its own floor and the next wider type's floor
+function wayBand(typeKey) {
+  const types = WAYDATA.types, i = types.findIndex(t => t.key === typeKey), lo = types[i].minVerses;
+  return i === 0 ? `≥ ${lo}` : `${lo}–${types[i - 1].minVerses - 1}`;
+}
+
+function wayKeyRow(parent, k, n, scale) {
+  const t = WAY_THEME.get(k), ty = WAY_TYPE.get(t.way), w = ty.widthPlan * scale, g = wayGeomFor(t, w / 2);
+  const row = dom("div", "wk-row", null, parent);
+  row.dataset.way = k;
+  const head = dom("div", "wk-head", null, row);
+  dom("span", "wk-n", String(n), head).setAttribute("aria-hidden", "true");
+  dom("span", "wk-label", t.label, head);
+  const x = dom("button", "wk-x", "×", head);
+  x.type = "button";
+  x.setAttribute("aria-label", `Remove ${t.label}`);
+  x.addEventListener("click", () => removeWay(k));
+  // swatch: the same stroke stack as the map, at true relative width
+  const type = dom("div", "wk-type", null, row);
+  const sw = document.createElementNS(NS, "svg");
+  sw.setAttribute("width", "46"); sw.setAttribute("height", "16"); sw.setAttribute("aria-hidden", "true");
+  type.appendChild(sw);
+  const k12 = 12 / (WAYDATA.types[0].widthPlan * scale);    // the widest type fills 12 px
+  drawWayStack(sw, t.way, "M5,8L41,8", w * k12, "way-swatch");
+  dom("span", null, `${ty.label} — ${ty.gloss}`, type);
+  const refs = t.refs.length <= 3 ? ` · ${t.refs.join(", ")}` : "";
+  dom("div", "wk-facts", `${plural(t.verses, "verse")} → ${ty.label} (band ${wayBand(t.way)}) · ` +
+    `${plural(t.blocks.length, "block")} · Greek ≈ ${fmt(t.greek)} (est.)${refs}`, row);
+  if (g.stub) dom("div", "wk-note wk-stub", "One block: drawn as a stub beside it — its position and length are not data.", row);
+  const pinches = wayPinches(g.crossings);
+  if (pinches.length) {
+    const note = dom("div", "wk-note wk-pinch", `Too wide for ${plural(pinches.length, "gap")} between blocks it is not on, so it passes over both at each: `, row);
+    pinches.forEach((q, i) => {
+      const sp = dom("span", null, `${i ? " · " : ""}${blockName(q.a)} & ${blockName(q.b)} (${q.gap.toFixed(1)} apart)`, note);
+      sp.dataset.pinch = [q.a, q.b].sort().join("|");
+    });
+  }
+}
+
+function renderKey() {
+  const key = document.getElementById("waykey");
+  if (!key) return;
+  key.replaceChildren();
+  if (!WAYDATA || !WAYS.shown.length) return;
+  const scale = wayScale();
+  if (!scale) return;
+  key.tabIndex = -1;
+  // the status qualifies every row, so it is read first — never scrolled below them
+  const st = dom("p", "wk-head-status", "Way types: ", key);
+  dom("span", "wk-status", WAYDATA.status, st);
+  WAYS.shown.forEach((k, i) => wayKeyRow(key, k, i + 1, scale));
+  const foot = dom("div", "wk-foot", null, key);
+  dom("p", null, "Verses and blocks are PaulDz's lists; each way's type is derived from its verse count.", foot);
+  dom("p", null, "Lines join each theme's blocks in verse order; the route between blocks is schematic.", foot);
+  dom("p", null, "Theme ways pass beneath the city wall; they make no gates.", foot);
+  const floored = svg.querySelectorAll(".way[data-floored]").length;
+  if (floored) dom("p", "wk-floor", `${plural(floored, "way is", "ways are")} thinner than a screen pixel at this zoom and drawn wider so it stays visible.`, foot);
+  for (const r of WAYS.rejects) {
+    const text = r.why === "unknown" ? `Not a theme: “${r.key}”.`
+      : r.why === "child" ? `“${WAY_THEME.get(r.key).label}” is inside ${WAY_THEME.get(r.parent).label}; its verses are counted in that way.`
+      : r.why === "duplicate" ? `“${r.key}” was listed twice; shown once.`
+      : `At most ${WAYS_MAX} ways at once; “${r.key}” was left out.`;
+    dom("p", "wk-reject", text, foot);
+  }
+}
+
+/* The URL is the review artefact: rewrite ?ways= by hand (URLSearchParams would encode the
+   comma as %2C), keep every other parameter and the hash. Sandboxed frames — artifact
+   previews — may refuse history writes; the map stays right either way. */
+function writeWaysURL() {
+  try {
+    const q = new URLSearchParams(location.search);
+    q.delete("ways");
+    const parts = [q.toString(), WAYS.shown.length ? "ways=" + WAYS.shown.join(",") : ""].filter(Boolean);
+    history.replaceState(null, "", location.pathname + (parts.length ? "?" + parts.join("&") : "") + location.hash);
+  } catch (e) { /* no history API here: nothing to do */ }
+}
+
+function removeWay(k) {
+  WAYS.shown = WAYS.shown.filter(x => x !== k);
+  WAYS.rejects = [];
+  writeWaysURL();
+  if (typeof refreshWayToggles === "function") refreshWayToggles();
+  renderOrganic();
+  const key = document.getElementById("waykey");
+  if (key && !key.hidden) key.focus();
+}
+
+/* One owner for the chrome the ways affect: the hint yields to the key, and the key shows
+   only on the organic map. "" hands the hint back to the stylesheet (its ≤900px rule),
+   which an inline "block" used to override after any view switch. */
+function syncChrome() {
+  const showing = !!(WAYDATA && WAYS.shown.length);
+  const hint = document.getElementById("hint"), key = document.getElementById("waykey");
+  if (hint) hint.style.display = (view === "index" || showing) ? "none" : "";
+  if (key) key.hidden = !(view === "organic" && showing);
 }
 
 /* ---------- ORGANIC VIEW ---------- */
@@ -1070,10 +1184,10 @@ document.querySelectorAll("#viewseg button").forEach(b => b.addEventListener("cl
   document.getElementById("mapwrap").style.display = isIndex ? "none" : "block";
   document.getElementById("controls").classList.toggle("hidden", isIndex);
   document.getElementById("zoomctl").style.display = isIndex ? "none" : "flex";
-  document.getElementById("hint").style.display = isIndex ? "none" : "block";
   hideTip();
   if (view === "organic") { resetVB(); renderOrganic(); }
   else if (view === "linear") { resetVB(); renderLinear(); }
+  syncChrome();
 }));
 
 /* ---------- theme toggle (in-memory only; no storage APIs) ---------- */
