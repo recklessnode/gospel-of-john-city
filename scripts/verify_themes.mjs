@@ -93,6 +93,12 @@ for (const t of TH.themes) {
   if (blocks.join() !== [...t.blocks].join()) fail(`${t.key}: blocks drifted (${t.blocks.length} stored, ${blocks.length} recomputed)`);
 }
 
+/* ---------- 4b. one home for theme extents ---------- */
+// The sketch's two hand-drawn "theme roads" were retired 2026-09-22 (conversations.md keeps
+// them verbatim). Theme extents live only in data/themes.json; a second list in the city data
+// would be two representations of one fact, and they would diverge.
+if ("themeRoads" in JD) fail("john-data.json carries themeRoads — theme extents live only in data/themes.json");
+
 /* ---------- 5. way bands are derivable, not hand-tagged ---------- */
 const WAYS = JSON.parse(readFileSync(join(ROOT, "data/way-types.json"), "utf8")).types;
 for (let i = 1; i < WAYS.length; i++)

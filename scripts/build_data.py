@@ -115,7 +115,6 @@ CITY = {
     },
     "districts": [],
     "iam": [],
-    "themeRoads": {},
 }
 
 
@@ -278,20 +277,9 @@ CITY["iam"] = [
     {"id": "iam-vine", "label": "I am the True Vine", "ref": "15:1", "v": vidx(15, 1)},
 ]
 
-# --- Theme roads (from PaulDz's sketch: theme paths snaking out of the Prologue) ---
-# Roads are ordered lists of neighborhood ids they pass through.
-CITY["themeRoads"] = {
-    "life": {
-        "label": "The Life & Water Road",
-        "note": "1:4 — 'In him was life' • water, bread, and resurrection sites",
-        "stops": ["n3", "n14", "n18", "n22", "n30", "n46", "n62", "n72", "n83", "n96", "n98"],
-    },
-    "light": {
-        "label": "The Light & Witness Road",
-        "note": "1:4 — 'the life was the light of men' • testimony and light sites",
-        "stops": ["n3", "n5", "n6", "n16", "n48", "n57", "n77", "n88", "n102"],
-    },
-}
+# Theme ways are not defined here: their extents come from PaulDz's issue-#2 lists via
+# data/themes-source.md -> scripts/build_themes.py -> data/themes.json. The two sketch
+# roads this block once defined are retired; conversations.md keeps them verbatim.
 
 # --- consistency checks ---
 problems = []

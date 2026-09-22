@@ -1326,40 +1326,6 @@
    "v": 656
   }
  ],
- "themeRoads": {
-  "life": {
-   "label": "The Life & Water Road",
-   "note": "1:4 — 'In him was life' • water, bread, and resurrection sites",
-   "stops": [
-    "n3",
-    "n14",
-    "n18",
-    "n22",
-    "n30",
-    "n46",
-    "n62",
-    "n72",
-    "n83",
-    "n96",
-    "n98"
-   ]
-  },
-  "light": {
-   "label": "The Light & Witness Road",
-   "note": "1:4 — 'the life was the light of men' • testimony and light sites",
-   "stops": [
-    "n3",
-    "n5",
-    "n6",
-    "n16",
-    "n48",
-    "n57",
-    "n77",
-    "n88",
-    "n102"
-   ]
-  }
- },
  "annex": {
   "id": "annex",
   "short": "The Mercy Annex",

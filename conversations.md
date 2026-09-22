@@ -723,3 +723,72 @@ session scratchpad under `/tmp/claude-1000/...` — so there was nothing to coll
 Verified after the move, before trusting it: HEAD unchanged, 41 tracked files before and after,
 worktree clean, `git worktree list` self-updated, all three verifiers passing, and the per-repo
 `gh` account pin surviving (it lives in `.git/config`, so it travelled with the checkout).
+
+### Retiring the two sketch roads — provenance (2026-09-22)
+
+The city carried two hand-drawn **theme roads** from its first build. They were our
+transcription of **PaulDz's early sketch**, not an invention of ours, and they are retired now
+because his own later, exhaustive theme lists (issue #2, `data/themes-source.md`) supersede
+them — and one of them, "Light & Witness", measures as more than one of his themes. Keeping
+both pictures would have the map contradict itself. The sketch image is not in the repository,
+so this entry is the only surviving record of what the roads were. Nothing below is typed; each
+block is printed by the command beside it.
+
+The attribution in the generator, `git show ce4b9e1:scripts/build_data.py | grep -n 'Theme roads'`:
+
+```
+281:# --- Theme roads (from PaulDz's sketch: theme paths snaking out of the Prologue) ---
+```
+
+The attribution in the README before this session, `git show 2ce9d82:README.md | grep -n -A1 'theme roads'`:
+
+```
+20:the **"I AM" landmarks**, the two **theme roads** (Life & Water, Light & Witness —
+21-the two paths in PaulDz's sketch), and **chiasm bridges** linking A↔A′ pairs.
+```
+
+Origin, `git log -1 --format='%h %ad %s' --date=short 4cb9bf8`:
+
+```
+4cb9bf8 2026-08-10 Initial build: interactive Gospel of John city map
+```
+
+Each road, and where its stops fall among PaulDz's measured themes. Produced by
+`node docs/provenance-sketch-roads.mjs ce4b9e1`, run from the repo root,
+against the last commit that still carried the data key:
+
+#### The Life & Water Road  —  1:4 — 'In him was life' • water, bread, and resurrection sites
+stops (11): n3, n14, n18, n22, n30, n46, n62, n72, n83, n96, n98
+| stop | top-level themes containing it | sub-entries containing it |
+|---|---|---|
+| n3 (1:1–18) | belief-eternal-life, life, witness-testimony, divinity-of-christ, light-vs-darkness, absolute-truth, child-of-god, born-again, incarnation | — |
+| n14 (3:1–21) | belief-eternal-life, life, witness-testimony, holy-spirit-person-work, light-vs-darkness, spiritual-blindness, child-of-god, born-again, love-for-cosmos | — |
+| n18 (4:1–42) | belief-eternal-life, life, witness-testimony, holy-spirit-person-work, i-am-statements | i-am-divine-name (sub-entry of i-am-statements) |
+| n22 (5:1–20) | signs, divinity-of-christ | signs-bethesda-invalid (sub-entry of signs) |
+| n30 (6:24–59) | belief-eternal-life, life, i-am-statements, abiding-in-christ, security-assurance, rest-sustenance | bread-of-life (sub-entry of i-am-statements) |
+| n46 (7:37–39) | belief-eternal-life, holy-spirit-person-work, glory-through-humiliation, rest-sustenance, spiritual-empowerment | — |
+| n62 (10:1–18) | life, i-am-statements, good-shepherd, greatest-sacrifice | door-of-the-sheep (sub-entry of i-am-statements), i-am-good-shepherd (sub-entry of i-am-statements) |
+| n72 (11:17–44) | signs, belief-eternal-life, life, i-am-statements, jesus-friendship, grief-mourning | signs-raising-lazarus (sub-entry of signs), resurrection-and-the-life (sub-entry of i-am-statements) |
+| n83 (14:1–31) | belief-eternal-life, life, divinity-of-christ, holy-spirit-person-work, i-am-statements, abiding-in-christ, abiding-intimacy, absolute-truth, prayer-jesus-name, honest-doubt, helper-comforter, overcoming-anxiety | way-truth-life (sub-entry of i-am-statements) |
+| n96 (20:1–31) | signs, belief-eternal-life, life, divinity-of-christ, holy-spirit-person-work, jesus-friendship, grief-mourning, honest-doubt, spiritual-empowerment | signs-purpose (sub-entry of signs) |
+| n98 (21:1–14) | signs, jesus-friendship | signs-catch-of-fish (sub-entry of signs) |
+
+Against the measured theme `life`: 8 of 11 road stops are among its 18 blocks; 10 of its blocks are not on the road (n16, n24, n25, n33, n34, n48, n67, n77, n79, n88).
+
+#### The Light & Witness Road  —  1:4 — 'the life was the light of men' • testimony and light sites
+stops (9): n3, n5, n6, n16, n48, n57, n77, n88, n102
+| stop | top-level themes containing it | sub-entries containing it |
+|---|---|---|
+| n3 (1:1–18) | belief-eternal-life, life, witness-testimony, divinity-of-christ, light-vs-darkness, absolute-truth, child-of-god, born-again, incarnation | — |
+| n5 (1:19–28) | witness-testimony | — |
+| n6 (1:29–34) | witness-testimony, holy-spirit-person-work | — |
+| n16 (3:22–36) | belief-eternal-life, life, witness-testimony, holy-spirit-person-work | — |
+| n48 (8:12) | life, i-am-statements, light-vs-darkness | light-of-the-world (sub-entry of i-am-statements) |
+| n57 (9:1–41) | signs, belief-eternal-life, i-am-statements, light-vs-darkness, spiritual-blindness | signs-man-born-blind (sub-entry of signs), light-of-the-world (sub-entry of i-am-statements) |
+| n77 (12:20–36) | belief-eternal-life, life, glory-through-humiliation, light-vs-darkness | — |
+| n88 (17:1–26) | belief-eternal-life, life, divinity-of-christ, glory-through-humiliation, abiding-intimacy, cultural-alienation, absolute-truth, security-assurance | — |
+| n102 (21:24–25) | witness-testimony | — |
+
+No top-level measured theme is keyed `light`.
+
+PaulDz is being invited to object if the sketch paths should stay (issue #2 draft).
