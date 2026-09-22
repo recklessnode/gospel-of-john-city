@@ -12,6 +12,7 @@ import datetime
 import json
 import os
 import subprocess
+import sys
 
 ALT_2D = '<a href="index.html">2D map ↩</a>'
 
@@ -39,7 +40,12 @@ def build_stamp():
 STAMP = build_stamp()
 
 
-def assemble(template, app, data, out, subtitle, alt_link, chiasm_iife=None):
+def js_json(obj):
+    """Compact JSON safe to inline in a <script> block: '</' cannot end the script early."""
+    return json.dumps(obj, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+
+
+def assemble(template, app, data, out, subtitle, alt_link, chiasm_iife=None, ways=None):
     html = template.replace("/*__DATA__*/;", json.dumps(data, ensure_ascii=False) + ";")
     # The chiasm corpus rides in front of the app code as window.JOHN_CHIASMS —
     # src/chiasm-ui.js picks it up lazily, so no page needs an init call. The two
@@ -51,13 +57,20 @@ def assemble(template, app, data, out, subtitle, alt_link, chiasm_iife=None):
                    + json.dumps(chiasms, ensure_ascii=False, separators=(",", ":")) + ";\n")
     if chiasm_iife:
         prefix += chiasm_iife + "\n"
+    # Theme ways (PaulDz's issue-#2 lists, measured and banded) ride in the 2D page only
+    # until slice 2 gives the 3D views a consumer. JOHN_WAYTHEMES, not JOHN_THEMES, so it
+    # cannot be confused with JOHN.themes — the seven narrative colour categories.
+    if ways is not None:
+        prefix += "window.JOHN_WAYTHEMES = " + js_json(ways[0]) + ";\n"
+        prefix += "window.JOHN_WAYS = " + js_json(ways[1]) + ";\n"
     html = html.replace("/*__APP__*/", prefix + app)
     html = html.replace("<!--__SUBTITLE__-->", subtitle)
     html = html.replace("<!--__ALT__-->", alt_link)
     html = html.replace("<!--__BUILD__-->", STAMP)
     with open(out, "w") as f:
         f.write(html)
-    print(f"{out} written ({len(html):,} bytes)")
+    # len(html) counts characters; the page is UTF-8, so measure what is actually written
+    print(f"{out} written ({len(html.encode('utf-8')):,} bytes)")
 
 
 with open("data/john-data.json") as f:
@@ -74,6 +87,17 @@ else:
     chiasms = None
     print(f"! {CHIASMS} missing — run `python3 scripts/build_chiasms.py`; pages built without chiasms")
 
+# Theme ways: both are committed sources, so a missing file is a broken checkout, not a
+# degraded build — refuse rather than ship a page that silently has no ways.
+WAYS_SRC = ("data/themes.json", "data/way-types.json")
+for p in WAYS_SRC:
+    if not os.path.exists(p):
+        sys.exit(f"✗ {p} missing — refusing to build (it is a committed source)")
+with open(WAYS_SRC[0], encoding="utf-8") as f:
+    waythemes = json.load(f)
+with open(WAYS_SRC[1], encoding="utf-8") as f:
+    waytypes = json.load(f)
+
 CHIASM_IIFE = "build/chiasm-ui.iife.js"
 if os.path.exists(CHIASM_IIFE):
     with open(CHIASM_IIFE) as f:
@@ -85,7 +109,7 @@ else:
 with open("index.template.html") as f:
     tpl2d = f.read()
 with open("scripts/app.js") as f:
-    assemble(tpl2d, f.read(), data, "index.html", "", "", chiasm_ui)
+    assemble(tpl2d, f.read(), data, "index.html", "", "", chiasm_ui, ways=(waythemes, waytypes))
 
 with open("city3d.template.html") as f:
     tpl3d = f.read()

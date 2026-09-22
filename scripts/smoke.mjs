@@ -77,6 +77,8 @@ const back = await page.evaluate(ids => ids.filter(id => document.getElementById
 ok("overlay toggles survive a round trip", back === TOGGLES.length, `${back}/${TOGGLES.length} re-checked`);
 // the legacy theme roads were retired (superseded by PaulDz's issue-#2 theme lists)
 ok("legacy road toggles are gone", !(await page.$("#ck3-life")) && !(await page.$("#ck3-light")));
+// theme-way data is 2D-only until slice 2 gives the 3D views a consumer
+ok("no theme-way data in 3D (slice 2)", await page.evaluate(() => typeof window.JOHN_WAYTHEMES === "undefined" && typeof window.JOHN_WAYS === "undefined"));
 const before = await page.getAttribute("html", "data-theme");
 await page.click("#themebtn");
 await page.waitForTimeout(300);

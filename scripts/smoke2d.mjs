@@ -8,8 +8,9 @@
    (`node scripts/smoke2d.mjs index.template.html`), whose __DATA__ placeholder is a syntax
    error, and it must go red. A harness that cannot say no proves nothing. */
 import { chromium } from "playwright";
-import { resolve } from "node:path";
-import { mkdirSync } from "node:fs";
+import { resolve, join, dirname } from "node:path";
+import { mkdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const argv = process.argv.slice(2);
 const VALUED = new Set(["--config", "--shots"]);
@@ -27,6 +28,11 @@ const CONFIGS = [
 if (!CONFIGS.length) { console.error(`unknown --config ${only}`); process.exit(2); }
 if (shots) mkdirSync(shots, { recursive: true });
 
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const DISK = {
+  themes: readFileSync(join(ROOT, "data/themes.json"), "utf8"),
+  ways: readFileSync(join(ROOT, "data/way-types.json"), "utf8"),
+};
 const url = (/^https?:/.test(target) ? target : "file://" + resolve(target));
 const b = await chromium.launch();
 const checks = [];
@@ -67,6 +73,15 @@ for (const cfg of CONFIGS) {
     await page.waitForTimeout(250);
     ok(cfg.name, `switch to ${view} view`, clicked && errors.length === before, clicked ? "" : "button not clickable");
   }
+
+  // the injected way data is exactly the committed files: same keys, same order, same values
+  const inj = await page.evaluate(() => ({
+    themes: typeof window.JOHN_WAYTHEMES === "object" ? JSON.stringify(window.JOHN_WAYTHEMES) : null,
+    ways: typeof window.JOHN_WAYS === "object" ? JSON.stringify(window.JOHN_WAYS) : null,
+  }));
+  const same = k => inj[k] !== null && inj[k] === JSON.stringify(JSON.parse(DISK[k]));
+  ok(cfg.name, "way data injected verbatim from data/", same("themes") && same("ways"),
+    `JOHN_WAYTHEMES ${inj.themes === null ? "missing" : same("themes") ? "=" : "≠"} themes.json, JOHN_WAYS ${inj.ways === null ? "missing" : same("ways") ? "=" : "≠"} way-types.json`);
 
   // the legacy theme roads were retired: no control, and nothing drawn in either view (the
   // linear view re-renders the svg, so each view is measured while it is the one shown)
