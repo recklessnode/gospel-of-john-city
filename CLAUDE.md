@@ -29,10 +29,12 @@ data/chiasms-source.md            PaulDz's chiasm structure of the whole gospel,
                                   Malina & Rohrbaugh (1998) — the provenance record
 data/themes-source.md             PaulDz's Roman way types + exhaustive theme verse
                                   lists (issue #2, 2026-08-18) — the provenance record
+data/themes-parsed.json           the audited parse of those lists (a committed source)
+data/way-types.json               the six way types and their verse-count bands
 scripts/build_data.py             extracts/curates → data/john-data.json
 scripts/build_chiasms.py          data/chiasms-source.md → data/chiasms.json
 scripts/verse_weights.py          per-verse Greek apportionment (blocks → verses)
-scripts/build_themes.py           parsed theme sections → data/themes.json, measured
+scripts/build_themes.py           themes-parsed.json → data/themes.json, measured + banded
 index.template.html + scripts/app.js     → index.html   (2D: city / linear / index)
 city3d.template.html + scripts/app3d.js  → city3d.html  (3D canvas renderer, classic)
 city3d.template.html + src/ (bundled)    → city3d-three.html (3D Three.js, Phase 2)
@@ -104,6 +106,12 @@ artifact previews + offline use).
   verses by `scripts/verse_weights.py`, because the spreadsheet counts words per
   pericope, not per verse. Greek totals are therefore estimates and must be labelled as
   such wherever shown. `npm run verify` re-derives the whole join and fails on drift.
+- **Way types are derived, never hand-tagged.** A theme's way is the widest type whose
+  `minVerses` it meets (`data/way-types.json`). To re-band — e.g. when PaulDz rules on the
+  bands — edit a `minVerses`, run `python3 scripts/build_themes.py`, then `npm run build`.
+  `npm run verify` refuses between those two steps, because a way no longer matches its
+  band. `build_themes.py` reads `data/themes-parsed.json` and refuses to write on missing
+  or empty input; that file is a source, never regenerate it by hand-editing themes.json.
 - **Chiasm centres are derived, never hand-tagged** (`src/chiasm-ui.js` consumes what
   `scripts/build_chiasms.py` derives). Where the source marks no centre, the UI says so
   in words rather than picking a plausible middle rung — six chiasms are legitimately

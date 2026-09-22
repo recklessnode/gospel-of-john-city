@@ -93,6 +93,26 @@ for (const t of TH.themes) {
   if (blocks.join() !== [...t.blocks].join()) fail(`${t.key}: blocks drifted (${t.blocks.length} stored, ${blocks.length} recomputed)`);
 }
 
+/* ---------- 4a. themes.json is generated from the committed parse ---------- */
+// data/themes-parsed.json is the audited parse (it once lived only in a /tmp scratchpad,
+// which a restart cleared). Every generated theme must match its parse entry, and nothing
+// may exist in one without the other.
+{
+  const PARSED = JSON.parse(readFileSync(join(ROOT, "data/themes-parsed.json"), "utf8"));
+  if (!PARSED.length) fail("data/themes-parsed.json is empty");
+  const P = new Map(PARSED.map(t => [t.key, t]));
+  const umbrella = new Set(PARSED.filter(t => t.parent).map(t => t.parent));
+  for (const t of TH.themes) {
+    const q = P.get(t.key);
+    if (!q) { fail(`${t.key}: in themes.json but not in themes-parsed.json`); continue; }
+    if (q.label !== t.label || q.group !== t.group || (q.parent || null) !== (t.parent || null))
+      fail(`${t.key}: label/group/parent drifted from themes-parsed.json`);
+    const want = umbrella.has(t.key) ? PARSED.filter(c => c.parent === t.key).flatMap(c => c.refs) : q.refs;
+    if (JSON.stringify(want) !== JSON.stringify(t.refs)) fail(`${t.key}: refs drifted from themes-parsed.json`);
+  }
+  for (const k of P.keys()) if (!TH.themes.some(t => t.key === k)) fail(`${k}: in themes-parsed.json but not generated`);
+}
+
 /* ---------- 4b. one home for theme extents ---------- */
 // The sketch's two hand-drawn "theme roads" were retired 2026-09-22 (conversations.md keeps
 // them verbatim). Theme extents live only in data/themes.json; a second list in the city data

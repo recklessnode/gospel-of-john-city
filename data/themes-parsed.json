@@ -1,0 +1,643 @@
+[
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "The Divinity of Christ (The Logos / Word)",
+  "key": "divinity-of-christ",
+  "refs": [
+   "1:1-3",
+   "1:14",
+   "1:18",
+   "5:17-18",
+   "5:21-23",
+   "8:19",
+   "8:58",
+   "10:30-33",
+   "10:38",
+   "12:41",
+   "14:7-11",
+   "17:5",
+   "17:21-22",
+   "20:28"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "The Incarnation (\"Tabernacling\" among us)",
+  "key": "incarnation",
+  "refs": [
+   "1:9-11",
+   "1:14"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "The \"I AM\" Statements",
+  "key": "i-am-statements",
+  "refs": []
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "I AM (Unpredicated/Divine Name)",
+  "key": "i-am-divine-name",
+  "parent": "i-am-statements",
+  "refs": [
+   "4:26",
+   "8:24",
+   "8:28",
+   "8:58",
+   "13:19",
+   "18:5-6",
+   "18:8"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "Bread of Life",
+  "key": "bread-of-life",
+  "parent": "i-am-statements",
+  "refs": [
+   "6:35",
+   "6:41",
+   "6:48",
+   "6:51"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "Light of the World",
+  "key": "light-of-the-world",
+  "parent": "i-am-statements",
+  "refs": [
+   "8:12",
+   "9:5"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "Door of the Sheep",
+  "key": "door-of-the-sheep",
+  "parent": "i-am-statements",
+  "refs": [
+   "10:7",
+   "10:9"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "Good Shepherd",
+  "key": "i-am-good-shepherd",
+  "parent": "i-am-statements",
+  "refs": [
+   "10:11",
+   "10:14"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "Resurrection and the Life",
+  "key": "resurrection-and-the-life",
+  "parent": "i-am-statements",
+  "refs": [
+   "11:25"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "The Way, the Truth, and the Life",
+  "key": "way-truth-life",
+  "parent": "i-am-statements",
+  "refs": [
+   "14:6"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "The True Vine",
+  "key": "true-vine",
+  "parent": "i-am-statements",
+  "refs": [
+   "15:1",
+   "15:5"
+  ]
+ },
+ {
+  "group": "The Nature and Identity of Jesus",
+  "label": "Glory through Humiliation (The Cross as Glorification)",
+  "key": "glory-through-humiliation",
+  "refs": [
+   "2:4",
+   "7:30",
+   "7:39",
+   "8:20",
+   "8:28",
+   "12:16",
+   "12:23-24",
+   "12:27-28",
+   "12:31-33",
+   "13:1",
+   "13:31-32",
+   "17:1-5"
+  ]
+ },
+ {
+  "group": "Key Metaphors and Teachings",
+  "label": "Light vs. Darkness",
+  "key": "light-vs-darkness",
+  "refs": [
+   "1:4-5",
+   "1:7-9",
+   "3:19-21",
+   "8:12",
+   "9:4-5",
+   "11:9-10",
+   "12:35-36",
+   "12:46",
+   "13:30"
+  ]
+ },
+ {
+  "group": "Key Metaphors and Teachings",
+  "label": "Life (Eternal Life, Living Water, Bread of Life)",
+  "key": "life",
+  "refs": [
+   "1:4",
+   "3:15-16",
+   "3:36",
+   "4:10-14",
+   "4:36",
+   "5:21",
+   "5:24-26",
+   "5:29",
+   "5:39-40",
+   "6:27",
+   "6:33",
+   "6:35",
+   "6:40",
+   "6:47-48",
+   "6:51",
+   "6:53-54",
+   "6:63",
+   "6:68",
+   "8:12",
+   "10:10",
+   "10:28",
+   "11:25-26",
+   "12:25",
+   "12:50",
+   "14:6",
+   "17:2-3",
+   "20:31"
+  ]
+ },
+ {
+  "group": "Key Metaphors and Teachings",
+  "label": "The Good Shepherd (Knowing His Sheep)",
+  "key": "good-shepherd",
+  "refs": [
+   "10:1-18",
+   "10:26-29"
+  ]
+ },
+ {
+  "group": "Key Metaphors and Teachings",
+  "label": "Abiding in Christ (The Vine and Branches)",
+  "key": "abiding-in-christ",
+  "refs": [
+   "6:56",
+   "8:31",
+   "14:23",
+   "15:1-11",
+   "15:16"
+  ]
+ },
+ {
+  "group": "Key Metaphors and Teachings",
+  "label": "Being Born Again (Spiritual Rebirth)",
+  "key": "born-again",
+  "refs": [
+   "1:12-13",
+   "3:3-8"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Belief and Eternal Life",
+  "key": "belief-eternal-life",
+  "refs": [
+   "1:7",
+   "1:12",
+   "1:50",
+   "2:11",
+   "2:22-23",
+   "3:12",
+   "3:15-16",
+   "3:18",
+   "3:36",
+   "4:21",
+   "4:39",
+   "4:41-42",
+   "4:48",
+   "4:50",
+   "4:53",
+   "5:24",
+   "5:38",
+   "5:44",
+   "5:46-47",
+   "6:29-30",
+   "6:35-36",
+   "6:40",
+   "6:47",
+   "6:64",
+   "6:69",
+   "7:5",
+   "7:31",
+   "7:38-39",
+   "7:48",
+   "8:24",
+   "8:30-31",
+   "8:45-46",
+   "9:18",
+   "9:35-38",
+   "10:25-26",
+   "10:37-38",
+   "10:42",
+   "11:15",
+   "11:25-27",
+   "11:40",
+   "11:42",
+   "11:45",
+   "11:48",
+   "12:11",
+   "12:36-39",
+   "12:42",
+   "12:44",
+   "12:46",
+   "13:19",
+   "14:1",
+   "14:10-12",
+   "14:29",
+   "16:9",
+   "16:27",
+   "16:30-31",
+   "17:8",
+   "17:20-21",
+   "19:35",
+   "20:8",
+   "20:25",
+   "20:27",
+   "20:29",
+   "20:31"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "The \"Signs\" (Miracles that authenticate Jesus)",
+  "key": "signs",
+  "refs": []
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Turning water to wine",
+  "key": "signs-water-to-wine",
+  "parent": "signs",
+  "refs": [
+   "2:1-11"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Healing the official's son",
+  "key": "signs-officials-son",
+  "parent": "signs",
+  "refs": [
+   "4:46-54"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Healing the invalid at Bethesda",
+  "key": "signs-bethesda-invalid",
+  "parent": "signs",
+  "refs": [
+   "5:1-15"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Feeding the 5,000",
+  "key": "signs-feeding-5000",
+  "parent": "signs",
+  "refs": [
+   "6:1-14"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Walking on water",
+  "key": "signs-walking-on-water",
+  "parent": "signs",
+  "refs": [
+   "6:16-21"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Healing the man born blind",
+  "key": "signs-man-born-blind",
+  "parent": "signs",
+  "refs": [
+   "9:1-41"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Raising Lazarus",
+  "key": "signs-raising-lazarus",
+  "parent": "signs",
+  "refs": [
+   "11:1-44"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "The Miraculous Catch of Fish (Post-Resurrection)",
+  "key": "signs-catch-of-fish",
+  "parent": "signs",
+  "refs": [
+   "21:1-14"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Verses explaining the purpose of the signs",
+  "key": "signs-purpose",
+  "parent": "signs",
+  "refs": [
+   "20:30-31"
+  ]
+ },
+ {
+  "group": "The Mechanics of Salvation and Evidence",
+  "label": "Witness and Testimony",
+  "key": "witness-testimony",
+  "refs": [
+   "1:7-8",
+   "1:15",
+   "1:19",
+   "1:32",
+   "1:34",
+   "3:11",
+   "3:26",
+   "3:28",
+   "3:32-33",
+   "4:39",
+   "5:31-40",
+   "8:13-18",
+   "10:25",
+   "12:17",
+   "15:26-27",
+   "18:23",
+   "18:37",
+   "19:35",
+   "21:24"
+  ]
+ },
+ {
+  "group": "The Holy Spirit",
+  "label": "The Person and Work of the Holy Spirit (Paraclete / Comforter)",
+  "key": "holy-spirit-person-work",
+  "refs": [
+   "1:32-33",
+   "3:5-8",
+   "3:34",
+   "4:24",
+   "6:63",
+   "7:39",
+   "14:16-17",
+   "14:26",
+   "15:26",
+   "16:7-15",
+   "20:22"
+  ]
+ },
+ {
+  "group": "1. Identity and Self-Worth",
+  "label": "Being a \"Child of God\" (Spiritual Adoption and Belonging)",
+  "key": "child-of-god",
+  "refs": [
+   "1:12-13",
+   "3:3",
+   "3:5-8",
+   "11:52"
+  ]
+ },
+ {
+  "group": "1. Identity and Self-Worth",
+  "label": "Security and Assurance (Safety in Salvation)",
+  "key": "security-assurance",
+  "refs": [
+   "6:37",
+   "6:39-40",
+   "10:27-29",
+   "17:11-12"
+  ]
+ },
+ {
+  "group": "1. Identity and Self-Worth",
+  "label": "Chosen and Appointed (Value not based on performance)",
+  "key": "chosen-appointed",
+  "refs": [
+   "15:16",
+   "15:19"
+  ]
+ },
+ {
+  "group": "2. Truth vs. Relativism",
+  "label": "Absolute Truth vs. Cultural Relativism",
+  "key": "absolute-truth",
+  "refs": [
+   "1:14",
+   "1:17",
+   "8:31-32",
+   "14:6",
+   "17:17",
+   "17:19",
+   "18:37-38"
+  ]
+ },
+ {
+  "group": "2. Truth vs. Relativism",
+  "label": "Deception and the Father of Lies",
+  "key": "father-of-lies",
+  "refs": [
+   "8:44-45"
+  ]
+ },
+ {
+  "group": "2. Truth vs. Relativism",
+  "label": "Cultural Alienation (The World's Hatred/Opposition)",
+  "key": "cultural-alienation",
+  "refs": [
+   "7:7",
+   "15:18-19",
+   "16:1-4",
+   "17:14-16"
+  ]
+ },
+ {
+  "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
+  "label": "Honest Doubt and Demanding Evidence",
+  "key": "honest-doubt",
+  "refs": [
+   "14:8",
+   "20:24-29"
+  ]
+ },
+ {
+  "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
+  "label": "Questioning Faith (Struggling with hard teachings)",
+  "key": "questioning-faith",
+  "refs": [
+   "6:60-66"
+  ]
+ },
+ {
+  "group": "3. Spiritual Deconstruction, Doubt, and Blindness",
+  "label": "Spiritual Blindness (Cognitive dissonance and refusing to see)",
+  "key": "spiritual-blindness",
+  "refs": [
+   "3:19-21",
+   "9:39-41",
+   "12:37-40"
+  ]
+ },
+ {
+  "group": "4. Relational Intimacy and Love",
+  "label": "God's Overarching Love for the Cosmos",
+  "key": "love-for-cosmos",
+  "refs": [
+   "3:16"
+  ]
+ },
+ {
+  "group": "4. Relational Intimacy and Love",
+  "label": "The Greatest Sacrifice (Laying down life for friends)",
+  "key": "greatest-sacrifice",
+  "refs": [
+   "10:11",
+   "10:15",
+   "10:17-18",
+   "15:13"
+  ]
+ },
+ {
+  "group": "4. Relational Intimacy and Love",
+  "label": "Intimacy with God (Abiding / Dwelling)",
+  "key": "abiding-intimacy",
+  "refs": [
+   "14:20-21",
+   "14:23",
+   "15:4-10",
+   "17:21-23",
+   "17:26"
+  ]
+ },
+ {
+  "group": "4. Relational Intimacy and Love",
+  "label": "The Command to Love One Another",
+  "key": "love-one-another",
+  "refs": [
+   "13:34-35",
+   "15:12",
+   "15:17"
+  ]
+ },
+ {
+  "group": "4. Relational Intimacy and Love",
+  "label": "Jesus' Friendship and Empathy with Individuals",
+  "key": "jesus-friendship",
+  "refs": [
+   "11:3",
+   "11:5",
+   "11:36",
+   "13:1",
+   "13:23",
+   "15:14-15",
+   "19:26-27",
+   "20:17",
+   "21:7",
+   "21:20"
+  ]
+ },
+ {
+  "group": "5. Comfort in Anxiety and Grief",
+  "label": "Overcoming Anxiety, Trouble, and Fear",
+  "key": "overcoming-anxiety",
+  "refs": [
+   "14:1",
+   "14:27",
+   "16:33"
+  ]
+ },
+ {
+  "group": "5. Comfort in Anxiety and Grief",
+  "label": "Rest and Spiritual Sustenance",
+  "key": "rest-sustenance",
+  "refs": [
+   "6:35",
+   "7:37-38"
+  ]
+ },
+ {
+  "group": "5. Comfort in Anxiety and Grief",
+  "label": "Grief, Empathy, and Mourning",
+  "key": "grief-mourning",
+  "refs": [
+   "11:33-35",
+   "11:38",
+   "16:20-22",
+   "20:11-15"
+  ]
+ },
+ {
+  "group": "6. The Role of the Holy Spirit in Daily Life",
+  "label": "The Helper/Comforter (Active Guidance)",
+  "key": "helper-comforter",
+  "refs": [
+   "14:16-17",
+   "14:26",
+   "15:26",
+   "16:7"
+  ]
+ },
+ {
+  "group": "6. The Role of the Holy Spirit in Daily Life",
+  "label": "Conviction and Truth",
+  "key": "conviction-truth",
+  "refs": [
+   "16:8-11",
+   "16:13-15"
+  ]
+ },
+ {
+  "group": "6. The Role of the Holy Spirit in Daily Life",
+  "label": "Spiritual Empowerment",
+  "key": "spiritual-empowerment",
+  "refs": [
+   "7:38-39",
+   "20:22"
+  ]
+ },
+ {
+  "group": "6. The Role of the Holy Spirit in Daily Life",
+  "label": "Direct Access in Prayer (Praying in Jesus' Name)",
+  "key": "prayer-jesus-name",
+  "refs": [
+   "14:13-14",
+   "15:7",
+   "15:16",
+   "16:23-24",
+   "16:26-27"
+  ]
+ }
+]

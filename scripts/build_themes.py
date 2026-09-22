@@ -1,22 +1,30 @@
-"""Merge the parsed theme sections, measure each theme against the text, and emit
+"""Measure each theme in data/themes-parsed.json against the text, and emit
 data/themes.json — the input the city uses to draw theme ways.
+
+data/themes-parsed.json is the audited parse of PaulDz's lists in data/themes-source.md
+(parsed by three agents, audited by three more, 2026-08-18). It is a committed source,
+not a scratch file: the first version of this script read it from a session scratchpad
+under /tmp, which a restart cleared, and the script then silently wrote an empty
+themes.json. It now refuses instead.
 
 "Measure" means: how much of the Gospel of John does this theme occupy? Two numbers,
 because they disagree in interesting ways — verse count (how many verses it touches)
 and Greek word count (how much *text* those verses actually are). PaulDz's rule is
-"the more text it takes to describe a theme, the larger the way", so the Greek count
-is the ranking key and the verse count is reported alongside it.
+"the more text it takes to describe a theme, the larger the way". Ranking by verse
+count, with Greek as a corroborating check, is OUR proposal to him, not his ruling —
+see data/way-types.json "rankedBy" and "status" (one home for that fact).
 
 Greek counts per verse are apportioned from per-block totals (see verse_weights.py),
 so every theme total here is an ESTIMATE and is labelled as one downstream.
 """
-import json, os, sys, glob
+import json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from verse_weights import load, hoods, abs_index, weights, chapter_verse  # noqa: E402
 
 OUT = os.path.join(HERE, "..", "data", "themes.json")
+PARSED = os.path.join(HERE, "..", "data", "themes-parsed.json")
 WAYS = os.path.join(HERE, "..", "data", "way-types.json")
 CHAPTER_TOTALS = {1: 51, 2: 25, 3: 36, 4: 54, 5: 47, 6: 71, 7: 53, 8: 59, 9: 41, 10: 42,
                   11: 57, 12: 50, 13: 38, 14: 31, 15: 27, 16: 33, 17: 26, 18: 40,
@@ -42,12 +50,18 @@ def main(paths):
     H = hoods(J)
     themes = []
     seen = set()
-    for p in sorted(paths):
+    for p in paths:
+        if not os.path.exists(p):
+            raise SystemExit(f"refusing: parsed themes not found at {p}")
         for t in json.load(open(p, encoding="utf-8")):
             if t["key"] in seen:
                 raise SystemExit("duplicate theme key: " + t["key"])
             seen.add(t["key"])
             themes.append(t)
+
+    # zero inputs is not an empty result, it is a measurement that did not happen
+    if not themes:
+        raise SystemExit("refusing: 0 parsed themes read — will not overwrite themes.json with nothing")
 
     by_key = {t["key"]: t for t in themes}
     # an umbrella theme's extent is the union of its children's
@@ -115,4 +129,4 @@ def main(paths):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:] or glob.glob("/tmp/claude-1000/-home-ronald/71832c1a-77e5-436e-9e91-49721d2aecf0/scratchpad/themes-?.json"))
+    main(sys.argv[1:] or [PARSED])
