@@ -359,7 +359,7 @@
     <button data-view="index">Index</button>
   </div>
   <div class="spacer"></div>
-  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/7c7fdd8" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-22 20:31Z · 7c7fdd8</a>
+  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/711df58" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-22 20:42Z · 711df58</a>
   <a class="iconbtn" href="city3d.html" style="text-decoration:none">3D City ⇗</a>
   <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
 </header>
@@ -1041,7 +1041,8 @@ function drawShownWays(gWays, gBridges, gBadges) {
     const w = WAY_TYPE.get(t.way).widthPlan * scale, hw = w / 2;
     const g = wayGeomFor(t, hw);
     const pts = g.stub ? g.stub.pts : g.route.pts, d = polyD(pts);
-    drawWayStack(gWays, t.way, d, w, "way", Object.assign({ "data-way": k, "data-n": i + 1 },
+    const cap = +wayFloorCap(g).toFixed(4);
+    drawWayStack(gWays, t.way, d, w, "way", Object.assign({ "data-way": k, "data-n": i + 1, "data-w": +w.toFixed(4), "data-cap": cap },
       g.stub ? { "data-stub": g.stops[0].id } : {}));
     // a certified pinch: no room between two blocks the way is not on, so it passes over
     // them — drawn above the block as an overpass and named in the key, never hidden
@@ -1049,7 +1050,8 @@ function drawShownWays(gWays, gBridges, gBadges) {
       const o = g.obstacles.find(o => o.id === c.id), cid = `bridge-${k}-${c.id}`;
       const cp = el("clipPath", { id: cid }, defs);
       el("circle", { cx: o.x, cy: o.y, r: o.r + hw + 1 }, cp);
-      drawWayStack(gBridges, t.way, d, w, "way-bridge", { "data-way": k, "data-bridge": c.id, "clip-path": `url(#${cid})` });
+      drawWayStack(gBridges, t.way, d, w, "way-bridge", { "data-way": k, "data-bridge": c.id, "clip-path": `url(#${cid})`,
+        "data-w": +w.toFixed(4), "data-cap": cap });
     }
     for (const h of g.stops) {
       if (!onBlock.has(h.id)) onBlock.set(h.id, []);
@@ -1148,8 +1150,6 @@ function renderKey() {
   dom("p", null, "Verses and blocks are PaulDz's lists; each way's type is derived from its verse count.", foot);
   dom("p", null, "Lines join each theme's blocks in verse order; the route between blocks is schematic.", foot);
   dom("p", null, "Theme ways pass beneath the city wall; they make no gates.", foot);
-  const floored = svg.querySelectorAll(".way[data-floored]").length;
-  if (floored) dom("p", "wk-floor", `${plural(floored, "way is", "ways are")} thinner than a screen pixel at this zoom and drawn wider so it stays visible.`, foot);
   for (const r of WAYS.rejects) {
     const text = r.why === "unknown" ? `Not a theme: “${r.key}”.`
       : r.why === "child" ? `“${WAY_THEME.get(r.key).label}” is inside ${WAY_THEME.get(r.parent).label}; its verses are counted in that way.`
@@ -1189,6 +1189,71 @@ function syncChrome() {
   const hint = document.getElementById("hint"), key = document.getElementById("waykey");
   if (hint) hint.style.display = (view === "index" || showing) ? "none" : "";
   if (key) key.hidden = !(view === "organic" && showing);
+}
+
+/* ---------- THEME WAYS: fit and legibility floor ---------- */
+/* Fit the view to the shown ways, inside the part of the map the key and the controls leave
+   free. The viewBox keeps the svg's own aspect, so "meet" never letterboxes it and the free
+   area maps exactly. Runs when the ways change, never on pan or zoom. */
+function fitToWays() {
+  if (!WAYDATA || !WAYS.shown.length) return;
+  const scale = wayScale();
+  if (!scale) return;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const add = (x, y, r) => { x0 = Math.min(x0, x - r); y0 = Math.min(y0, y - r); x1 = Math.max(x1, x + r); y1 = Math.max(y1, y + r); };
+  for (const k of WAYS.shown) {
+    const t = WAY_THEME.get(k), w = WAY_TYPE.get(t.way).widthPlan * scale, g = wayGeomFor(t, w / 2);
+    for (const h of g.stops) add(h.x, h.y, h.r);
+    for (const p of (g.stub ? g.stub.pts : g.route.pts)) add(p[0], p[1], w / 2);
+  }
+  const PAD = 40;
+  x0 -= PAD; y0 -= PAD; x1 += PAD; y1 += PAD;
+  const sr = svg.getBoundingClientRect();
+  if (!sr.width || !sr.height) return;
+  const free = { l: sr.left, t: sr.top, r: sr.right, b: sr.bottom };
+  const ctl = document.getElementById("controls"), key = document.getElementById("waykey");
+  const cr = ctl && getComputedStyle(ctl).display !== "none" && !ctl.classList.contains("hidden") ? ctl.getBoundingClientRect() : null;
+  if (cr && cr.width) free.l = Math.max(free.l, cr.right + 8);
+  const kr = key && !key.hidden ? key.getBoundingClientRect() : null;
+  if (kr && kr.width) {
+    if (kr.width > sr.width * 0.6) free.b = Math.min(free.b, kr.top - 8);   // a bottom sheet (phone)
+    else free.r = Math.min(free.r, kr.left - 8);                              // a side card
+  }
+  const fw = Math.max(40, free.r - free.l), fh = Math.max(40, free.b - free.t);
+  const bw = x1 - x0, bh = y1 - y0;
+  let s = Math.min(fw / bw, fh / bh);                         // CSS px per plan unit
+  const w = Math.min(3200, Math.max(300, sr.width / s));       // the existing zoom clamp
+  s = sr.width / w;
+  vb = { w, h: sr.height / s,
+         x: x0 - (free.l - sr.left) / s - (fw / s - bw) / 2,
+         y: y0 - (free.t - sr.top) / s - (fh / s - bh) / 2 };
+  setVB();
+}
+
+/* The legibility floor: a way thinner than one screen pixel is drawn one pixel wide, so the
+   narrowest (a two-foot ambitus) stays visible on a phone. It is capped per way by the
+   clearance that way's route keeps from blocks it does not touch (data-cap, from
+   wayFloorCap), so widening can never make it touch one. Beyond the cap a way stays thin, and
+   the key says so. One owner: re-applied on every setVB, disclosure included. */
+function applyWayFloor() {
+  const u = parseFloat(svg.style.getPropertyValue("--u1px")) || 1;
+  let floored = 0, sub = 0;
+  svg.querySelectorAll(".way[data-w], .way-bridge[data-w]").forEach(g => {
+    const w = +g.dataset.w, cap = +g.dataset.cap, outer = g.querySelector(".wl-outer");
+    const drawn = Math.min(Math.max(w, u), w + cap);
+    outer.setAttribute("stroke-width", +drawn.toFixed(3));
+    const isWay = g.classList.contains("way");
+    g.toggleAttribute("data-floored", drawn > w + 1e-9);
+    if (isWay && drawn > w + 1e-9) floored++;
+    if (isWay && drawn < u - 1e-9) sub++;
+  });
+  const foot = document.querySelector("#waykey .wk-foot");
+  if (!foot) return;
+  foot.querySelectorAll(".wk-floor").forEach(e => e.remove());
+  const anchor = foot.querySelector(".wk-reject");
+  const note = text => { const e = dom("p", "wk-floor", text); foot.insertBefore(e, anchor); };
+  if (floored) note(`${plural(floored, "way is", "ways are")} thinner than a screen pixel at this zoom and drawn a pixel wide so ${floored === 1 ? "it stays" : "they stay"} visible.`);
+  if (sub) note(`${plural(sub, "way is", "ways are")} still thinner than a pixel here: drawing ${sub === 1 ? "it" : "them"} wider would touch blocks ${sub === 1 ? "it does" : "they do"} not touch.`);
 }
 
 /* ---------- ORGANIC VIEW ---------- */
@@ -1351,6 +1416,8 @@ function renderOrganic() {
   applyOverlays();
   applySelection();
   applyWays();
+  fitToWays();
+  applyWayFloor();
 }
 
 /* ---------- LINEAR VIEW ---------- */
@@ -1527,6 +1594,7 @@ function setVB() {
   // on-screen size with it, where --inv only holds them to the default view's size
   const cw = svg.clientWidth || 1200, ch = svg.clientHeight || 1000;
   svg.style.setProperty("--u1px", Math.max(vb.w / cw, vb.h / ch).toFixed(4));
+  applyWayFloor();
 }
 function resetVB() { vb = { x: 0, y: 0, w: 1200, h: 1000 }; setVB(); }
 function clientToMap(cx, cy) {
@@ -1576,8 +1644,9 @@ document.getElementById("z-out").addEventListener("click", () => { zoomCenter(1 
 document.getElementById("z-fit").addEventListener("click", resetVB);
 function zoomCenter(k) {
   const mx = vb.x + vb.w / 2, my = vb.y + vb.h / 2;
+  const aspect = vb.h / vb.w;   // keep it: after a fit the view is the svg's aspect, not 1200:1000
   vb.w = Math.min(3200, Math.max(300, vb.w * k));
-  vb.h = vb.w * (1000 / 1200);
+  vb.h = vb.w * aspect;
   vb.x = mx - vb.w / 2; vb.y = my - vb.h / 2;
   setVB();
 }

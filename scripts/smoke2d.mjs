@@ -109,7 +109,11 @@ function measureWays(keys) {
     const badgeOnBridge = bridges.filter(id => document.querySelector(`#map .way-badge[data-way="${k}"][data-badge="${id}"]`)).length;
     const bdg = document.querySelector(`#map .way-badge[data-way="${k}"]`);
     const badgeContrast = bdg ? ratio(col(getComputedStyle(bdg.querySelector("text")).fill), col(getComputedStyle(bdg.querySelector("circle")).fill)) : null;
-    return { k, type: t.way, typeDrawn: [...g.classList].find(c => c.startsWith("way-")).slice(4), sw, want: TY(t.way).widthPlan * scale,
+    const u1px = parseFloat(document.getElementById("map").style.getPropertyValue("--u1px")) || 1, cap = +g.dataset.cap;
+    const want = TY(t.way).widthPlan * scale, wantDrawn = Math.min(Math.max(want, u1px), want + cap);
+    const subNote = [...document.querySelectorAll("#waykey .wk-floor")].some(e => e.textContent.includes("still thinner"));
+    return { k, type: t.way, typeDrawn: [...g.classList].find(c => c.startsWith("way-")).slice(4), sw, want, wantDrawn, u1px, cap,
+      onScreen: sw / u1px, subNote,
       bbw: bb.width, bbh: bb.height, con, badges: document.querySelectorAll(`#map .way-badge[data-way="${k}"]`).length,
       blocks: t.blocks.length, stub, crossed: crossed.sort(), bridges: bridges.sort(), badgeOnBridge, badgeContrast };
   });
@@ -142,6 +146,28 @@ function measureWays(keys) {
   probeEl.remove();
   return { ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
     widths, ascending: widths.every((v, i) => !i || widths[i - 1] <= v), ptOpp, ptBad, ptHood };
+}
+
+/* Runs IN THE PAGE: is every shown block on screen, and clear of the key and the controls? */
+function measureFit(keys) {
+  const blocks = new Set(keys.flatMap(k => window.JOHN_WAYTHEMES.themes.find(x => x.key === k).blocks));
+  const mw = document.getElementById("mapwrap").getBoundingClientRect(), key = document.getElementById("waykey");
+  const ctl = document.getElementById("controls");
+  const covers = [key && !key.hidden ? key.getBoundingClientRect() : null,
+    ctl && getComputedStyle(ctl).display !== "none" && !ctl.classList.contains("hidden") ? ctl.getBoundingClientRect() : null].filter(r => r && r.width);
+  const hits = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+  const bad = [];
+  let opp = 0;
+  for (const c of document.querySelectorAll("#map circle.hood[data-hood]")) {
+    if (!blocks.has(c.dataset.hood)) continue;
+    opp++;
+    const r = c.getBoundingClientRect();
+    const inside = r.left >= mw.left - 0.5 && r.right <= mw.right + 0.5 && r.top >= mw.top - 0.5 && r.bottom <= mw.bottom + 0.5 &&
+      r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5;
+    if (!inside || covers.some(k => hits(r, k))) bad.push(c.dataset.hood);
+  }
+  const svg = document.getElementById("map"), v = svg.viewBox.baseVal;
+  return { opp, bad, vbAspect: v.height / v.width, svgAspect: svg.clientHeight / svg.clientWidth };
 }
 
 /* Runs IN THE PAGE: reads the way key back and recomputes what it should say. */
@@ -280,6 +306,8 @@ for (const cfg of CONFIGS) {
     dim: document.querySelectorAll("#map .dimmed").length, br: document.querySelectorAll("#map .way-bridge").length,
     badges: document.querySelectorAll("#map .way-badge").length }));
   ok(cfg.name, "no ?ways= → nothing drawn, nothing dimmed", !dflt.ways && !dflt.dim && !dflt.br && !dflt.badges, JSON.stringify(dflt));
+  const dvb = await page.evaluate(() => document.getElementById("map").getAttribute("viewBox"));
+  ok(cfg.name, "no ?ways= → the default view, not a fit", dvb === "0 0 1200 1000", dvb);
   if (shots) await page.screenshot({ path: `${shots}/default-${cfg.name}.png` });
 
   let bridgesMeasured = 0;
@@ -292,7 +320,10 @@ for (const cfg of CONFIGS) {
       const L = `[${w.k}]`;
       if (w.missing) { ok(cfg.name, `${L} is drawn`, false, tag); continue; }
       ok(cfg.name, `${L} drawn as its data's type (${w.type})`, w.typeDrawn === w.type, `drawn ${w.typeDrawn}`);
-      ok(cfg.name, `${L} width = widthPlan × scale`, Math.abs(w.sw - w.want) < 0.01, `${w.sw.toFixed(3)} vs ${w.want.toFixed(3)}`);
+      ok(cfg.name, `${L} width = widthPlan × scale, floored to 1px within its clearance`, Math.abs(w.sw - w.wantDrawn) < 0.01,
+        `${w.sw.toFixed(3)} vs ${w.wantDrawn.toFixed(3)} (plan ${w.want.toFixed(3)}, 1px = ${w.u1px.toFixed(3)}, cap +${w.cap})`);
+      ok(cfg.name, `${L} at least a screen pixel wide, or the key says why not`, w.onScreen >= 0.999 || w.subNote,   // 0.1%: stroke-width is written at 3 decimals, --u1px at 4
+        `${w.onScreen.toFixed(2)}px on screen`);
       ok(cfg.name, `${L} has geometry`, w.bbw > 0 && w.bbh > 0, `bbox ${w.bbw.toFixed(1)}×${w.bbh.toFixed(1)}`);
       for (const [gname, c] of Object.entries(w.con))
         ok(cfg.name, `${L} contrast on ${gname} ≥ the Way's own casing`, c.way >= c.floor - 1e-6, `${c.way.toFixed(2)} vs floor ${c.floor.toFixed(2)}`);
@@ -313,6 +344,15 @@ for (const cfg of CONFIGS) {
     ok(cfg.name, `${tag} ways painted narrowest first`, M.ascending, `widths ${M.widths.join(",")}`);
     ok(cfg.name, `${tag} way layers never take the pointer`, M.ptOpp > 0 && M.ptBad === 0,
       M.ptOpp ? `${M.ptBad} of ${M.ptOpp} probes hit a way layer; ${M.ptHood} bridged-block probes reached the block` : "unmeasured: no probe point on the map");
+    const F = await page.evaluate(measureFit, keys);
+    ok(cfg.name, `${tag} fit: every shown block on screen, clear of the key and the controls`, F.opp > 0 && F.bad.length === 0,
+      F.opp ? `${F.opp} blocks; off or covered: [${F.bad.join(",")}]` : "unmeasured: no shown block");
+    ok(cfg.name, `${tag} fit keeps the svg's aspect (no letterbox)`, Math.abs(F.vbAspect - F.svgAspect) < 1e-3,
+      `viewBox ${F.vbAspect.toFixed(4)} svg ${F.svgAspect.toFixed(4)}`);
+    await page.click("#z-in", { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(150);
+    const Z = await page.evaluate(() => { const v = document.getElementById("map").viewBox.baseVal; return v.height / v.width; });
+    ok(cfg.name, `${tag} zooming after a fit keeps its aspect`, Math.abs(Z - F.vbAspect) < 1e-3, `${F.vbAspect.toFixed(4)} → ${Z.toFixed(4)}`);
+    await page.click("#z-out", { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(150);
     const K = await page.evaluate(measureKey, keys);
     ok(cfg.name, `${tag} key is shown, as a labelled region`, K.visible && K.role === "region", `visible ${K.visible}, role ${K.role}`);
     ok(cfg.name, `${tag} key states the status verbatim (from the page's own data)`, K.hasStatus);
