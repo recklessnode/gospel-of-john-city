@@ -19,6 +19,7 @@
    Usage: node scripts/verify_themes.mjs        (exit 0 = join intact) */
 
 import { readFileSync } from "node:fs";
+import { ROAD_HALF } from "../src/plan.js";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -121,6 +122,13 @@ if ("themeRoads" in JD) fail("john-data.json carries themeRoads — theme extent
 
 /* ---------- 5. way bands are derivable, not hand-tagged ---------- */
 const WAYS = JSON.parse(readFileSync(join(ROOT, "data/way-types.json"), "utf8")).types;
+// drawing widths: one per type, strictly narrowing in band order, and the widest theme way
+// narrower than the Johannine Way itself (2 × ROAD_HALF, imported — never restated here),
+// so the narrative spine stays visually primary.
+for (const w of WAYS) if (typeof w.widthPlan !== "number" || !(w.widthPlan > 0)) fail(`way type ${w.key}: widthPlan missing or not a positive number`);
+for (let i = 1; i < WAYS.length; i++)
+  if (!(WAYS[i].widthPlan < WAYS[i - 1].widthPlan)) fail(`way widths not strictly decreasing: ${WAYS[i - 1].key} ${WAYS[i - 1].widthPlan} → ${WAYS[i].key} ${WAYS[i].widthPlan}`);
+if (WAYS.length && !(WAYS[0].widthPlan < 2 * ROAD_HALF)) fail(`${WAYS[0].key} widthPlan ${WAYS[0].widthPlan} is not narrower than the Way (2 × ROAD_HALF = ${2 * ROAD_HALF})`);
 for (let i = 1; i < WAYS.length; i++)
   if (WAYS[i].minVerses >= WAYS[i - 1].minVerses)
     fail(`way bands out of order: ${WAYS[i - 1].key} minVerses ${WAYS[i - 1].minVerses} <= ${WAYS[i].key} ${WAYS[i].minVerses}`);

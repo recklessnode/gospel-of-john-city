@@ -30,7 +30,7 @@ data/chiasms-source.md            PaulDz's chiasm structure of the whole gospel,
 data/themes-source.md             PaulDz's Roman way types + exhaustive theme verse
                                   lists (issue #2, 2026-08-18) — the provenance record
 data/themes-parsed.json           the audited parse of those lists (a committed source)
-data/way-types.json               the six way types and their verse-count bands
+data/way-types.json               the six way types: verse-count bands + drawing widths
 scripts/build_data.py             extracts/curates → data/john-data.json
 scripts/build_chiasms.py          data/chiasms-source.md → data/chiasms.json
 scripts/verse_weights.py          per-verse Greek apportionment (blocks → verses)
