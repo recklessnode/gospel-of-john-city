@@ -208,6 +208,202 @@ function buildWay() {
   });
 }
 
+/* ---------- theme ways: 2D-only until slice 2 ----------
+   NOT mirrored in app3d.js or src/plan.js and NOT parity-checked: the 2D map is their
+   only consumer, and a copy with no consumer would be a second home that drifts. Slice 2
+   moves them into src/plan.js together with their parity check. Pure: no DOM, no globals
+   written. Exercised in node by scripts/verify_ways.mjs through the same slice of this
+   file that verify_parity.mjs evaluates.
+
+   A theme way joins its member blocks in verse order. The line must not read as touching
+   a block it does not touch, so samples are pushed clear of every NON-member block; stops
+   stay pinned at member centres. Where two non-member blocks sit closer than the way is
+   wide, no route exists between them; that crossing is certified, drawn as a bridge and
+   disclosed, never hidden. */
+const WAY_ROUTE = {
+  PER: 32,          // catmull samples per stop-to-stop hop
+  STEP: 2,          // densify so no two samples are further apart (plan units)
+  ITERS: 80,        // push/smooth rounds
+  SETTLE: 12,       // pushes after the last smooth, so the route ends satisfied, not smoothed
+  SMOOTH: 0.5,      // pull each free sample this far toward its neighbours' midpoint
+  MARGIN: 1.5,      // clearance beyond the stroke edge a pushed sample must keep
+  ROUND_TOL: 0.01,  // the drawn path is rounded to 2 decimals (≤ 0.0071 u); keep this much clear
+  NORMAL_DEG: 30,   // radial push within this angle of the tangent → push along the normal
+  STUB_PAD: 0.6, STUB_FRAC: 0.55, STUB_CAP: 34,   // single-block themes (see wayStub)
+};
+
+function wayStops(theme) {
+  return theme.blocks.map(id => {
+    const h = byId[id];
+    if (!h) throw new Error(`theme way ${theme.key}: unknown block ${id}`);
+    return h;
+  }).sort((a, b) => a.v0 - b.v0);
+}
+
+// every block the way must not appear to touch; the annex as drawn (its blob is r + 6)
+function wayObstacles(theme) {
+  const mine = new Set(theme.blocks);
+  const obs = HOODS.filter(h => !mine.has(h.id)).map(h => ({ id: h.id, x: h.x, y: h.y, r: h.r }));
+  const AX = JOHN.annex;
+  if (AX && !mine.has(AX.id)) obs.push({ id: AX.id, x: AX.x, y: AX.y, r: AX.r + 6 });
+  return obs;
+}
+
+// closest point on segment ab to p: [distance, x, y]
+function segClosest(px, py, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy;
+  let t = L2 ? ((px - a[0]) * dx + (py - a[1]) * dy) / L2 : 0;
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const x = a[0] + t * dx, y = a[1] + t * dy;
+  return [Math.hypot(px - x, py - y), x, y];
+}
+
+// the centre-to-centre curve, densified to STEP, with the stops marked as pinned
+function wayRaw(stops) {
+  const R = WAY_ROUTE, ctrl = stops.map(h => [h.x, h.y]);
+  const raw = catmullSample(ctrl, R.PER), pts = [], pinned = [];
+  for (let i = 0; i < raw.length; i++) {
+    if (i > 0) {
+      const a = raw[i - 1], b = raw[i], n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / R.STEP);
+      for (let k = 1; k < n; k++) { pts.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); pinned.push(false); }
+    }
+    const stop = i % R.PER === 0;
+    // a stop is the member centre itself, not a sample that happens to be near it
+    pts.push(stop ? ctrl[i / R.PER].slice() : raw[i].slice()); pinned.push(stop);
+  }
+  return { pts, pinned };
+}
+
+function wayRoute(stops, obstacles, hw) {
+  const R = WAY_ROUTE, { pts, pinned } = wayRaw(stops);
+  const cosNear = Math.cos(R.NORMAL_DEG * Math.PI / 180);
+  /* Averaged projection (Cimmino): each sample moves by the MEAN of the pushes every
+     violated block asks for. Applied one block at a time instead, the last block processed
+     wins, and in a neck between two blocks the line ends a full MARGIN from one and flush
+     against the other. Averaged, opposed pushes balance and the line settles in the middle
+     of the neck; where the neck is narrower than the stroke it stays crossed — a pinch. */
+  const pushOf = (p, i, o) => {
+    const need = o.r + hw + R.MARGIN, dx = p[0] - o.x, dy = p[1] - o.y, d = Math.hypot(dx, dy);
+    if (d >= need) return null;
+    if (d > 1e-9) {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+      let tx = b[0] - a[0], ty = b[1] - a[1];
+      const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+      if (Math.abs((dx * tx + dy * ty) / d) < cosNear)
+        return [o.x + dx / d * need - p[0], o.y + dy / d * need - p[1]];          // radial
+      // the block sits (nearly) on the line: a radial push would only slide the sample
+      // along it, so step sideways along the normal, on the side the sample leans to
+      const nx = -ty, ny = tx, along = dx * nx + dy * ny, perp = dx * tx + dy * ty;
+      const s = (along < 0 ? -1 : 1) * Math.sqrt(Math.max(0, need * need - perp * perp)) - along;
+      return [nx * s, ny * s];
+    }
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    let tx = b[0] - a[0], ty = b[1] - a[1];
+    const tl = Math.hypot(tx, ty) || 1;
+    return [-ty / tl * need, tx / tl * need];                                     // exactly on the centre: left
+  };
+  const push = () => {
+    for (let i = 0; i < pts.length; i++) {
+      if (pinned[i]) continue;
+      const p = pts[i];
+      let sx = 0, sy = 0, n = 0;
+      for (const o of obstacles) {
+        const v = pushOf(p, i, o);
+        if (v) { sx += v[0]; sy += v[1]; n++; }
+      }
+      if (n) { p[0] += sx / n; p[1] += sy / n; }
+    }
+  };
+  const smooth = () => {
+    const prev = pts.map(q => q.slice());
+    for (let i = 1; i < pts.length - 1; i++) {
+      if (pinned[i]) continue;
+      const mx = (prev[i - 1][0] + prev[i + 1][0]) / 2, my = (prev[i - 1][1] + prev[i + 1][1]) / 2;
+      pts[i][0] += (mx - pts[i][0]) * R.SMOOTH; pts[i][1] += (my - pts[i][1]) * R.SMOOTH;
+    }
+  };
+  for (let it = 0; it < R.ITERS; it++) { push(); smooth(); }
+  for (let it = 0; it < R.SETTLE; it++) push();   // end on pushes, so smoothing never has the last word
+  return { pts, pinned };
+}
+
+/* A crossing is the drawn stroke overlapping a non-member disc: some SEGMENT (not just a
+   sample) within o.r + hw of its centre. It is certified — a pinch no route can clear —
+   only when a second non-member B leaves a gap to o narrower than the stroke itself
+   (< 2·hw) AND B is also in the way's path at that point. Anything else is a routing
+   failure. Returns every crossing, certified or not, plus the least segment clearance
+   the route keeps from any obstacle it does NOT cross (the floor's safety budget). */
+function wayCrossings(pts, obstacles, hw) {
+  const out = [];
+  let clearMin = Infinity;
+  for (const o of obstacles) {
+    let best = Infinity, bx = 0, by = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const [d, x, y] = segClosest(o.x, o.y, pts[i - 1], pts[i]);
+      if (d < best) { best = d; bx = x; by = y; }
+    }
+    if (best >= o.r + hw) { clearMin = Math.min(clearMin, best - o.r - hw); continue; }
+    const pinch = obstacles.find(B => B !== o &&
+      Math.hypot(B.x - o.x, B.y - o.y) - o.r - B.r < 2 * hw &&
+      Math.hypot(B.x - bx, B.y - by) < B.r + hw + WAY_ROUTE.MARGIN);
+    out.push({ id: o.id, certifiedBy: pinch ? pinch.id : null,
+               gap: pinch ? Math.hypot(pinch.x - o.x, pinch.y - o.y) - o.r - pinch.r : null });
+  }
+  out.clearMin = clearMin;
+  return out;
+}
+
+// certified crossings come in pairs (A pinched by B, B by A): report each neck once
+function wayPinches(crossings) {
+  const seen = new Set(), out = [];
+  for (const c of crossings) {
+    if (!c.certifiedBy) continue;
+    const k = [c.id, c.certifiedBy].sort().join("|");
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const [a, b] = k.split("|");
+    out.push({ a, b, gap: c.gap });
+  }
+  return out;
+}
+
+/* How far a way may be widened (in total) by the one-screen-pixel legibility floor without
+   reaching a block it does not touch: twice the clearance its route actually keeps, less the
+   rounding of the drawn path. Derived from the route, never a fixed budget: a route centred
+   in a tight neck keeps only the slack the neck allows. */
+function wayFloorCap(geom) {
+  const c = geom.crossings.clearMin;
+  return 2 * Math.max(0, (c === Infinity ? 1e9 : c) - WAY_ROUTE.ROUND_TOL);
+}
+
+/* A single-block theme has no route: it is drawn as a short arc hugging its block, centred
+   on the bearing to the nearest neighbouring block. Its position and length are OURS, not
+   data, and the key says so. */
+function wayStub(h, hw) {
+  const R = WAY_ROUTE, others = HOODS.concat(JOHN.annex ? [JOHN.annex] : []).filter(o => o !== h);
+  let near = null, best = Infinity;
+  for (const o of others) {
+    const g = Math.hypot(o.x - h.x, o.y - h.y) - o.r - h.r;
+    if (g < best) { best = g; near = o; }
+  }
+  const rad = h.r + hw + R.STUB_PAD, want = R.STUB_FRAC * 2 * Math.PI * h.r, L = Math.min(want, R.STUB_CAP);
+  const mid = Math.atan2(near.y - h.y, near.x - h.x), half = L / rad / 2;
+  const pts = [];
+  for (let k = 0; k <= 24; k++) { const a = mid - half + 2 * half * k / 24; pts.push([h.x + rad * Math.cos(a), h.y + rad * Math.sin(a)]); }
+  return { cx: h.x, cy: h.y, R: rad, a0: mid - half, a1: mid + half, L, capBinds: want > R.STUB_CAP, nearest: near.id, pts };
+}
+
+// every figure the map shows about a way is computed here, once, from the data
+function wayGeometry(theme, hw) {
+  const stops = wayStops(theme), obstacles = wayObstacles(theme);
+  if (stops.length === 1) {
+    const stub = wayStub(stops[0], hw);
+    return { stub, stops, obstacles, crossings: wayCrossings(stub.pts, obstacles, hw) };
+  }
+  const route = wayRoute(stops, obstacles, hw);
+  return { route, stops, obstacles, crossings: wayCrossings(route.pts, obstacles, hw) };
+}
+
 /* ---------- svg helpers ---------- */
 const svg = document.getElementById("map");
 const NS = "http://www.w3.org/2000/svg";

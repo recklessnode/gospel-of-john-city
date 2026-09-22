@@ -11,18 +11,12 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildPlan, catmullSample } from "../src/plan.js";
+import { upTo } from "./plan_slice.mjs";   // one home for slicing a renderer's plan section
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const raw = readFileSync(join(ROOT, "data/john-data.json"), "utf8");
 const fresh = () => JSON.parse(raw);
 
-/* --- slice a source file down to its DOM-free plan section --- */
-function upTo(file, marker) {
-  const src = readFileSync(join(ROOT, file), "utf8");
-  const i = src.indexOf(marker);
-  if (i < 0) throw new Error(`marker not found in ${file}: ${marker}`);
-  return src.slice(0, i);
-}
 
 /* --- 1. the canvas 3D renderer (runs its layout at load) --- */
 function planFromApp3d() {
