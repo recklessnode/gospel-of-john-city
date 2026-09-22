@@ -569,12 +569,12 @@ const WAYS = { shown: [], rejects: [] };
    type's drawn width, dash]. Presentation constants — the widths themselves live in
    data/way-types.json. Dashed layers use butt caps, or the dashes would grow round ends. */
 const WAY_TREATMENT = {
-  via:        [["casing", 1], ["fill", 0.82], ["center", 0.07, "10 6"]],     // paved, with a crown line
-  vicus:      [["casing", 1], ["fill", 0.78], ["kerb", 0.40], ["fill", 0.29]], // two cart ruts
-  clivus:     [["casing", 1], ["kerb", 0.62], ["fill", 0.50], ["kerb", 0.5, "0.8 5.2"]], // gutters + traction grooves
-  semita:     [["kerb", 1], ["fill", 0.5]],                                    // a deck on a heavy kerb
-  angiportus: [["shade", 1], ["fill", 0.5]],                                   // an unlit lane
-  ambitus:    [["shade", 1, "1.6 2.4"]],                                       // a broken slit between walls
+  via:        [["kerb", 1], ["deck", 0.80]],                                    // a broad grey deck between kerbs
+  vicus:      [["kerb", 1], ["deck", 0.78], ["kerb", 0.40], ["deck", 0.29]],    // two cart ruts
+  clivus:     [["kerb", 1], ["deck", 0.72], ["kerb", 0.72, "0.8 5.2"]],         // gutters, grooves across the deck
+  semita:     [["kerb", 1], ["deck", 0.5]],                                     // a deck on a heavy kerb: a double line
+  angiportus: [["shade", 1]],                                                    // one unlit lane
+  ambitus:    [["shade", 1, "4 2"]],                                             // a broken slit (not 7 5 or 3 4: the legend's outlines)
 };
 
 function parseWaysParam(search) {
@@ -669,6 +669,7 @@ function applyWays() {
   const on = new Set(shown.flatMap(t => t.blocks));
   svg.querySelectorAll(".hood[data-hood]").forEach(e =>
     e.classList.toggle("dimmed", shown.length > 0 && !on.has(e.dataset.hood)));
+  svg.classList.toggle("ways-on", shown.length > 0);
   renderKey();
   syncChrome();
 }
@@ -908,7 +909,7 @@ function renderOrganic() {
     const L = Math.hypot(dx, dy);
     if (L > 150 || L < 2) return;
     const sx = h.roadPt[0] + dx / L * (ROAD_HALF - 2), sy = h.roadPt[1] + dy / L * (ROAD_HALF - 2);
-    el("line", { x1: sx, y1: sy, x2: bx, y2: by, stroke: "var(--road-casing)", "stroke-width": 3, "stroke-linecap": "round" }, gWay);
+    el("line", { x1: sx, y1: sy, x2: bx, y2: by, "class": "walk", stroke: "var(--road-casing)", "stroke-width": 3, "stroke-linecap": "round" }, gWay);
   });
   // gates & quay
   el("rect", { x: gate[0] - 13, y: gate[1] - 9, width: 26, height: 18, rx: 4, "class": "gate" }, gWay);

@@ -22,6 +22,7 @@
     /* theme ways: two greys, no new hue — colour already carries the seven narrative themes */
     --way-kerb: #8a8374;   /* darker than the deck by day … */
     --way-shade: #6f6a5f;  /* the alley / maintenance-gap tone */
+    --road-edge: #5c574c;  /* the Johannine Way's edge while theme ways are shown: out-contrasts every way */
     --water: #d7e8ef;
     --water-ink: #7fa8b8;
     --gold: #b8860b;
@@ -54,8 +55,9 @@
     --wall: #8d8676;
     --road-fill: #2a2822;
     --road-casing: #4a463c;
-    --way-kerb: #9a9384;   /* … lighter than the deck by night: the semita's kerb flips */
-    --way-shade: #8a8577;  /* light-on-dark, so a dark alley stays visible on a dark ground */
+    --way-kerb: #7a7568;   /* … lighter than the deck by night: the semita's kerb flips */
+    --way-shade: #6e695e;  /* light-on-dark, so a dark alley stays visible on a dark ground */
+    --road-edge: #a8a192;  /* above both, so no theme way outshines the Johannine Way at night */
     --water: #16303a;
     --water-ink: #4e7889;
     --gold: #d9a419;
@@ -127,13 +129,20 @@
   .way-casing { fill: none; stroke: var(--road-casing); stroke-width: 13; stroke-linecap: round; }
   .way-fill { fill: none; stroke: var(--road-fill); stroke-width: 9.5; stroke-linecap: round; }
   .way-center { fill: none; stroke: var(--baseline); stroke-width: 1; stroke-dasharray: 8 8; }
+  /* while theme ways are shown the Johannine Way takes an edge none of them can match, and its
+     data-free entry walkways drop below every way but the ambitus (colour and width only:
+     wayScale() reads the casing's stroke WIDTH, which is unchanged) */
+  #map.ways-on .way-casing { stroke: var(--road-edge); }
+  #map.ways-on line.walk { stroke-width: 1; }
   /* theme ways — six treatments built from stacked strokes; widths/dashes come from
      WAY_TREATMENT in app.js (one home). Nothing here sets opacity: what the contrast test
      computes is what paints. Nothing the ways draw takes the pointer. */
   .way, .way-bridge, .layer-way-badges { pointer-events: none; }
   .way path, .way-bridge path, .way-swatch path { fill: none; stroke-linejoin: round; }
-  .wl-casing { stroke: var(--road-casing); }
-  .wl-fill   { stroke: var(--road-fill); }
+  /* no theme way uses the Johannine Way's own road tokens: its casing, deck and crown are its alone */
+  .wl-deck   { stroke: var(--grid); }
+  .wl-fill   { stroke: var(--road-fill); }     /* the Johannine Way's swatch only */
+  .wl-roadedge { stroke: var(--road-edge); }   /* the Johannine Way's swatch only */
   .wl-kerb   { stroke: var(--way-kerb); }
   .wl-shade  { stroke: var(--way-shade); }
   .wl-center { stroke: var(--baseline); }
@@ -378,7 +387,7 @@
     <button data-view="index">Index</button>
   </div>
   <div class="spacer"></div>
-  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/c966566" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-22 20:52Z · c966566</a>
+  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/b5c2479" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-22 21:20Z · b5c2479</a>
   <a class="iconbtn" href="city3d.html" style="text-decoration:none">3D City ⇗</a>
   <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
 </header>
@@ -996,12 +1005,12 @@ const WAYS = { shown: [], rejects: [] };
    type's drawn width, dash]. Presentation constants — the widths themselves live in
    data/way-types.json. Dashed layers use butt caps, or the dashes would grow round ends. */
 const WAY_TREATMENT = {
-  via:        [["casing", 1], ["fill", 0.82], ["center", 0.07, "10 6"]],     // paved, with a crown line
-  vicus:      [["casing", 1], ["fill", 0.78], ["kerb", 0.40], ["fill", 0.29]], // two cart ruts
-  clivus:     [["casing", 1], ["kerb", 0.62], ["fill", 0.50], ["kerb", 0.5, "0.8 5.2"]], // gutters + traction grooves
-  semita:     [["kerb", 1], ["fill", 0.5]],                                    // a deck on a heavy kerb
-  angiportus: [["shade", 1], ["fill", 0.5]],                                   // an unlit lane
-  ambitus:    [["shade", 1, "1.6 2.4"]],                                       // a broken slit between walls
+  via:        [["kerb", 1], ["deck", 0.80]],                                    // a broad grey deck between kerbs
+  vicus:      [["kerb", 1], ["deck", 0.78], ["kerb", 0.40], ["deck", 0.29]],    // two cart ruts
+  clivus:     [["kerb", 1], ["deck", 0.72], ["kerb", 0.72, "0.8 5.2"]],         // gutters, grooves across the deck
+  semita:     [["kerb", 1], ["deck", 0.5]],                                     // a deck on a heavy kerb: a double line
+  angiportus: [["shade", 1]],                                                    // one unlit lane
+  ambitus:    [["shade", 1, "4 2"]],                                             // a broken slit (not 7 5 or 3 4: the legend's outlines)
 };
 
 function parseWaysParam(search) {
@@ -1096,6 +1105,7 @@ function applyWays() {
   const on = new Set(shown.flatMap(t => t.blocks));
   svg.querySelectorAll(".hood[data-hood]").forEach(e =>
     e.classList.toggle("dimmed", shown.length > 0 && !on.has(e.dataset.hood)));
+  svg.classList.toggle("ways-on", shown.length > 0);
   renderKey();
   syncChrome();
 }
@@ -1335,7 +1345,7 @@ function renderOrganic() {
     const L = Math.hypot(dx, dy);
     if (L > 150 || L < 2) return;
     const sx = h.roadPt[0] + dx / L * (ROAD_HALF - 2), sy = h.roadPt[1] + dy / L * (ROAD_HALF - 2);
-    el("line", { x1: sx, y1: sy, x2: bx, y2: by, stroke: "var(--road-casing)", "stroke-width": 3, "stroke-linecap": "round" }, gWay);
+    el("line", { x1: sx, y1: sy, x2: bx, y2: by, "class": "walk", stroke: "var(--road-casing)", "stroke-width": 3, "stroke-linecap": "round" }, gWay);
   });
   // gates & quay
   el("rect", { x: gate[0] - 13, y: gate[1] - 9, width: 26, height: 18, rx: 4, "class": "gate" }, gWay);

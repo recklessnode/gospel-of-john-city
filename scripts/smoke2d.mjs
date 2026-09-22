@@ -87,7 +87,13 @@ function measureWays(keys) {
     let op = parseFloat(cs.strokeOpacity);
     for (let e = outer; e && e.id !== "map"; e = e.parentElement) op *= parseFloat(getComputedStyle(e).opacity);
     const oc = col(cs.stroke); oc.a *= op;
-    const con = Object.fromEntries(Object.entries(grounds).map(([n, gd]) => [n, { way: ratio(over(oc, gd), gd), floor: ratio(casing, gd) }]));
+    // visibility floor: no fainter than the Johannine Way's normal casing; primacy ceiling: the
+    // Johannine Way as DRAWN now (its lifted edge) must out-contrast every layer of every way
+    const jw = col(getComputedStyle(document.querySelector("#map .way-casing")).stroke);
+    const con = Object.fromEntries(Object.entries(grounds).map(([n, gd]) => [n, { way: ratio(over(oc, gd), gd), floor: ratio(casing, gd),
+      jw: ratio(jw, gd), loudest: Math.max(...[...g.querySelectorAll("path")].map(e => ratio(over(col(getComputedStyle(e).stroke), gd), gd))) }]));
+    const roadTok = [css("--road-casing"), css("--road-fill")].map(c => JSON.stringify(col(c)));
+    const usesRoadToken = [...g.querySelectorAll("path")].some(e => roadTok.includes(JSON.stringify(col(getComputedStyle(e).stroke))));
     const stub = g.hasAttribute("data-stub");
     let crossed = [];
     if (!stub) {
@@ -114,7 +120,7 @@ function measureWays(keys) {
     return { k, type: t.way, typeDrawn: [...g.classList].find(c => c.startsWith("way-")).slice(4), sw, want, wantDrawn, u1px, cap,
       onScreen: sw / u1px, subNote,
       bbw: bb.width, bbh: bb.height, con, badges: document.querySelectorAll(`#map .way-badge[data-way="${k}"]`).length,
-      blocks: t.blocks.length, stub, crossed: crossed.sort(), bridges: bridges.sort(), badgeOnBridge, badgeContrast };
+      blocks: t.blocks.length, stub, crossed: crossed.sort(), bridges: bridges.sort(), badgeOnBridge, badgeContrast, usesRoadToken };
   });
   const hoods = [...document.querySelectorAll("#map .hood[data-hood]")];
   const union = new Set(keys.flatMap(k => T(k).blocks));
@@ -324,8 +330,11 @@ for (const cfg of CONFIGS) {
       ok(cfg.name, `${L} at least a screen pixel wide, or the key says why not`, w.onScreen >= 0.999 || w.subNote,   // 0.1%: stroke-width is written at 3 decimals, --u1px at 4
         `${w.onScreen.toFixed(2)}px on screen`);
       ok(cfg.name, `${L} has geometry`, w.bbw > 0 && w.bbh > 0, `bbox ${w.bbw.toFixed(1)}×${w.bbh.toFixed(1)}`);
-      for (const [gname, c] of Object.entries(w.con))
+      for (const [gname, c] of Object.entries(w.con)) {
         ok(cfg.name, `${L} contrast on ${gname} ≥ the Way's own casing`, c.way >= c.floor - 1e-6, `${c.way.toFixed(2)} vs floor ${c.floor.toFixed(2)}`);
+        ok(cfg.name, `${L} the Johannine Way out-contrasts it on ${gname}`, c.jw > c.loudest, `JW ${c.jw.toFixed(2)} vs loudest layer ${c.loudest.toFixed(2)}`);
+      }
+      ok(cfg.name, `${L} uses none of the Johannine Way's road tokens`, !w.usesRoadToken);
       ok(cfg.name, `${L} one badge per block it touches`, w.badges === w.blocks, `${w.badges} badges, ${w.blocks} blocks`);
       ok(cfg.name, `${L} drawn as a stub exactly when it has one block`, w.stub === (w.blocks === 1), `stub ${w.stub}, blocks ${w.blocks}`);
       if (!w.stub) {
