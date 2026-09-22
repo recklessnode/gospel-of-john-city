@@ -19,6 +19,9 @@
     --wall: #6b6558;
     --road-fill: #efe9da;
     --road-casing: #c9c2af;
+    /* theme ways: two greys, no new hue — colour already carries the seven narrative themes */
+    --way-kerb: #8a8374;   /* darker than the deck by day … */
+    --way-shade: #6f6a5f;  /* the alley / maintenance-gap tone */
     --water: #d7e8ef;
     --water-ink: #7fa8b8;
     --gold: #b8860b;
@@ -51,6 +54,8 @@
     --wall: #8d8676;
     --road-fill: #2a2822;
     --road-casing: #4a463c;
+    --way-kerb: #9a9384;   /* … lighter than the deck by night: the semita's kerb flips */
+    --way-shade: #8a8577;  /* light-on-dark, so a dark alley stays visible on a dark ground */
     --water: #16303a;
     --water-ink: #4e7889;
     --gold: #d9a419;
@@ -122,8 +127,25 @@
   .way-casing { fill: none; stroke: var(--road-casing); stroke-width: 13; stroke-linecap: round; }
   .way-fill { fill: none; stroke: var(--road-fill); stroke-width: 9.5; stroke-linecap: round; }
   .way-center { fill: none; stroke: var(--baseline); stroke-width: 1; stroke-dasharray: 8 8; }
+  /* theme ways — six treatments built from stacked strokes; widths/dashes come from
+     WAY_TREATMENT in app.js (one home). Nothing here sets opacity: what the contrast test
+     computes is what paints. Nothing the ways draw takes the pointer. */
+  .way, .way-bridge, .layer-way-badges { pointer-events: none; }
+  .way path, .way-bridge path, .way-swatch path { fill: none; stroke-linejoin: round; }
+  .wl-casing { stroke: var(--road-casing); }
+  .wl-fill   { stroke: var(--road-fill); }
+  .wl-kerb   { stroke: var(--way-kerb); }
+  .wl-shade  { stroke: var(--way-shade); }
+  .wl-center { stroke: var(--baseline); }
+  .way-badge circle { fill: var(--ink-1); r: calc(7px * var(--u1px, 1)); }
+  .way-badge text { fill: var(--surface-1); font-size: calc(9.5px * var(--u1px, 1)); font-weight: 700;
+                    text-anchor: middle; dominant-baseline: central; }
   .hood { stroke: var(--surface-1); stroke-width: 2; cursor: pointer; transition: filter .12s; }
   .hood:hover { filter: brightness(1.12); }
+  /* blocks on no shown way: desaturated, never faded — opacity would change what the
+     annex (0.55) and every contrast measurement mean */
+  .hood.dimmed { filter: saturate(.15); }
+  .hood.dimmed:hover { filter: saturate(.15) brightness(1.12); }
   .hood.selected { stroke: var(--ink-1); stroke-width: 2.5; }
   .hood-ring { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-dasharray: 3 3; pointer-events: none; }
   .center-ring { fill: none; stroke: var(--ink-2); stroke-width: 1.2; pointer-events: none; }

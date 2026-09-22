@@ -553,12 +553,133 @@ function iamHood(iam) {
   return HOODS.find(h => h.v0 <= iam.v && iam.v <= h.v1);
 }
 
+/* ---------- THEME WAYS: state, drawing ---------- */
+/* PaulDz's theme lists (data/themes.json) with our proposed way type per theme
+   (data/way-types.json, derived from verse-count bands). The page READS t.way and never
+   re-bands: one home for the assignment. Which ways are shown is URL state, ?ways=a,b —
+   a link is the whole review artefact. */
+const WAYDATA = (typeof window.JOHN_WAYTHEMES === "object" && typeof window.JOHN_WAYS === "object")
+  ? { themes: window.JOHN_WAYTHEMES.themes, types: window.JOHN_WAYS.types, status: window.JOHN_WAYS.status } : null;
+const WAY_THEME = new Map(WAYDATA ? WAYDATA.themes.map(t => [t.key, t]) : []);
+const WAY_TYPE = new Map(WAYDATA ? WAYDATA.types.map(t => [t.key, t]) : []);
+const WAYS_MAX = 4;
+const WAYS = { shown: [], rejects: [] };
+
+/* Each type is a stack of strokes, outermost first: [colour class, width as a fraction of the
+   type's drawn width, dash]. Presentation constants — the widths themselves live in
+   data/way-types.json. Dashed layers use butt caps, or the dashes would grow round ends. */
+const WAY_TREATMENT = {
+  via:        [["casing", 1], ["fill", 0.82], ["center", 0.07, "10 6"]],     // paved, with a crown line
+  vicus:      [["casing", 1], ["fill", 0.78], ["kerb", 0.40], ["fill", 0.29]], // two cart ruts
+  clivus:     [["casing", 1], ["kerb", 0.62], ["fill", 0.50], ["kerb", 0.5, "0.8 5.2"]], // gutters + traction grooves
+  semita:     [["kerb", 1], ["fill", 0.5]],                                    // a deck on a heavy kerb
+  angiportus: [["shade", 1], ["fill", 0.5]],                                   // an unlit lane
+  ambitus:    [["shade", 1, "1.6 2.4"]],                                       // a broken slit between walls
+};
+
+function parseWaysParam(search) {
+  WAYS.shown = []; WAYS.rejects = [];
+  const raw = new URLSearchParams(search).get("ways");
+  if (!raw || !WAYDATA) return;
+  const seen = new Set();
+  for (const k of raw.split(",").map(x => x.trim()).filter(Boolean)) {
+    const t = WAY_THEME.get(k);
+    if (seen.has(k)) { WAYS.rejects.push({ key: k, why: "duplicate" }); continue; }
+    seen.add(k);
+    if (!t) WAYS.rejects.push({ key: k, why: "unknown" });
+    else if (t.parent) WAYS.rejects.push({ key: k, why: "child", parent: t.parent });
+    else if (WAYS.shown.length >= WAYS_MAX) WAYS.rejects.push({ key: k, why: "cap" });
+    else WAYS.shown.push(k);
+  }
+}
+
+/* scale: the Way's drawn casing over its plan width (2 × ROAD_HALF), read from the page's own
+   CSS so a change to either moves every theme way with it */
+function wayScale() {
+  const probe = svg.querySelector(".way-casing");
+  const w = probe ? parseFloat(getComputedStyle(probe).strokeWidth) : NaN;
+  return Number.isFinite(w) && w > 0 ? w / (2 * ROAD_HALF) : null;
+}
+const WAY_GEOM = new Map();   // key -> geometry; blocks never move after layout
+function wayGeomFor(t, hw) {
+  const k = t.key + "@" + hw.toFixed(4);
+  if (!WAY_GEOM.has(k)) WAY_GEOM.set(k, wayGeometry(t, hw));
+  return WAY_GEOM.get(k);
+}
+const polyD = pts => "M" + pts.map(p => p[0].toFixed(2) + "," + p[1].toFixed(2)).join("L");
+
+// one drawn way (or a key swatch): the treatment's stroke stack along a path
+function drawWayStack(parent, type, d, w, cls, attrs) {
+  const g = el("g", Object.assign({ "class": `${cls} way-${type}` }, attrs || {}), parent);
+  WAY_TREATMENT[type].forEach(([c, frac, dash], i) => {
+    el("path", Object.assign({
+      d, "class": `wl wl-${c}${i === 0 ? " wl-outer" : ""}`, "stroke-width": +(frac * w).toFixed(3),
+      "stroke-linecap": dash ? "butt" : "round",
+    }, dash ? { "stroke-dasharray": dash } : {}), g);
+  });
+  return g;
+}
+
+function drawShownWays(gWays, gBridges, gBadges) {
+  if (!WAYDATA || !WAYS.shown.length) return;
+  const scale = wayScale();
+  if (!scale) return;
+  // paint narrow first, so a wider way stays continuous across a junction
+  const order = WAYS.shown.map((k, i) => ({ k, i, t: WAY_THEME.get(k) }))
+    .sort((a, b) => WAY_TYPE.get(a.t.way).widthPlan - WAY_TYPE.get(b.t.way).widthPlan || a.i - b.i);
+  const defs = el("defs", {}, gBridges);
+  const onBlock = new Map();   // block id -> shown ways touching it, in shown order
+  for (const { k, i, t } of order) {
+    const w = WAY_TYPE.get(t.way).widthPlan * scale, hw = w / 2;
+    const g = wayGeomFor(t, hw);
+    const pts = g.stub ? g.stub.pts : g.route.pts, d = polyD(pts);
+    drawWayStack(gWays, t.way, d, w, "way", Object.assign({ "data-way": k, "data-n": i + 1 },
+      g.stub ? { "data-stub": g.stops[0].id } : {}));
+    // a certified pinch: no room between two blocks the way is not on, so it passes over
+    // them — drawn above the block as an overpass and named in the key, never hidden
+    for (const c of g.crossings.filter(c => c.certifiedBy)) {
+      const o = g.obstacles.find(o => o.id === c.id), cid = `bridge-${k}-${c.id}`;
+      const cp = el("clipPath", { id: cid }, defs);
+      el("circle", { cx: o.x, cy: o.y, r: o.r + hw + 1 }, cp);
+      drawWayStack(gBridges, t.way, d, w, "way-bridge", { "data-way": k, "data-bridge": c.id, "clip-path": `url(#${cid})` });
+    }
+    for (const h of g.stops) {
+      if (!onBlock.has(h.id)) onBlock.set(h.id, []);
+      onBlock.get(h.id).push({ k, n: i + 1 });
+    }
+  }
+  // badges: one numbered disc per (way, block it touches), on the block's west edge
+  for (const [id, list] of onBlock) {
+    const h = byId[id];
+    list.sort((a, b) => a.n - b.n).forEach((e, j) => {
+      const a = Math.PI + (j - (list.length - 1) / 2) * 0.6;
+      const bg = el("g", { "class": "way-badge", "data-way": e.k, "data-badge": id, "aria-hidden": "true",
+        transform: `translate(${(h.x + h.r * Math.cos(a)).toFixed(2)},${(h.y + h.r * Math.sin(a)).toFixed(2)})` }, gBadges);
+      el("circle", { cx: 0, cy: 0 }, bg);
+      const tx = el("text", { x: 0, y: 0 }, bg); tx.textContent = String(e.n);
+    });
+  }
+}
+
+// dimming: blocks on no shown way are desaturated (never faded); called after every render
+function applyWays() {
+  const shown = WAYS.shown.map(k => WAY_THEME.get(k)).filter(Boolean);
+  const on = new Set(shown.flatMap(t => t.blocks));
+  svg.querySelectorAll(".hood[data-hood]").forEach(e =>
+    e.classList.toggle("dimmed", shown.length > 0 && !on.has(e.dataset.hood)));
+}
+
 /* ---------- ORGANIC VIEW ---------- */
 function renderOrganic() {
   svg.innerHTML = "";
   svg.setAttribute("viewBox", "0 0 1200 1000");
-  const gWater = el("g", {}), gDistrict = el("g", {}), gWall = el("g", {}), gWay = el("g", {}),
+  // Layer order is a claim: theme ways run UNDER the city wall (a way drawn over it would cut
+  // a gap where the plan has no gate — invariant 5) and under the Johannine Way (the
+  // narrative spine stays primary). Bridges and badges sit over the blocks.
+  const gWater = el("g", {}), gDistrict = el("g", {}), gWays = el("g", { "class": "layer-ways" }),
+        gWall = el("g", {}), gWay = el("g", {}),
         gHoods = el("g", {}),
+        gWayBridges = el("g", { "class": "layer-way-bridges" }), gWayBadges = el("g", { "class": "layer-way-badges" }),
         gChiasm = el("g", { "class": "layer-chiasm" }), gIam = el("g", { "class": "layer-iam" }),
         gLabels = el("g", { "class": "layer-labels" });
 
@@ -704,8 +825,10 @@ function renderOrganic() {
   el("path", { d: "M0,-26 L7,8 L0,2 L-7,8 Z", "class": "compass" }, comp);
   txt(comp, 0, -32, "N", "label-ward");
 
+  drawShownWays(gWays, gWayBridges, gWayBadges);
   applyOverlays();
   applySelection();
+  applyWays();
 }
 
 /* ---------- LINEAR VIEW ---------- */
@@ -878,6 +1001,10 @@ function setVB() {
   svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   svg.classList.toggle("zoomed", 1200 / vb.w >= 1.55);
   svg.style.setProperty("--inv", (vb.w / 1200).toFixed(4)); // counter-scale labels
+  // one CSS pixel in plan units under preserveAspectRatio "meet" — badges hold a constant
+  // on-screen size with it, where --inv only holds them to the default view's size
+  const cw = svg.clientWidth || 1200, ch = svg.clientHeight || 1000;
+  svg.style.setProperty("--u1px", Math.max(vb.w / cw, vb.h / ch).toFixed(4));
 }
 function resetVB() { vb = { x: 0, y: 0, w: 1200, h: 1000 }; setVB(); }
 function clientToMap(cx, cy) {
@@ -975,6 +1102,7 @@ document.head.appendChild(style2);
 /* ---------- boot ---------- */
 layoutOrganic();
 buildWay();
+parseWaysParam(location.search);
 renderIndex();
-renderOrganic();
 resetVB();
+renderOrganic();
