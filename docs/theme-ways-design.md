@@ -1,3 +1,6 @@
+> **Superseded in part — read `docs/theme-ways-slice1.md` first.** Slice 1's build decisions override this
+> design's §1 routing, §2 focus/pin and §3 co-extension, and six factual claims below are marked inline where they are wrong.
+
 ## 1. The six way types, drawn
 
 Scale anchor: the Way is `2 × ROAD_HALF = 18` plan units. Reading that as a real *via* (~12 m) fixes **1 plan unit ≈ 0.65 m**, which is what makes the *ambitus* number honest: 1.2 units = 0.78 m = 2.6 Roman feet, exactly PaulDz's "two to three feet".
@@ -21,10 +24,10 @@ Identity without hue, four channels: only ≤4 ways are visible at once; each ca
 
 **Routing** (pure maths, belongs in `plan.js` beside `themeRoadPts`):
 1. stops = `theme.blocks` in narrative order (verified: 0 out-of-order block pairs across all 51 entries — sort by `v0` anyway);
-2. `catmullSample(stops, 16)`, **then push the final stop point** — the existing sampler drops it, so today's two roads already stop one sample short;
+2. `catmullSample(stops, 16)`, **then push the final stop point** — the existing sampler drops it, so today's two roads already stop one sample short; **[Correction, slice 1: false — every `catmullSample` copy already pushes the endpoint; the real bug was the renderers' `i += 3` decimation, fixed in 8f3b2d7. Pushing again would duplicate the endpoint. See docs/theme-ways-slice1.md.]**
 3. hood clearance: iteratively push any sample inside a hood circle out to `h.r + width/2 + 1.5`, same idiom as the road-clearance pass at `plan.js:172`;
 4. Way clearance: drop samples within `ROAD_HALF + 0.5` of the Way and split the ribbon there. A lesser street does not paint over the *via sacra*; the gap reads as a junction and enforces the hard constraint;
-5. single-block themes get a **stub**: an arc hugging the block at `r + w/2 + 0.6`, length `min(0.55·2πr, 34 u)`, centred on the bearing to the nearest neighbouring hood. Only 5 themes need it (`questioning-faith` n33, `conviction-truth` m16_4b-33, `incarnation` n3, `father-of-lies` n54, `love-for-cosmos` n14) and all are ≤2.2 u wide, so the stub rule is never asked to wrap a via.
+5. single-block themes get a **stub**: an arc hugging the block at `r + w/2 + 0.6`, length `min(0.55·2πr, 34 u)`, centred on the bearing to the nearest neighbouring hood. Only 5 themes need it (`questioning-faith` n33, `conviction-truth` m16_4b-33, `incarnation` n3, `father-of-lies` n54, `love-for-cosmos` n14) and all are ≤2.2 u wide, so the stub rule is never asked to wrap a via. **[Correction, slice 1: false — two of the five are 3.4 u semitae (questioning-faith, conviction-truth). The stub still never wraps a via.]**
 
 ## 2. Collision / selection
 
@@ -58,7 +61,7 @@ Three consequences worth naming:
 
 - **The semita case is free and is the point.** When a footpath shares a stretch with a bigger way it is *already* drawn raised with a kerb on the street side — offsetting it turns it into that street's sidewalk, which is literally PaulDz's definition. `honest-doubt` beside the Belief via at 20:24-29, and `prayer-jesus-name` running the length of the Holy Spirit clivus through 14–16, come out right with no special code.
 - **Paint order** is ascending width — narrower first, wider on top — so the greater street stays continuous through a junction. At each crossing drop a junction node: a square of the wider way's paving.
-- **Exact co-extension** (`rest-sustenance` / `spiritual-empowerment`, tied on both measures) resolves as ±1 sides at equal width: a matched pair of alleys either side of the same line. Likewise 3:16's *ambitus* runs against the very wall the `born-again` semita passes, both in n14 Nicodemus Assembly — a good screenshot for PaulDz.
+- **Exact co-extension** (`rest-sustenance` / `spiritual-empowerment`, tied on both measures) resolves as ±1 sides at equal width: a matched pair of alleys either side of the same line. Likewise 3:16's *ambitus* runs against the very wall the `born-again` semita passes, both in n14 Nicodemus Assembly — a good screenshot for PaulDz. **[Correction, slice 1: false — measured, no two of the 34 top-level themes have identical block lists (0 of 561 pairs); rest-sustenance and spiritual-empowerment share only n46.]**
 
 ## 4. First slice
 
@@ -89,13 +92,13 @@ Three consequences worth naming:
 2. **`src/scene.js:189` and `:278`** — `const trColor = { life: pal.themes.sign, light: pal.themes.witness }`. Any new key yields `undefined` and `THREE.Color.set(undefined)` throws. Both copies must go.
 3. **`src/main.js:409-410`** — checkboxes wired to `city.themeRoads.life/.light`; throws once those keys are gone.
 4. **`index.template.html:328-329` + `scripts/app.js:686`** — `applyOverlays()` reads `#ck-life`/`#ck-light` by id; removing the markup without the JS is a null deref. Delete together.
-5. **`src/plan.js:264-268` and `scripts/app3d.js:309-313`** both iterate `JOHN.themeRoads` and will silently produce `{}`.
+5. **`src/plan.js:264-268` and `scripts/app3d.js:309-313`** both iterate `JOHN.themeRoads` and will silently produce `{}`. **[Correction, slice 1: now src/plan.js:274-279 and scripts/app3d.js:316-320; both copies are deleted in slice 1.]**
 6. **`scripts/verify_parity.mjs`** slices sources with `upTo(file, marker)` — `"/* ---------- svg helpers ---------- */"` in app.js, `"/* ---------- palettes ---------- */"` in app3d.js. New way maths in app.js must sit *above* that marker and stay DOM-free. Note the verifier currently checks nothing about theme roads at all.
 7. **Geometry budget.** Measured on the real plan: minimum edge-to-edge gap between hood circles is exactly **8.00** plan units, with 45 pairs under 15; `CLEAR = ROAD_HALF + 4.5 = 13.5` (plan.js:172). A 14 u via **cannot** fit between two blocks. Hence the clearance-push routing, hence a via visibly bulges around tight pairs — accepted, that is what a real via does — and hence the Way-corridor clip in step 4 rather than an over-paint.
 8. **`index.template.html:122-123`** — the 2D Way is `stroke-width: 13` casing / `9.5` fill, *not* `2 × ROAD_HALF = 18`. Drawing theme ways at raw plan widths would make the via look wider than the Way in 2D and break the primacy constraint. Hence the ×0.72 rule.
 9. **`src/scene.js:216-234`** — buildings are per-hood groups but share one `kitMats` set, merged per material. Per-building dimming therefore needs a parallel *dim* material set with the same `body:/roof:/accent:` keys and a group-level `mesh.material` swap (cheap: ~21 extra materials, not 61×), and CLAUDE.md's rule applies — register in both the material set **and** `applyTheme`, or it sticks in day colours at night. Deferred to slice 2.
 10. **`src/labels.js`** — way labels must join the nearest-first culling or they will overprint block labels.
-11. **Linear view, `scripts/app.js:625-646`** — theme roads are lanes at `y = 74 + lane*30`; 34 lanes is ~1020 px in a 1000-unit viewBox. Cap to focus + pins (≤4 lanes); the rest lives in the index table.
+11. **Linear view, `scripts/app.js:625-646`** — theme roads are lanes at `y = 74 + lane*30`; 34 lanes is ~1020 px in a 1000-unit viewBox. Cap to focus + pins (≤4 lanes); the rest lives in the index table. **[Correction, slice 1: now app.js:624-639; the legacy lanes are deleted, not capped.]**
 12. **`scripts/app.js:424-431`** — `key === "life" ? var(--t-sign) : var(--t-witness)`. The hue-per-road idiom is what the colour constraint forbids; replace with `class="way way-<type>"`.
 13. **`scripts/build_themes.py:80-88`** derives `way` from `way-types.json` `minVerses`. Drawing code must read `t.way` and never re-derive from Greek, or the band and the width can drift apart.
-14. **Size:** `themes.json` is 21.9 KB and rides into all three single-file pages (+8% on index.html). Acceptable; `refs` is needed by the panel, `malformed` can be stripped at injection.
+14. **Size:** `themes.json` is 21.9 KB and rides into all three single-file pages (+8% on index.html). Acceptable; `refs` is needed by the panel, `malformed` can be stripped at injection. **[Correction, slice 1: injected compact (≈15 KB) into index.html only; the 3D pages carry none until slice 2.]**
