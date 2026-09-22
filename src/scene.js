@@ -9,7 +9,6 @@
 import * as THREE from "three";
 import { PAL, SUN } from "./palette.js";
 import { makeKitMaterials, buildBlock, buildWall, buildGate } from "./kits.js";
-import { everyNth } from "./plan.js";
 
 const WALL_H = 16, WALL_T = 3.2;
 
@@ -41,17 +40,6 @@ function ribbonMesh(left, right, y, material) {
   return new THREE.Mesh(geo, material);
 }
 
-function dotTexture() {
-  const c = document.createElement("canvas");
-  c.width = c.height = 32;
-  const g = c.getContext("2d");
-  g.beginPath(); g.arc(16, 16, 13, 0, Math.PI * 2);
-  g.fillStyle = "#fff"; g.fill();
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 function skyTexture(pal) {
   const c = document.createElement("canvas");
   c.width = 4; c.height = 256;
@@ -66,7 +54,7 @@ function skyTexture(pal) {
 
 export function buildCity(scene, plan, themeName) {
   const { HOODS, WARDS, DISTRICTS, AX, WAY, WALL_SEGS, GATES, OBELISKS,
-    themeRoadPts, CX, CY, ROAD_HALF, GATE_GAP, gatePt, portPt } = plan;
+    CX, CY, ROAD_HALF, GATE_GAP, gatePt, portPt } = plan;
   let pal = PAL[themeName];
   const all = HOODS.concat([AX]);
 
@@ -183,23 +171,6 @@ export function buildCity(scene, plan, themeName) {
     ], 0.52, M.road));
   });
 
-  /* ---------- theme roads (dotted overlays) ---------- */
-  const dot = dotTexture();
-  const themeRoads = {};
-  const trColor = { life: pal.themes.sign, light: pal.themes.witness };
-  for (const key in themeRoadPts) {
-    const pts = [];
-    for (const q of everyNth(themeRoadPts[key], 3)) pts.push(q[0], 1.4, q[1]);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    // screen-space dots (like the canvas view's capped 4px markers) — with size
-    // attenuation they balloon into beach balls as you walk past them
-    const mat = new THREE.PointsMaterial({ color: trColor[key], size: 5, map: dot, transparent: true, alphaTest: 0.4, sizeAttenuation: false });
-    const p = new THREE.Points(geo, mat);
-    themeRoads[key] = p;
-    root.add(p);
-  }
-
   /* ---------- the wall: crenellated circuit with towers ---------- */
   const wallGroup = buildWall(WALL_SEGS, kitMats, { height: WALL_H, thickness: WALL_T, centre: [CX, CY] });
   root.add(wallGroup);
@@ -275,8 +246,6 @@ export function buildCity(scene, plan, themeName) {
     M.roadEdge.color.set(pal.roadEdge);
     M.seam.color.set(pal.roadSeam); M.seam.opacity = pal.seamOpacity;
     M.gold.color.set(pal.gold); M.gold.emissive.set(pal.goldDark);
-    const tc = { life: pal.themes.sign, light: pal.themes.witness };
-    for (const key in themeRoads) themeRoads[key].material.color.set(tc[key]);
     kit.applyTheme(name);
   }
   applyTheme(themeName);
@@ -288,6 +257,6 @@ export function buildCity(scene, plan, themeName) {
     selRing.scale.set(h.r + 1.6, h.r + 1.6, 1.6);
   }
 
-  return { root, buildings, pickables, occluders, obeliskGroup, themeRoads, washes,
+  return { root, buildings, pickables, occluders, obeliskGroup, washes,
     applyTheme, setSelected, sun, hemi };
 }

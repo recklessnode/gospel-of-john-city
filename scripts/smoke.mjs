@@ -67,11 +67,16 @@ ok("Space resumes", resumed.trim() === "⏸", `${playing.trim()} → ${paused.tr
 await page.click("#playbtn");
 
 // overlays + theme
-for (const id of ["ck3-iam", "ck3-life", "ck3-light", "ck3-labels"]) {
+const TOGGLES = ["ck3-iam", "ck3-labels"];
+for (const id of TOGGLES) {
   await page.uncheck("#" + id); await page.waitForTimeout(120);
   await page.check("#" + id); await page.waitForTimeout(120);
 }
-ok("overlay toggles survive a round trip", true);
+// was ok(..., true) — a check that could not fail; now it measures the round trip
+const back = await page.evaluate(ids => ids.filter(id => document.getElementById(id)?.checked).length, TOGGLES);
+ok("overlay toggles survive a round trip", back === TOGGLES.length, `${back}/${TOGGLES.length} re-checked`);
+// the legacy theme roads were retired (superseded by PaulDz's issue-#2 theme lists)
+ok("legacy road toggles are gone", !(await page.$("#ck3-life")) && !(await page.$("#ck3-light")));
 const before = await page.getAttribute("html", "data-theme");
 await page.click("#themebtn");
 await page.waitForTimeout(300);

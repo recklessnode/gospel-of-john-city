@@ -68,6 +68,18 @@ for (const cfg of CONFIGS) {
     ok(cfg.name, `switch to ${view} view`, clicked && errors.length === before, clicked ? "" : "button not clickable");
   }
 
+  // the legacy theme roads were retired: no control, and nothing drawn in either view (the
+  // linear view re-renders the svg, so each view is measured while it is the one shown)
+  const legacyIn = async view => {
+    await page.click(`#viewseg button[data-view="${view}"]`).catch(() => {});
+    await page.waitForTimeout(200);
+    return page.evaluate(() => document.querySelectorAll(".theme-road, .theme-road-dots, [data-road]").length);
+  };
+  const legacy = { ctl: await page.evaluate(() => document.querySelectorAll("#ck-life, #ck-light").length),
+                   linear: await legacyIn("linear"), organic: await legacyIn("organic") };
+  ok(cfg.name, "legacy theme roads are gone", legacy.ctl === 0 && legacy.linear === 0 && legacy.organic === 0,
+    `controls ${legacy.ctl}, drawn organic ${legacy.organic} / linear ${legacy.linear}`);
+
   // The page chrome itself must never scroll sideways (this cannot see inside #indexview, which
   // has its own scroller; that gets the reachability check below).
   const docW = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: innerWidth }));

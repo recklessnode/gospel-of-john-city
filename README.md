@@ -17,8 +17,7 @@ between Ronald and PaulDz.
 
 Interactive elements: pan/zoom, hover tooltips, click any building for a detail panel
 (including chiasm ladders for the Upper Room and Praetorium plazas), and toggles for
-the **"I AM" landmarks**, the two **theme roads** (Life & Water, Light & Witness —
-the two paths in PaulDz's sketch), and **chiasm bridges** linking A↔A′ pairs.
+the **"I AM" landmarks** and **chiasm bridges** linking A↔A′ pairs.
 
 ## Structure encoded in the map
 

@@ -406,8 +406,6 @@ document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("cl
   const t = document.createElement("div");
   t.className = "grp-title"; t.textContent = "Overlays"; lg.appendChild(t);
   mk("ck3-iam", "“I AM” obelisks", true, v => city.obeliskGroup.visible = v);
-  mk("ck3-life", "Life & Water road", true, v => city.themeRoads.life.visible = v);
-  mk("ck3-light", "Light & Witness road", true, v => city.themeRoads.light.visible = v);
   mk("ck3-labels", "Labels", true, v => { if (!v) labels.clear(); });
 })();
 

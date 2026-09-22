@@ -362,7 +362,7 @@ function renderOrganic() {
   svg.innerHTML = "";
   svg.setAttribute("viewBox", "0 0 1200 1000");
   const gWater = el("g", {}), gDistrict = el("g", {}), gWall = el("g", {}), gWay = el("g", {}),
-        gRoads = el("g", { "class": "layer-roads" }), gHoods = el("g", {}),
+        gHoods = el("g", {}),
         gChiasm = el("g", { "class": "layer-chiasm" }), gIam = el("g", { "class": "layer-iam" }),
         gLabels = el("g", { "class": "layer-labels" });
 
@@ -419,16 +419,6 @@ function renderOrganic() {
   txt(gWay, gate[0] + 24, gate[1] + 4, "WEST GATE · “In the beginning…” 1:1", "gate-label", { "text-anchor": "start" });
   el("rect", { x: port[0] - 12, y: port[1] - 8, width: 24, height: 16, rx: 3, "class": "gate" }, gWay);
   txt(gWay, port[0], port[1] + 28, "THE HARBOR · 21:25", "gate-label");
-
-  // theme roads
-  for (const key in JOHN.themeRoads) {
-    const road = JOHN.themeRoads[key];
-    const pts = road.stops.map(id => byId[id]).filter(Boolean).map(h => [h.x, h.y]);
-    el("path", {
-      d: catmull(pts), "class": "theme-road", id: "road-" + key,
-      stroke: key === "life" ? "var(--t-sign)" : "var(--t-witness)"
-    }, gRoads);
-  }
 
   // neighborhoods
   HOODS.forEach(h => {
@@ -528,7 +518,7 @@ function renderLinear() {
   svg.setAttribute("viewBox", "0 0 1200 1000");
   const ML = 52, MR = 60, ROAD_Y = 620, ROAD_H = 22;
   const X = v => ML + (v - 0.5) / TOTAL * (W - ML - MR);
-  const gBase = el("g", {}), gRoads = el("g", { "class": "layer-roads" }),
+  const gBase = el("g", {}),
         gHoods = el("g", {}), gChiasm = el("g", { "class": "layer-chiasm" }),
         gIam = el("g", { "class": "layer-iam" }), gLabels = el("g", { "class": "layer-labels" });
 
@@ -621,23 +611,6 @@ function renderLinear() {
     if (h) st.addEventListener("click", ev => { ev.stopPropagation(); openHood(h); });
   });
 
-  // theme lanes above the skyline
-  let lane = 0;
-  for (const key in JOHN.themeRoads) {
-    const road = JOHN.themeRoads[key];
-    const y = 74 + lane * 30;
-    const color = key === "life" ? "var(--t-sign)" : "var(--t-witness)";
-    const stops = road.stops.map(id => byId[id]).filter(Boolean);
-    el("line", { x1: X(1), y1: y, x2: X(TOTAL), y2: y, "class": "theme-road", stroke: color, id: "road-" + key }, gRoads);
-    const gDots = el("g", { "class": "theme-road-dots", "data-road": key }, gRoads);
-    stops.forEach(h => {
-      el("circle", { cx: h.lx, cy: y, r: 4, fill: color, stroke: "var(--surface-1)", "stroke-width": 1.5 }, gDots);
-      el("line", { x1: h.lx, y1: y + 4, x2: h.lx, y2: h.ly - 2, stroke: color, "stroke-width": 0.7, opacity: 0.45, "stroke-dasharray": "2 3" }, gDots);
-    });
-    txt(gRoads, X(TOTAL), y - 9, road.label, "label-ward", { "text-anchor": "end", fill: color, "data-road": key });
-    lane++;
-  }
-
   // gate labels (topmost so the skyline can't cover them)
   txt(gLabels, ML - 20, ROAD_Y - 8, "WEST GATE · 1:1", "gate-label", { "text-anchor": "start" });
   txt(gLabels, W - MR + 12, ROAD_Y + ROAD_H + 18, "HARBOR · 21:25", "gate-label", { "text-anchor": "end" });
@@ -683,15 +656,13 @@ function renderIndex() {
 function applyOverlays() {
   const show = (sel, on) => document.querySelectorAll(sel).forEach(e => e.style.display = on ? "" : "none");
   show(".layer-iam", document.getElementById("ck-iam").checked);
-  show("#road-life, [data-road=life]", document.getElementById("ck-life").checked);
-  show("#road-light, [data-road=light]", document.getElementById("ck-light").checked);
   show(".layer-chiasm", document.getElementById("ck-chiasm").checked);
   svg.classList.toggle("nolabels", !document.getElementById("ck-labels").checked);
 }
 function applySelection() {
   if (selectedId) document.querySelectorAll(`[data-hood="${selectedId}"]`).forEach(e => e.classList.add("selected"));
 }
-["ck-iam", "ck-life", "ck-light", "ck-chiasm", "ck-labels"].forEach(id =>
+["ck-iam", "ck-chiasm", "ck-labels"].forEach(id =>
   document.getElementById(id).addEventListener("change", applyOverlays));
 
 (function buildLegend() {

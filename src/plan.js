@@ -43,17 +43,6 @@ export function catmullSample(pts, per) {
   return out;
 }
 
-/* Decimate a sampled curve for point-drawn roads, ALWAYS keeping the endpoint.
-   Stepping `i += n` over a curve silently drops the tail unless the last index
-   happens to be a multiple of n — which left the Light & Witness road stopping
-   30 plan units short of its final stop. Both 3D views share this. */
-export function everyNth(pts, n) {
-  const out = [];
-  for (let i = 0; i < pts.length; i += n) out.push(pts[i]);
-  if (out[out.length - 1] !== pts[pts.length - 1]) out.push(pts[pts.length - 1]);
-  return out;
-}
-
 function segInt(p1, p2, p3, p4) {
   const d = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0]);
   if (Math.abs(d) < 1e-9) return null;
@@ -64,7 +53,7 @@ function segInt(p1, p2, p3, p4) {
 }
 
 /* Builds (and mutates into) the JOHN data: parent links, plan positions, the Way,
-   the wall with its gate gaps, obelisks and theme roads. Returns the whole plan. */
+   the wall with its gate gaps and obelisks. Returns the whole plan. */
 export function buildPlan(JOHN) {
   const TOTAL = JOHN.totalVerses;
   const HOODS = [], WARDS = [], DISTRICTS = JOHN.districts;
@@ -271,13 +260,6 @@ const WALL_SEGS = [], GATES = [];
     GATES.sort((a, b) => arc(a) - arc(b));
   }
 
-  /* theme road samples */
-  const themeRoadPts = {};
-  for (const key in JOHN.themeRoads) {
-    const stops = JOHN.themeRoads[key].stops.map(id => byId[id]).filter(Boolean).map(h => [h.x, h.y]);
-    themeRoadPts[key] = catmullSample(stops, 16);
-  }
-
   /* I AM landmarks: obelisk positions beside their hood */
   const iamHood = s => HOODS.find(h => h.v0 <= s.v && s.v <= h.v1);
   const OBELISKS = [];
@@ -355,7 +337,7 @@ const WALL_SEGS = [], GATES = [];
   return {
     JOHN, TOTAL, HOODS, WARDS, DISTRICTS, byId, MAXG, AX, gateT,
     WAY, wayAt, wayTotal, gatePt, portPt, wayPoint, hullOf,
-    WALL_SEGS, GATES, wallHull, themeRoadPts, OBELISKS, SEA_POLY, QUAY_POLY, QUAY_W,
+    WALL_SEGS, GATES, wallHull, OBELISKS, SEA_POLY, QUAY_POLY, QUAY_W,
     CX, CY, ROAD_HALF, GATE_GAP,
   };
 }

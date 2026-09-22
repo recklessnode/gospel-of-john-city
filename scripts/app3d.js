@@ -305,20 +305,6 @@ const QUAY_POLY = (() => {
   return l.concat(r.reverse());
 })();
 
-/* theme road samples */
-/* keeps the endpoint — see everyNth in src/plan.js (invariant 1: kept in lockstep) */
-function everyNth(pts, n) {
-  const out = [];
-  for (let i = 0; i < pts.length; i += n) out.push(pts[i]);
-  if (out[out.length - 1] !== pts[pts.length - 1]) out.push(pts[pts.length - 1]);
-  return out;
-}
-const themeRoadPts = {};
-for (const key in JOHN.themeRoads) {
-  const stops = JOHN.themeRoads[key].stops.map(id => byId[id]).filter(Boolean).map(h => [h.x, h.y]);
-  themeRoadPts[key] = catmullSample(stops, 16);
-}
-
 /* I AM landmarks: obelisk positions beside their hood */
 function iamHood(s) { return HOODS.find(h => h.v0 <= s.v && s.v <= h.v1); }
 const OBELISKS = [];
@@ -802,19 +788,6 @@ function render() {
                  P().road, P().roadEdge);
   });
 
-  // theme roads (dotted)
-  const trColors = { life: P().themes.sign, light: P().themes.witness };
-  for (const key in themeRoadPts) {
-    if (!document.getElementById("ck3-" + key).checked) continue;
-    ctx.fillStyle = trColors[key];
-    for (const q of everyNth(themeRoadPts[key], 3)) {
-      const p = project(q[0], 1.4, q[1]);
-      if (!p) continue;
-      const rr = Math.max(0.8, 2.6 * FOCAL / p[2] * 3);
-      ctx.beginPath(); ctx.arc(p[0], p[1], Math.min(4, rr), 0, Math.PI * 2); ctx.fill();
-    }
-  }
-
   // 3D objects
   R = [];
   addWall();
@@ -1076,8 +1049,6 @@ document.querySelectorAll("#modeseg button").forEach(b => b.addEventListener("cl
   const t = document.createElement("div");
   t.className = "grp-title"; t.textContent = "Overlays"; lg.appendChild(t);
   mk("ck3-iam", "“I AM” obelisks", true);
-  mk("ck3-life", "Life & Water road", true);
-  mk("ck3-light", "Light & Witness road", true);
   mk("ck3-labels", "Labels", true);
 })();
 
