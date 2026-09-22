@@ -23,7 +23,7 @@
 
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { ROOT, app2dPlan } from "./plan_slice.mjs";
+import { ROOT, app2dPlan, wayScale } from "./plan_slice.mjs";
 
 const NAIVE = process.argv.includes("--naive");
 const JOHN = JSON.parse(readFileSync(join(ROOT, "data/john-data.json"), "utf8"));
@@ -34,10 +34,7 @@ const R = P.WAY_ROUTE;
 
 /* scale: the Way's own drawn casing over its plan width — derived from the page's CSS, never
    restated, so a change to either moves every theme way with it */
-const tpl = readFileSync(join(ROOT, "index.template.html"), "utf8");
-const casing = /\.way-casing\s*\{[^}]*stroke-width:\s*([\d.]+)/.exec(tpl);
-if (!casing) { console.error("✗ cannot find the .way-casing stroke-width in index.template.html"); process.exit(1); }
-const SCALE = parseFloat(casing[1]) / (2 * P.ROAD_HALF);
+const SCALE = wayScale(P.ROAD_HALF);
 const hwOf = type => TYPES.find(t => t.key === type).widthPlan * SCALE / 2;
 /* The page floors a way's drawn width at one screen pixel so the narrowest stay visible. The
    floor is capped PER WAY by the clearance that way's route actually keeps from the blocks it

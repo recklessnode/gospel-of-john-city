@@ -24,3 +24,13 @@ export function app2dPlan(JOHN) {
     " WAY_ROUTE, wayStops, wayObstacles, wayRaw, wayRoute, wayCrossings, wayPinches, wayFloorCap, wayStub, wayGeometry };";
   return new Function("JOHN", body)(JOHN);
 }
+
+/* The theme ways' drawing scale: the Way's own casing width in the page CSS over its plan
+   width (2 × ROAD_HALF). One home — the gate, the smoke test and the draft generator all read
+   it here, so none can drift from the page. */
+export function wayScale(ROAD_HALF) {
+  const tpl = readFileSync(join(ROOT, "index.template.html"), "utf8");
+  const m = /\.way-casing\s*\{[^}]*stroke-width:\s*([\d.]+)/.exec(tpl);
+  if (!m) throw new Error("cannot find the .way-casing stroke-width in index.template.html");
+  return parseFloat(m[1]) / (2 * ROAD_HALF);
+}

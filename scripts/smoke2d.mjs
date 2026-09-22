@@ -11,7 +11,7 @@ import { chromium } from "playwright";
 import { resolve, join, dirname } from "node:path";
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { app2dPlan } from "./plan_slice.mjs";
+import { app2dPlan, wayScale } from "./plan_slice.mjs";
 
 const argv = process.argv.slice(2);
 const VALUED = new Set(["--config", "--shots"]);
@@ -41,8 +41,7 @@ const DISK = {
 const WT = JSON.parse(DISK.themes).themes.filter(t => !t.parent);
 const TY = JSON.parse(DISK.ways).types;
 const PLAN = app2dPlan(JSON.parse(readFileSync(join(ROOT, "data/john-data.json"), "utf8")));
-const TPL = readFileSync(join(ROOT, "index.template.html"), "utf8");
-const SCALE = parseFloat(/\.way-casing\s*\{[^}]*stroke-width:\s*([\d.]+)/.exec(TPL)[1]) / (2 * PLAN.ROAD_HALF);
+const SCALE = wayScale(PLAN.ROAD_HALF);
 const hwOf = t => TY.find(y => y.key === t.way).widthPlan * SCALE / 2;
 const fixtureKeys = [], unmeasured = [];
 for (const ty of TY) {
