@@ -409,6 +409,70 @@ for (const cfg of CONFIGS) {
     await page.click(`#viewseg button[data-view="organic"]`, { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(400);
     ok(cfg.name, "key back on the map view", await page.evaluate(() => !document.getElementById("waykey").hidden));
   }
+  // the index view's Ways table: complete, operable by keyboard, capped, and the phone path works
+  {
+    await page.goto(url); await page.waitForTimeout(400);
+    await page.click('#viewseg button[data-view="index"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(300);
+    const T = await page.evaluate(() => {
+      const all = window.JOHN_WAYTHEMES.themes;
+      const rows = document.querySelectorAll("#ways-index tr.way-row, #ways-index tr.way-child").length;
+      const toggles = [...document.querySelectorAll("#ways-index .way-toggle")];
+      const iv = document.getElementById("indexview").getBoundingClientRect();
+      const t0 = toggles[0] && toggles[0].getBoundingClientRect();
+      const withOpen = document.querySelectorAll("#ways-index [data-open]").length;
+      const sec = document.getElementById("ways-index");
+      const firstInView = !!(sec && document.getElementById("indexview").firstElementChild === sec);
+      return { rows, want: all.length, toggles: toggles.length, wantT: all.filter(t => t.way).length,
+        inX: toggles.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; }),
+        firstOnScreen: !!t0 && t0.top >= iv.top && t0.bottom <= Math.min(iv.bottom, innerHeight), withOpen, firstInView,
+        names: toggles.every(b => /^Show .+ on map$/.test(b.getAttribute("aria-label") || "")) };
+    });
+    ok(cfg.name, "Ways table: one row per theme and sub-entry (from the data)", T.rows === T.want, `${T.rows} rows, ${T.want} in data`);
+    ok(cfg.name, "Ways table: one toggle per way (sub-entries get none)", T.toggles === T.wantT, `${T.toggles} toggles, ${T.wantT} ways`);
+    ok(cfg.name, "Ways table comes first in the index view", T.firstInView);
+    ok(cfg.name, "Ways toggles never open a block (no data-open)", T.withOpen === 0, `${T.withOpen}`);
+    ok(cfg.name, "every toggle has an accessible name", T.names);
+    ok(cfg.name, "every toggle is within the screen width", T.inX);
+    ok(cfg.name, "the first toggle is on the first screen, no scrolling", T.firstOnScreen);
+    // null subject for the width check: a wide cell BEFORE the toggles must push them off screen
+    const nullW = await page.evaluate(() => {
+      const tr = document.querySelector("#ways-index tr.way-row"), td = document.createElement("td");
+      td.style.minWidth = "1500px"; td.textContent = "x"; tr.prepend(td);
+      const b = tr.querySelector(".way-toggle").getBoundingClientRect(), off = !(b.left >= 0 && b.right <= innerWidth);
+      td.remove(); return off;
+    });
+    ok(cfg.name, "…and that width check can fail (a wide cell pushes a toggle off screen)", nullW);
+    const tops = JSON.parse(DISK.themes).themes.filter(t => !t.parent).map(t => t.key);
+    // keyboard: focus a toggle and press Space
+    await page.focus(`#ways-index .way-toggle[data-way="${tops[0]}"]`).catch(() => {});
+    await page.keyboard.press("Space"); await page.waitForTimeout(150);
+    const pressed = await page.evaluate(k => document.querySelector(`#ways-index .way-toggle[data-way="${k}"]`).getAttribute("aria-pressed"), tops[0]);
+    ok(cfg.name, "Space on a focused toggle adds that way (aria-pressed)", pressed === "true", `aria-pressed ${pressed}`);
+    for (const k of tops.slice(1, 4)) await page.click(`#ways-index .way-toggle[data-way="${k}"]`, { timeout: 2000 }).catch(() => {});
+    await page.click(`#ways-index .way-toggle[data-way="${tops[4]}"]`, { timeout: 2000 }).catch(() => {});
+    await page.waitForTimeout(150);
+    const cap = await page.evaluate(k => ({ live: document.querySelector("#ways-index .ways-live").textContent,
+      p5: document.querySelector(`#ways-index .way-toggle[data-way="${k}"]`).getAttribute("aria-pressed") }), tops[4]);
+    ok(cfg.name, "a fifth toggle is refused, with a visible reason", cap.p5 === "false" && /At most/.test(cap.live), `"${cap.live}"`);
+    // the phone path: index → toggles → Show → the map, with the key up and the hint gone
+    await page.click("#ways-show", { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(700);
+    const P = await page.evaluate(() => {
+      const key = document.getElementById("waykey"), kb = key.getBoundingClientRect();
+      const hits = (a, b) => a.width && b.width && !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+      return { ways: [...document.querySelectorAll("#map .way")].map(e => e.dataset.way),
+        url: (new URLSearchParams(location.search).get("ways") || "").split(",").filter(Boolean),
+        keyShown: !key.hidden && kb.width > 0, hint: getComputedStyle(document.getElementById("hint")).display,
+        clear: !hits(kb, document.getElementById("zoomctl").getBoundingClientRect()),
+        inView: kb.left >= 0 && kb.right <= innerWidth + 0.5 && kb.bottom <= innerHeight + 0.5 };
+    });
+    const want = tops.slice(0, 4);
+    ok(cfg.name, "Show on map: the picked ways are drawn, in order, and in the URL",
+      JSON.stringify(P.ways.slice().sort()) === JSON.stringify(want.slice().sort()) && JSON.stringify(P.url) === JSON.stringify(want),
+      `map [${P.ways}] url [${P.url}]`);
+    ok(cfg.name, "after the phone path the key is up, in view, clear of the zoom buttons", P.keyShown && P.inView && P.clear);
+    ok(cfg.name, "after the phone path the hint has yielded", P.hint === "none", `hint ${P.hint}`);
+  }
+
   // a pinch exists in the data, so the bridge assertions must have had something to measure
   ok(cfg.name, "bridge assertions measured at least one bridge", !pinched.length || bridgesMeasured > 0,
     pinched.length ? `${bridgesMeasured} bridge(s) measured` : "no pinch in the data");

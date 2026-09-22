@@ -1150,6 +1150,103 @@ function renderIndex() {
     const id = r.dataset.open;
     openHood(id === "annex" ? AX : byId[id]);
   }));
+  renderWaysIndex(iv);
+}
+
+/* ---------- THEME WAYS: the index table ----------
+   First in the index view, because on a phone (where #controls is hidden) it is the only way
+   to pick ways. All 51 entries: 34 ways, each with its sub-entries beneath it. Built with DOM
+   calls; toggles are real buttons and never use data-open (that opens a block). */
+function renderWaysIndex(iv) {
+  if (!WAYDATA) return;
+  const sec = document.createElement("section");
+  sec.id = "ways-index";
+  sec.setAttribute("aria-labelledby", "ways-h");
+  dom("h2", null, "Theme ways", sec).id = "ways-h";
+  const bar = dom("div", "ways-bar", null, sec);
+  const show = dom("button", null, "", bar);
+  show.id = "ways-show"; show.type = "button";
+  show.addEventListener("click", () => document.querySelector('#viewseg button[data-view="organic"]').click());
+  const live = dom("span", "ways-live", "", bar);
+  live.setAttribute("aria-live", "polite");
+  const jump = dom("a", "ways-jump", "Places ↓", bar);
+  jump.href = "#places";
+  jump.addEventListener("click", ev => { ev.preventDefault(); const t = document.getElementById("places"); if (t) t.scrollIntoView(); });
+  const wrap = dom("div", "ways-wrap", null, sec);
+  const table = dom("table", "ways-table", null, wrap);
+  const cap = dom("caption", null, "Way types: ", table);
+  dom("b", null, WAYDATA.status, cap);
+  cap.append(". Verses and blocks are PaulDz's lists; each way's type is derived from its verse count.");
+  const hr = dom("tr", null, null, dom("thead", null, null, table));
+  ["", "Way", "Type", "Verses", "Greek (est.)", "Blocks", "Chapters", "Refs"].forEach((h, i) =>
+    dom("th", i >= 3 && i <= 6 ? "num" : null, h, hr));
+  const body = dom("tbody", null, null, table);
+  const kids = WAYDATA.themes.filter(t => t.parent);
+  const cells = (tr, t, first) => {
+    const c0 = dom("td", null, null, tr);
+    if (first) c0.appendChild(first);
+    dom("td", null, t.label, tr);
+    dom("td", null, t.way ? WAY_TYPE.get(t.way).label : "", tr);
+    dom("td", "num", fmt(t.verses), tr);
+    dom("td", "num", fmt(t.greek), tr);
+    dom("td", "num", fmt(t.blocks.length), tr);
+    dom("td", "num", fmt(t.chapters.length), tr);
+    dom("td", "refs", t.refs.join(", "), tr);
+  };
+  for (const ty of WAYDATA.types) {
+    const mine = WAYDATA.themes.filter(t => !t.parent && t.way === ty.key).sort((a, b) => b.verses - a.verses);
+    if (!mine.length) continue;
+    const g = dom("tr", "way-group", null, body);
+    const gc = dom("td", null, `${ty.label} — ${ty.gloss} · band ${wayBand(ty.key)} verses`, g);
+    gc.colSpan = 8;
+    for (const t of mine) {
+      const tr = dom("tr", "way-row", null, body);
+      tr.dataset.way = t.key;
+      const b = dom("button", "way-toggle", null);
+      b.type = "button"; b.dataset.way = t.key;
+      b.setAttribute("aria-label", `Show ${t.label} on map`);
+      b.addEventListener("click", () => toggleWay(t.key));
+      cells(tr, t, b);
+      for (const c of kids.filter(c => c.parent === t.key).sort((a, b) => b.verses - a.verses)) {
+        const cr = dom("tr", "way-child", null, body);
+        cr.dataset.child = c.key;
+        cells(cr, c, null);
+        cr.children[2].textContent = `inside ${t.label}; its verses are counted in that way`;
+      }
+    }
+  }
+  iv.prepend(sec);
+  const anchor = document.createElement("a");
+  anchor.id = "places";
+  sec.after(anchor);
+  refreshWayToggles();
+}
+
+function toggleWay(k) {
+  const live = document.querySelector("#ways-index .ways-live");
+  if (WAYS.shown.includes(k)) WAYS.shown = WAYS.shown.filter(x => x !== k);
+  else if (WAYS.shown.length >= WAYS_MAX) {
+    if (live) live.textContent = `At most ${WAYS_MAX} ways at once — remove one first.`;
+    return;
+  } else WAYS.shown.push(k);
+  if (live) live.textContent = "";
+  WAYS.rejects = [];
+  writeWaysURL();
+  refreshWayToggles();
+}
+
+// one place that makes every toggle and the Show button agree with WAYS.shown
+function refreshWayToggles() {
+  document.querySelectorAll("#ways-index .way-toggle").forEach(b => {
+    const i = WAYS.shown.indexOf(b.dataset.way);
+    b.setAttribute("aria-pressed", String(i >= 0));
+    b.textContent = i >= 0 ? String(i + 1) : "+";
+  });
+  const show = document.getElementById("ways-show");
+  if (show) {
+    show.textContent = WAYS.shown.length ? `Show ${WAYS.shown.length} on map` : "Pick up to " + WAYS_MAX + " ways to show";
+    show.disabled = !WAYS.shown.length;
+  }
 }
 
 /* ---------- overlays / legend ---------- */
