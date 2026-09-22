@@ -148,8 +148,21 @@ function measureWays(keys) {
     probe(r.left + r.width / 2, r.top + r.height / 2, b.dataset.bridge);
   }
   for (const b of document.querySelectorAll("#map .way-badge")) { const r = b.getBoundingClientRect(); probe(r.left + r.width / 2, r.top + r.height / 2, null); }
+  // badges on one block never overlap on screen (centres ≥ one disc apart), and paint above labels
+  const byBlock = new Map();
+  for (const b of document.querySelectorAll("#map .way-badge")) {
+    const r = b.querySelector("circle").getBoundingClientRect();
+    if (!byBlock.has(b.dataset.badge)) byBlock.set(b.dataset.badge, []);
+    byBlock.get(b.dataset.badge).push({ x: r.left + r.width / 2, y: r.top + r.height / 2, d: r.width });
+  }
+  let badgePairs = 0, badgeClash = [];
+  for (const [id, list] of byBlock) for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+    badgePairs++;
+    if (Math.hypot(list[i].x - list[j].x, list[i].y - list[j].y) < Math.min(list[i].d, list[j].d) - 0.5) badgeClash.push(id);
+  }
+  const badgesOverLabels = before(document.querySelector("#map .layer-labels"), document.querySelector("#map .layer-way-badges"));
   probeEl.remove();
-  return { ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
+  return { badgePairs, badgeClash, badgesOverLabels, ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
     widths, ascending: widths.every((v, i) => !i || widths[i - 1] <= v), ptOpp, ptBad, ptHood };
 }
 
@@ -350,6 +363,9 @@ for (const cfg of CONFIGS) {
     ok(cfg.name, `${tag} dimming never changes opacity`, M.opChanged === 0, `${M.opChanged} changed`);
     ok(cfg.name, `${tag} layer order: ways under wall/Way/blocks; bridges and badges over blocks`, M.orderOK);
     ok(cfg.name, `${tag} ways painted narrowest first`, M.ascending, `widths ${M.widths.join(",")}`);
+    ok(cfg.name, `${tag} no two badges on one block overlap on screen`, M.badgeClash.length === 0,
+      M.badgePairs ? `${M.badgePairs} pair(s) checked; clashing at [${[...new Set(M.badgeClash)]}]` : "no block with two badges here");
+    ok(cfg.name, `${tag} badges paint above the labels`, M.badgesOverLabels);
     ok(cfg.name, `${tag} way layers never take the pointer`, M.ptOpp > 0 && M.ptBad === 0,
       M.ptOpp ? `${M.ptBad} of ${M.ptOpp} probes hit a way layer; ${M.ptHood} bridged-block probes reached the block` : "unmeasured: no probe point on the map");
     const F = await page.evaluate(measureFit, keys);

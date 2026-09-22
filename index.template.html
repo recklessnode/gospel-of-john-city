@@ -147,6 +147,7 @@
   .wl-shade  { stroke: var(--way-shade); }
   .wl-center { stroke: var(--baseline); }
   .way-badge circle { fill: var(--ink-1); r: calc(7px * var(--u1px, 1)); }
+  .way-badge > circle, .way-badge > text { transform: translateY(calc(var(--j, 0) * 16px * var(--u1px, 1))); }
   .way-badge text { fill: var(--surface-1); font-size: calc(9.5px * var(--u1px, 1)); font-weight: 700;
                     text-anchor: middle; dominant-baseline: central; }
   .hood { stroke: var(--surface-1); stroke-width: 2; cursor: pointer; transition: filter .12s; }

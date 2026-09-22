@@ -650,13 +650,16 @@ function drawShownWays(gWays, gBridges, gBadges) {
       onBlock.get(h.id).push({ k, n: i + 1 });
     }
   }
-  // badges: one numbered disc per (way, block it touches), on the block's west edge
+  // badges: one numbered disc per (way, block it touches), in a column on the block's west rim.
+  // Spread by an ANGLE they collided on small blocks (0.6 rad of a 9 px block is 5 px, for 14 px
+  // discs) and hid which ways touch the block; the column is spaced in screen pixels by CSS
+  // (--j × 16 px × --u1px), so no two can overlap at any zoom, with no work on pan or zoom.
   for (const [id, list] of onBlock) {
     const h = byId[id];
     list.sort((a, b) => a.n - b.n).forEach((e, j) => {
-      const a = Math.PI + (j - (list.length - 1) / 2) * 0.6;
       const bg = el("g", { "class": "way-badge", "data-way": e.k, "data-badge": id, "aria-hidden": "true",
-        transform: `translate(${(h.x + h.r * Math.cos(a)).toFixed(2)},${(h.y + h.r * Math.sin(a)).toFixed(2)})` }, gBadges);
+        style: `--j:${j - (list.length - 1) / 2}`,
+        transform: `translate(${(h.x - h.r).toFixed(2)},${h.y.toFixed(2)})` }, gBadges);
       el("circle", { cx: 0, cy: 0 }, bg);
       const tx = el("text", { x: 0, y: 0 }, bg); tx.textContent = String(e.n);
     });
@@ -859,9 +862,10 @@ function renderOrganic() {
   const gWater = el("g", {}), gDistrict = el("g", {}), gWays = el("g", { "class": "layer-ways" }),
         gWall = el("g", {}), gWay = el("g", {}),
         gHoods = el("g", {}),
-        gWayBridges = el("g", { "class": "layer-way-bridges" }), gWayBadges = el("g", { "class": "layer-way-badges" }),
+        gWayBridges = el("g", { "class": "layer-way-bridges" }),
         gChiasm = el("g", { "class": "layer-chiasm" }), gIam = el("g", { "class": "layer-iam" }),
-        gLabels = el("g", { "class": "layer-labels" });
+        gLabels = el("g", { "class": "layer-labels" }),
+        gWayBadges = el("g", { "class": "layer-way-badges" });   // over the labels: a label never covers a badge
 
   // Sea of Tiberias behind the harbor
   const seaC = wayPoint(1.035, 620);
