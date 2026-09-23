@@ -792,3 +792,98 @@ stops (9): n3, n5, n6, n16, n48, n57, n77, n88, n102
 No top-level measured theme is keyed `light`.
 
 PaulDz is being invited to object if the sketch paths should stay (issue #2 draft).
+
+### Theme ways, slice 1 — built, reviewed, fixed (2026-09-22/23, Opus 5.5, ultracode)
+
+**Why now.** PaulDz had not answered the issue-#2 assignment in five weeks, after answering every
+earlier reply within days. The diagnosis: the reply was 211 lines carrying about twelve questions — the
+dense-ask shape that gets passed over (the same lesson the Divine Fire commit taught). So slice 1's one
+job is to give him **a link per question** he can react to, instead of prose. The design survived his
+silence because it is data-driven: his answers change `data/way-types.json`, not the code.
+
+**Process, in the order it ran.** Each design and review step was a workflow; the building was inline
+(agents.md: build inline, review out-of-line).
+1. *Verify the five-week-old design against the code* (4 Fable agents): 23 claims, 7 wrong or stale, 38
+   things it missed — the worst, removing the legacy checkboxes would null-deref at script load and kill
+   the whole 2D page.
+2. *Plan*, then *critique from two lenses* (Opus). Both critics independently found the same blocker:
+   a centre-to-centre line passes under blocks the theme does not touch and reads as touching them.
+3. *Revise against all 30 critique items*, then a completeness audit and a regression audit. The
+   regression audit found the revision's own new bugs; past that point the tests became the verifier.
+   The plan and its build-time addendum are `docs/theme-ways-slice1.md`.
+4. *Build* C0–C10 below, every assertion mutation-tested: each check was shown to go red when the thing
+   it guards is broken, not merely to go green.
+5. *Independent visual review*, three Opus lenses + synthesis. **All three: not fit to show PaulDz.**
+6. *Fix the nine essential findings*, then *re-review with the same instrument* (below).
+
+**Commits** (all local until Ronald approves the push): d1ce1d2 plan · 2ce9d82 2D smoke test (the 2D page
+had none) · ce4b9e1 legacy roads no longer drawn · 042cb0b themeRoads deleted, provenance kept · ba3958e
+theme parse committed · 3632ef1 way widths · 111a31d data into the 2D page · 6b6b694 routing + node gate ·
+7c7fdd8 drawing · 711df58 key · c966566 fit + floor · b5c2479 index Ways table · 6c1070b scale has one home
+· 21c32ee materials · 4e8f539 badges · ed2b668 stubs · 3376355 dimming · bbe563a key wording · 52d7a00 draft.
+
+**The honesty result.** Drawn naively, the 34 ways touch **117** blocks they are not on, across 22 ways.
+Routed clear of non-member blocks, **0** uncertified crossings remain. What remains is 3 pinches on the
+Signs via — two non-member blocks closer together than a via is wide — drawn as bridges and named in the
+key. `scripts/verify_ways.mjs` gates this in `npm run verify`, in node, in seconds, using app.js's own
+functions (no second copy); it is proven against a radial-only router, the bug a regression audit found.
+
+**Bugs found on the way, most of them mine** (each fixed at its cause, each with a check that fails
+without the fix):
+- **The audited parse of PaulDz's lists had only ever lived in `/tmp`.** The restart erased it, and
+  `build_themes.py` then silently wrote an empty `themes.json`. Recovered from the committed output —
+  rebuilding from the reconstruction is byte-identical — committed as `data/themes-parsed.json`, and the
+  script now refuses on missing or empty input. The same failure class as the Divine Fire tmpfs loss,
+  carried in my own repo while I flagged it for another session.
+- **The router settled a neck by iteration order**: pushes applied one block at a time let the last block
+  win, so a line kissed one block and hugged the other. Pushes are averaged now (Cimmino), so a neck is
+  split evenly — and the result no longer depends on which block the loop reaches first.
+- **A synthetic test proved the wrong thing**: a block exactly on a sample was rescued by the d = 0
+  tie-break, so it never exercised the normal-push fix it claimed to. It now uses a block between samples
+  and asserts that it is.
+- **The smoke harness crashed and lost every result** when an interaction failed; it now records the step
+  as ✗ and keeps the rest. The "proposed" check was case-sensitive and missed "Proposed".
+- **The build's size line counted characters as bytes.**
+- **I committed once on a red smoke run** (ed2b668, amended before anything was pushed): the command
+  printed the failures without gating on them. Every later commit runs smoke and verify first.
+
+**What the visual review changed.** The via had been drawn in the Johannine Way's own casing, deck and
+crown at 78% of its width — three identical main roads. Badges spread by angle hid each other on small
+blocks, so Q4's shared block showed one way. The 3:16 stub hugged its rim and read as the legend's own
+outline symbols. Dimming by `saturate()` left Passion blocks the darkest marks on the map. Fixed: ways use
+greys that are not the Way's; the Way takes a lifted edge while ways are shown; badges stack in a
+screen-spaced column above the labels; stubs are a dash outside every ring; dimming is one flat grey; the
+key says who supplied what. **And the review caught a false claim in my draft**: Q4 said the two alleys
+were "tied on both measures", but the Greek tie is an artefact of spreading each pericope's words evenly
+over its verses — by NA28, 6:35 has about 26 words and 20:22 about 10 — and "3:16 ≈ 17" is wrong (it has
+25). Q4 now claims a tie on verse count only, and the key states how the Greek estimate is made.
+
+**Not built, deliberately**: route shields along each way, lane offsets at shared blocks, zoom-scaled
+phone badges, a collapsed phone sheet, a six-type ladder in the key, a type-ordered phone floor, any 3D
+drawing. **Found and not fixed, because it is not this slice's to settle**: an I AM star sits on 7:37-38
+("Rivers of Living Water"), which has no ἐγώ εἰμι and is not in PaulDz's I AM list. It has been there
+since the first build (4cb9bf8); it may come from his sketch, as the roads did. Removing it changes the
+default map and settles a scholarly question — a question for him, not a quiet edit.
+
+**The recheck, with the same three lenses** (each given its own first-round findings as a checklist).
+Verdict: *close, but not yet* — every first-round blocker confirmed fixed, measured rather than eyeballed
+(the Way's lifted edge 6.14:1 against a via kerb 3.22; same-block badges exactly 16.0 px apart; the 3:16
+stub visible on a phone), and the honesty lens re-checked every figure in the key against the data and
+found all correct. But the fixes had introduced their own problems, and the lenses found them: a dimmed
+block's rings stayed bright, so Q4's solid alley read as a ring round Pilate's Judgment Seat; district
+outlines outranked the ways in dark mode, so the 3:16 stub still read as one; the draft's intro said
+"every line on the map" came from PaulDz's lists while the key calls routes schematic — two documents
+contradicting each other; Q3 promised two roads and measured one; Q4's "only 1 block" steered the answer.
+Fixed in 282f52d (rings and outlines recede while ways are shown; the key says which side a stub is on,
+checked against the drawn dash) and 241c78e (the draft claims only what is computed; Q4 asserts the block
+counts it states). Each check mutation-tested; the compass one catches reading SVG's y-down as y-up.
+
+**Deferred to slice 2 by the recheck's verdict**: treat ward outlines as obstacles when placing a stub;
+keep badges off label letters; route by ring extent and widen bridge clips over rings; name the verse the
+Q4 alleys share (7:38) as well as the block; name the theme in Q2; a screen-space dash floor for the
+ambitus and clivus on phones; the collapsed phone sheet; route shields; the six-type ladder. And the I AM
+star on 7:37-38, to raise with Ronald as its own issue.
+
+**Before the draft is posted, the work must be live**: its links point at GitHub Pages, which does not
+have any of this until it is pushed. Order: Ronald approves → push → origin/main == main by ref → wait for
+Pages → fetch one ?ways= link live and match its build stamp → only then post.
