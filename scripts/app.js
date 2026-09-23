@@ -701,6 +701,9 @@ function applyWays() {
   svg.querySelectorAll(".hood[data-hood]").forEach(e =>
     e.classList.toggle("dimmed", shown.length > 0 && !on.has(e.dataset.hood)));
   svg.classList.toggle("ways-on", shown.length > 0);
+  // a dimmed block's rings recede with it, or a way running near them reads as one of them
+  svg.querySelectorAll("[data-ring-of]").forEach(e =>
+    e.classList.toggle("dimmed", shown.length > 0 && !on.has(e.dataset.ringOf)));
   renderKey();
   syncChrome();
 }
@@ -767,7 +770,12 @@ function wayKeyRow(parent, k, n, scale) {
     const e = dom("div", "wk-note wk-shared", `Shares ${what} with way ${j + 1}.`, row);
     e.dataset.with = m; e.dataset.blocks = both.slice().sort().join(",");
   });
-  if (g.stub) dom("div", "wk-note wk-stub", "One block: drawn as a stub beside it — its position and length are not data.", row);
+  if (g.stub) {
+    // SVG y runs down, so a bearing of +90° is south
+    const dir = ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"][((Math.round(g.stub.bearing / (Math.PI / 4)) % 8) + 8) % 8];
+    const e = dom("div", "wk-note wk-stub", `One block: drawn as a short dash ${dir} of ${blockName(g.stops[0].id)} — its position and length are not data.`, row);
+    e.dataset.dir = dir;
+  }
   const pinches = wayPinches(g.crossings);
   if (pinches.length) {
     const note = dom("div", "wk-note wk-pinch", `Passes over ${plural(pinches.length, "pair")} of blocks outside this theme that stand closer together than the way is wide: `, row);
@@ -974,10 +982,10 @@ function renderOrganic() {
       fill: `var(--t-${h.theme})`
     }, gHoods);
     attachHood(c, h);
-    if (h.landmark) el("circle", { cx: h.x, cy: h.y, r: h.r + 3.5, "class": "hood-ring" }, gHoods);
+    if (h.landmark) el("circle", { cx: h.x, cy: h.y, r: h.r + 3.5, "class": "hood-ring", "data-ring-of": h.id }, gHoods);
     if (h.center) {
-      el("circle", { cx: h.x, cy: h.y, r: h.r + 6.5, "class": "center-ring" }, gHoods);
-      el("circle", { cx: h.x, cy: h.y, r: h.r + 9, "class": "center-ring", "stroke-dasharray": "1 3" }, gHoods);
+      el("circle", { cx: h.x, cy: h.y, r: h.r + 6.5, "class": "center-ring", "data-ring-of": h.id }, gHoods);
+      el("circle", { cx: h.x, cy: h.y, r: h.r + 9, "class": "center-ring", "stroke-dasharray": "1 3", "data-ring-of": h.id }, gHoods);
     }
     if (h.r > 10) txt(gLabels, h.x, h.y + h.r + 9, h.short, "label-hood zoomlabel");
     else txt(gLabels, h.x, h.y + h.r + 8, h.short, "label-hood zoomlabel");

@@ -134,6 +134,10 @@
      wayScale() reads the casing's stroke WIDTH, which is unchanged) */
   #map.ways-on .way-casing { stroke: var(--road-edge); }
   #map.ways-on line.walk { stroke-width: 1; }
+  /* reference layers drop below every theme way while ways are shown, in both themes: district
+     outlines (else a stub reads as one), and the rings of a block that is on no shown way */
+  #map.ways-on .district-blob { stroke: var(--baseline); }
+  #map.ways-on .center-ring.dimmed, #map.ways-on .hood-ring.dimmed { stroke: var(--baseline); }
   /* theme ways — six treatments built from stacked strokes; widths/dashes come from
      WAY_TREATMENT in app.js (one home). Nothing here sets opacity: what the contrast test
      computes is what paints. Nothing the ways draw takes the pointer. */

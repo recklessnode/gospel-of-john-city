@@ -165,6 +165,13 @@ function measureWays(keys) {
     if (Math.hypot(list[i].x - list[j].x, list[i].y - list[j].y) < Math.min(list[i].d, list[j].d) - 0.5) badgeClash.push(id);
   }
   const badgesOverLabels = before(document.querySelector("#map .layer-labels"), document.querySelector("#map .layer-way-badges"));
+  // reference layers sit below the data: the district outline, and a dimmed block's rings,
+  // must be quieter on the page than the quietest theme-way line shown
+  const wayMin = Math.min(...[...document.querySelectorAll("#map .way .wl-outer")].map(e => ratio(over(col(getComputedStyle(e).stroke), page), page)));
+  const distr = document.querySelector("#map .district-blob");
+  const districtRatio = distr ? ratio(col(getComputedStyle(distr).stroke), page) : null;
+  const loudRings = [...document.querySelectorAll("#map [data-ring-of].dimmed")].filter(e => ratio(col(getComputedStyle(e).stroke), page) >= wayMin).length;
+  const undimmedRings = [...document.querySelectorAll("#map [data-ring-of]")].filter(e => !e.classList.contains("dimmed") && !union.has(e.dataset.ringOf)).length;
   // a dimmed block must recede: lower contrast on the page than every block that is on a way
   let dimMax = 0, litMin = Infinity;
   for (const e of hoods) {
@@ -173,7 +180,7 @@ function measureWays(keys) {
     if (e.classList.contains("dimmed")) dimMax = Math.max(dimMax, r); else litMin = Math.min(litMin, r);
   }
   probeEl.remove();
-  return { dimMax, litMin, badgePairs, badgeClash, badgesOverLabels, ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
+  return { wayMin, districtRatio, loudRings, undimmedRings, dimMax, litMin, badgePairs, badgeClash, badgesOverLabels, ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
     widths, ascending: widths.every((v, i) => !i || widths[i - 1] <= v), ptOpp, ptBad, ptHood };
 }
 
@@ -216,7 +223,16 @@ function measureKey(keys) {
       const note = r.querySelector(`.wk-shared[data-with="${o}"]`);
       return both ? !!note && note.dataset.blocks === both : !note;
     });
-    return { k, label: t.label, sharedOK, noDistance: !/\d+(\.\d+)? apart/.test(r.textContent),
+    let dirOK = true, dirShown = null, dirDrawn = null;
+    const stubG = document.querySelector(`#map g.way[data-way="${k}"][data-stub]`);
+    if (stubG) {
+      const note = r.querySelector(".wk-stub"), c = document.querySelector(`#map circle.hood[data-hood="${stubG.dataset.stub}"]`);
+      const pts = stubG.querySelector(".wl-outer").getAttribute("d").slice(1).split("L").map(q => q.split(",").map(Number));
+      const mx = pts.reduce((a, p) => a + p[0], 0) / pts.length - +c.getAttribute("cx"), my = pts.reduce((a, p) => a + p[1], 0) / pts.length - +c.getAttribute("cy");
+      dirDrawn = ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"][((Math.round(Math.atan2(my, mx) / (Math.PI / 4)) % 8) + 8) % 8];
+      dirShown = note && note.dataset.dir; dirOK = !!note && dirShown === dirDrawn && note.textContent.includes(dirDrawn);
+    }
+    return { k, label: t.label, dirOK, dirShown, dirDrawn, sharedOK, noDistance: !/\d+(\.\d+)? apart/.test(r.textContent),
       est: facts.includes("(est.)"), bandShown: m ? m[1] : null, bandWant: band(t.way),
       stubNote: !!r.querySelector(".wk-stub"), isStub: !!document.querySelector(`#map g.way[data-way="${k}"][data-stub]`),
       pinchIds, bridgeIds, xName: x ? (x.getAttribute("aria-label") || x.textContent) : "" };
@@ -382,6 +398,10 @@ for (const cfg of CONFIGS) {
     }
     ok(cfg.name, `${tag} dims exactly the blocks on no shown way`, M.dimmed === M.expectDim, `${M.dimmed} dimmed, ${M.expectDim} expected`);
     ok(cfg.name, `${tag} dimming never changes opacity`, M.opChanged === 0, `${M.opChanged} changed`);
+    ok(cfg.name, `${tag} district outlines sit below every theme way`, M.districtRatio !== null && M.districtRatio < M.wayMin,
+      `outline ${M.districtRatio && M.districtRatio.toFixed(2)}:1, quietest way ${M.wayMin.toFixed(2)}:1`);
+    ok(cfg.name, `${tag} rings of blocks on no shown way recede with them`, M.loudRings === 0 && M.undimmedRings === 0,
+      `${M.undimmedRings} not dimmed, ${M.loudRings} still as loud as a way`);
     ok(cfg.name, `${tag} dimmed blocks recede below every block on a way`, M.dimMax < M.litMin,
       `dimmed ≤ ${M.dimMax.toFixed(2)}:1, lit ≥ ${M.litMin.toFixed(2)}:1 on the page`);
     ok(cfg.name, `${tag} layer order: ways under wall/Way/blocks; bridges and badges over blocks`, M.orderOK);
@@ -414,6 +434,7 @@ for (const cfg of CONFIGS) {
       ok(cfg.name, `${L} key row names exactly the blocks drawn as bridges`, JSON.stringify(r.pinchIds) === JSON.stringify(r.bridgeIds), `named [${r.pinchIds}] bridged [${r.bridgeIds}]`);
       ok(cfg.name, `${L} remove button names the theme`, r.xName.includes(r.label), `"${r.xName}"`);
       ok(cfg.name, `${L} shared-block notes match the block lists`, r.sharedOK);
+      if (r.isStub) ok(cfg.name, `${L} key says which side the stub is drawn on`, r.dirOK, `says ${r.dirShown}, drawn ${r.dirDrawn}`);
       ok(cfg.name, `${L} no unitless distances in the key`, r.noDistance);
     }
     ok(cfg.name, `${tag} "proposed" appears only inside the status string`, K.proposedOutside === 0, `${K.proposedOutside} stray`);
