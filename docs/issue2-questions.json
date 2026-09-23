@@ -1,7 +1,7 @@
 {
  "note": "Templates for the issue-#2 reply that asks PaulDz about the proposed way types. Every figure is a {placeholder} filled from data/themes.json and data/way-types.json by scripts/draft_issue2.mjs, which refuses to write the draft if a template contains a digit outside a placeholder or if an assert is false. Placeholders: {k.field} for label, verses, greek, blocks, chapters, refs, type, gloss, band; {plural:k.field:word}; {plural:shared:a,b:word}; {pinches:k}; {an:k.type} (a/an); {sketch:road} / {sketch-rest:road} (from the legacy themeRoads at sketchCommit, against this question's ways); {status}; {issue}.",
  "issue": 2,
- "intro": "**The theme ways are drawn. Four questions, one link each.** Every figure below is computed from your lists, and so is every line on the map. The way *types* are our proposal, awaiting your ruling; the key on every view says so. Each link opens the city with those ways drawn and a key that says how each one was banded.",
+ "intro": "**The theme ways are drawn. Four questions, one link each.** Every figure below is computed, never typed, from your lists and the map; which blocks each way joins comes from your verses, but the route a line takes between them, and where a one-block stub sits, is ours and schematic, as the key says. The way *types* are our proposal, awaiting your ruling; the key on every view says so. Each link opens the city with those ways drawn and a key that says how each one was banded.",
  "questions": [
   {
    "title": "Same width, very different reach",
@@ -39,12 +39,12 @@
    ]
   },
   {
-   "title": "Your sketch's two roads",
+   "title": "Your sketch's Light & Witness road",
    "ways": [
     "witness-testimony",
     "light-vs-darkness"
    ],
-   "template": "They are retired in favour of your issue-#{issue} lists. Of the \"Light & Witness\" road's stops, {sketch:light} fall in two of your themes of different types: {witness-testimony.label}, {an:witness-testimony.type} **{witness-testimony.type}** of {plural:witness-testimony.blocks:block}, and {light-vs-darkness.label}, {an:light-vs-darkness.type} **{light-vs-darkness.type}** of {plural:light-vs-darkness.blocks:block}{sketch-rest:light}. Object if the sketch roads should stay.",
+   "template": "Your sketch's roads are retired in favour of your issue-#{issue} lists. Of the stops we read off its Light & Witness road, {sketch:light} fall in one or both of two of your themes of different types: {witness-testimony.label}, {an:witness-testimony.type} **{witness-testimony.type}** of {plural:witness-testimony.blocks:block}, and {light-vs-darkness.label}, {an:light-vs-darkness.type} **{light-vs-darkness.type}** of {plural:light-vs-darkness.blocks:block}{sketch-rest:light}. Object if the sketch roads should stay.",
    "asserts": [
     {
      "ne": [
@@ -60,7 +60,7 @@
     "rest-sustenance",
     "spiritual-empowerment"
    ],
-   "template": "{rest-sustenance.label} and {spiritual-empowerment.label} are tied on verse count ({plural:rest-sustenance.verses:verse} each) and both band as {an:rest-sustenance.type} **{rest-sustenance.type}**, but they share only {plural:shared:rest-sustenance,spiritual-empowerment:block}. Two ways, or one?",
+   "template": "*{rest-sustenance.label}* and *{spiritual-empowerment.label}* are tied on verse count ({plural:rest-sustenance.verses:verse} each) and both band as {an:rest-sustenance.type} **{rest-sustenance.type}**; they share {plural:shared:rest-sustenance,spiritual-empowerment:block} of the {plural:rest-sustenance.blocks:block} each touches. Two ways, or one?",
    "asserts": [
     {
      "eq": [
@@ -72,6 +72,12 @@
      "eq": [
       "rest-sustenance.way",
       "spiritual-empowerment.way"
+     ]
+    },
+    {
+     "eq": [
+      "rest-sustenance.blocks",
+      "spiritual-empowerment.blocks"
      ]
     }
    ]
