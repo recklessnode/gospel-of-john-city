@@ -368,8 +368,15 @@
   .wk-foot { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--grid); font-size: 11px; color: var(--muted); line-height: 1.5; }
   .wk-foot p { margin: 0 0 3px; }
   .wk-status { color: var(--ink-1); font-weight: 600; }
-  .wk-head-status { margin: 0 0 8px; padding-bottom: 7px; border-bottom: 1px solid var(--grid); font-size: 11px; color: var(--muted); }
-  @media (max-width: 700px) { #waykey { max-height: 40vh; } }
+  .wk-head-status { margin: 0 0 8px; padding-bottom: 7px; border-bottom: 1px solid var(--grid); font-size: 12px; color: var(--muted); }
+  /* use the height there is, and SHOW when it scrolls: caveats must never be silently cut off */
+  #waykey { max-height: calc(100% - 24px);
+    background: linear-gradient(var(--panel) 30%, transparent) top / 100% 24px no-repeat local,
+                linear-gradient(transparent, var(--panel) 70%) bottom / 100% 24px no-repeat local,
+                linear-gradient(var(--border), transparent) top / 100% 10px no-repeat scroll,
+                linear-gradient(transparent, var(--border)) bottom / 100% 10px no-repeat scroll,
+                var(--panel); }
+  @media (max-width: 700px) { #waykey { max-height: 46vh; } }
   @media (max-width: 700px) {
     #controls { display: none; }
     header h1 { font-size: 14px; }
@@ -390,7 +397,7 @@
     <button data-view="index">Index</button>
   </div>
   <div class="spacer"></div>
-  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/ed2b668" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-23 18:35Z · ed2b668</a>
+  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/3376355" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-23 18:40Z · 3376355</a>
   <a class="iconbtn" href="city3d.html" style="text-decoration:none">3D City ⇗</a>
   <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
 </header>
@@ -851,6 +858,15 @@ function wayStub(h, hw) {
            wayClear: best.c.way, blockClear: best.c.blocks };
 }
 
+// the verse band a type occupies, from its own floor and its neighbours' — one home: the key,
+// the index table and the draft generator all read it. The ends are open: "≥ 40", "≤ 2".
+function wayBandOf(types, typeKey) {
+  const i = types.findIndex(t => t.key === typeKey), lo = types[i].minVerses;
+  if (i === 0) return `≥ ${lo}`;
+  const hi = types[i - 1].minVerses - 1;
+  return i === types.length - 1 ? `≤ ${hi}` : `${lo}–${hi}`;
+}
+
 // every figure the map shows about a way is computed here, once, from the data
 function wayGeometry(theme, hw) {
   const stops = wayStops(theme), obstacles = wayObstacles(theme);
@@ -1150,10 +1166,20 @@ const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : (many || one + "s"
 const blockName = id => (byId[id] || (JOHN.annex && JOHN.annex.id === id ? JOHN.annex : null) || { short: id }).short;
 
 // the band a type occupies, from its own floor and the next wider type's floor
-function wayBand(typeKey) {
-  const types = WAYDATA.types, i = types.findIndex(t => t.key === typeKey), lo = types[i].minVerses;
-  return i === 0 ? `≥ ${lo}` : `${lo}–${types[i - 1].minVerses - 1}`;
-}
+const wayBand = typeKey => wayBandOf(WAYDATA.types, typeKey);
+
+/* Every caveat the key and the index table state, in one place so the two cannot drift. Who
+   supplied what matters: PaulDz gave the six types and the verse lists; the blocks are our join
+   of those verses onto the spreadsheet's pericopes; the ORDER of the types and their verse
+   bands are our proposal. */
+const WAY_TEXT = {
+  statusPrefix: "Each theme's type (our order and verse bands): ",
+  provenance: "Verses are PaulDz's lists; blocks are the pericopes those verses fall in; each way's type is our proposal, derived from its verse count.",
+  greek: "Greek ≈ (est.) spreads each pericope's word count evenly over its verses; it is not a count of the theme's own verses.",
+  schematic: "Each line joins its theme's blocks in verse order; between two blocks it carries none of the theme's verses, and its route there is schematic.",
+  discs: "A numbered disc marks a block holding at least one of that way's verses; the whole pericope is lit. Grey blocks hold none of the shown ways' verses.",
+  wall: "Theme ways pass beneath the city wall; they make no gates.",
+};
 
 function wayKeyRow(parent, k, n, scale) {
   const t = WAY_THEME.get(k), ty = WAY_TYPE.get(t.way), w = ty.widthPlan * scale, g = wayGeomFor(t, w / 2);
@@ -1175,14 +1201,24 @@ function wayKeyRow(parent, k, n, scale) {
   drawWayStack(sw, t.way, "M5,8L41,8", w * k12, "way-swatch");
   dom("span", null, `${ty.label} — ${ty.gloss}`, type);
   const refs = t.refs.length <= 3 ? ` · ${t.refs.join(", ")}` : "";
+  const named = t.blocks.length <= 2 ? ` (${t.blocks.map(blockName).join(", ")})` : "";
   dom("div", "wk-facts", `${plural(t.verses, "verse")} → ${ty.label} (band ${wayBand(t.way)}) · ` +
-    `${plural(t.blocks.length, "block")} · Greek ≈ ${fmt(t.greek)} (est.)${refs}`, row);
+    `${plural(t.blocks.length, "block")}${named} · Greek ≈ ${fmt(t.greek)} (est.)${refs}`, row);
+  // blocks this way shares with each other shown way, computed from the two block lists
+  WAYS.shown.forEach((m, j) => {
+    if (m === k) return;
+    const other = new Set(WAY_THEME.get(m).blocks), both = t.blocks.filter(b => other.has(b));
+    if (!both.length) return;
+    const what = both.length <= 2 ? both.map(b => `${blockName(b)} (${(byId[b] || {}).ref || b})`).join(" and ") : plural(both.length, "block");
+    const e = dom("div", "wk-note wk-shared", `Shares ${what} with way ${j + 1}.`, row);
+    e.dataset.with = m; e.dataset.blocks = both.slice().sort().join(",");
+  });
   if (g.stub) dom("div", "wk-note wk-stub", "One block: drawn as a stub beside it — its position and length are not data.", row);
   const pinches = wayPinches(g.crossings);
   if (pinches.length) {
-    const note = dom("div", "wk-note wk-pinch", `Too wide for ${plural(pinches.length, "gap")} between blocks it is not on, so it passes over both at each: `, row);
+    const note = dom("div", "wk-note wk-pinch", `Passes over ${plural(pinches.length, "pair")} of blocks outside this theme that stand closer together than the way is wide: `, row);
     pinches.forEach((q, i) => {
-      const sp = dom("span", null, `${i ? " · " : ""}${blockName(q.a)} & ${blockName(q.b)} (${q.gap.toFixed(1)} apart)`, note);
+      const sp = dom("span", null, `${i ? " · " : ""}${blockName(q.a)} & ${blockName(q.b)}`, note);
       sp.dataset.pinch = [q.a, q.b].sort().join("|");
     });
   }
@@ -1197,13 +1233,11 @@ function renderKey() {
   if (!scale) return;
   key.tabIndex = -1;
   // the status qualifies every row, so it is read first — never scrolled below them
-  const st = dom("p", "wk-head-status", "Way types: ", key);
+  const st = dom("p", "wk-head-status", WAY_TEXT.statusPrefix, key);
   dom("span", "wk-status", WAYDATA.status, st);
   WAYS.shown.forEach((k, i) => wayKeyRow(key, k, i + 1, scale));
   const foot = dom("div", "wk-foot", null, key);
-  dom("p", null, "Verses and blocks are PaulDz's lists; each way's type is derived from its verse count.", foot);
-  dom("p", null, "Lines join each theme's blocks in verse order; the route between blocks is schematic.", foot);
-  dom("p", null, "Theme ways pass beneath the city wall; they make no gates.", foot);
+  for (const k of ["provenance", "schematic", "discs", "greek", "wall"]) dom("p", `wk-${k}`, WAY_TEXT[k], foot);
   for (const r of WAYS.rejects) {
     const text = r.why === "unknown" ? `Not a theme: “${r.key}”.`
       : r.why === "child" ? `“${WAY_THEME.get(r.key).label}” is inside ${WAY_THEME.get(r.parent).label}; its verses are counted in that way.`
@@ -1637,9 +1671,9 @@ function renderWaysIndex(iv) {
   jump.addEventListener("click", ev => { ev.preventDefault(); const t = document.getElementById("places"); if (t) t.scrollIntoView(); });
   const wrap = dom("div", "ways-wrap", null, sec);
   const table = dom("table", "ways-table", null, wrap);
-  const cap = dom("caption", null, "Way types: ", table);
+  const cap = dom("caption", null, WAY_TEXT.statusPrefix, table);
   dom("b", null, WAYDATA.status, cap);
-  cap.append(". Verses and blocks are PaulDz's lists; each way's type is derived from its verse count.");
+  cap.append(". " + WAY_TEXT.provenance + " " + WAY_TEXT.greek);
   const hr = dom("tr", null, null, dom("thead", null, null, table));
   ["", "Way", "Type", "Verses", "Greek (est.)", "Blocks", "Chapters", "Refs"].forEach((h, i) =>
     dom("th", i >= 3 && i <= 6 ? "num" : null, h, hr));

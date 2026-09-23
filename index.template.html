@@ -368,8 +368,15 @@
   .wk-foot { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--grid); font-size: 11px; color: var(--muted); line-height: 1.5; }
   .wk-foot p { margin: 0 0 3px; }
   .wk-status { color: var(--ink-1); font-weight: 600; }
-  .wk-head-status { margin: 0 0 8px; padding-bottom: 7px; border-bottom: 1px solid var(--grid); font-size: 11px; color: var(--muted); }
-  @media (max-width: 700px) { #waykey { max-height: 40vh; } }
+  .wk-head-status { margin: 0 0 8px; padding-bottom: 7px; border-bottom: 1px solid var(--grid); font-size: 12px; color: var(--muted); }
+  /* use the height there is, and SHOW when it scrolls: caveats must never be silently cut off */
+  #waykey { max-height: calc(100% - 24px);
+    background: linear-gradient(var(--panel) 30%, transparent) top / 100% 24px no-repeat local,
+                linear-gradient(transparent, var(--panel) 70%) bottom / 100% 24px no-repeat local,
+                linear-gradient(var(--border), transparent) top / 100% 10px no-repeat scroll,
+                linear-gradient(transparent, var(--border)) bottom / 100% 10px no-repeat scroll,
+                var(--panel); }
+  @media (max-width: 700px) { #waykey { max-height: 46vh; } }
   @media (max-width: 700px) {
     #controls { display: none; }
     header h1 { font-size: 14px; }

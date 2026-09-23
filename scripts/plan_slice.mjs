@@ -21,7 +21,7 @@ export function app2dPlan(JOHN) {
   const body = upTo("scripts/app.js", APP2D_MARKER) +
     "\n;layoutOrganic(); buildWay();" +
     "\n;return { HOODS, AX: JOHN.annex, WAYPTS, byId, ROAD_HALF, catmullSample," +
-    " WAY_ROUTE, wayStops, wayObstacles, wayRaw, wayRoute, wayCrossings, wayPinches, wayFloorCap, wayStub, wayGeometry };";
+    " WAY_ROUTE, wayStops, wayObstacles, wayRaw, wayRoute, wayCrossings, wayPinches, wayFloorCap, wayStub, wayGeometry, wayBandOf };";
   return new Function("JOHN", body)(JOHN);
 }
 

@@ -198,14 +198,22 @@ function measureFit(keys) {
 /* Runs IN THE PAGE: reads the way key back and recomputes what it should say. */
 function measureKey(keys) {
   const key = document.getElementById("waykey"), status = window.JOHN_WAYS.status, types = window.JOHN_WAYS.types;
-  const band = k => { const i = types.findIndex(t => t.key === k), lo = types[i].minVerses; return i === 0 ? `≥ ${lo}` : `${lo}–${types[i - 1].minVerses - 1}`; };
+  const band = k => { const i = types.findIndex(t => t.key === k), lo = types[i].minVerses;
+    return i === 0 ? `≥ ${lo}` : i === types.length - 1 ? `≤ ${types[i - 1].minVerses - 1}` : `${lo}–${types[i - 1].minVerses - 1}`; };
   const rows = [...key.querySelectorAll(".wk-row")].map(r => {
     const k = r.dataset.way, t = window.JOHN_WAYTHEMES.themes.find(x => x.key === k);
     const facts = r.querySelector(".wk-facts").textContent, m = /\(band ([^)]*)\)/.exec(facts);
     const pinchIds = [...new Set([...r.querySelectorAll("[data-pinch]")].flatMap(e => e.dataset.pinch.split("|")))].sort();
     const bridgeIds = [...document.querySelectorAll(`#map .way-bridge[data-way="${k}"]`)].map(e => e.dataset.bridge).sort();
     const x = r.querySelector(".wk-x");
-    return { k, label: t.label, est: facts.includes("(est.)"), bandShown: m ? m[1] : null, bandWant: band(t.way),
+    // shared-block notes must equal the intersection computed from the two block lists
+    const sharedOK = keys.filter(o => o !== k).every(o => {
+      const both = t.blocks.filter(b => window.JOHN_WAYTHEMES.themes.find(x => x.key === o).blocks.includes(b)).sort().join(",");
+      const note = r.querySelector(`.wk-shared[data-with="${o}"]`);
+      return both ? !!note && note.dataset.blocks === both : !note;
+    });
+    return { k, label: t.label, sharedOK, noDistance: !/\d+(\.\d+)? apart/.test(r.textContent),
+      est: facts.includes("(est.)"), bandShown: m ? m[1] : null, bandWant: band(t.way),
       stubNote: !!r.querySelector(".wk-stub"), isStub: !!document.querySelector(`#map g.way[data-way="${k}"][data-stub]`),
       pinchIds, bridgeIds, xName: x ? (x.getAttribute("aria-label") || x.textContent) : "" };
   });
@@ -216,7 +224,8 @@ function measureKey(keys) {
   const statusEl = key.querySelector(".wk-status"), firstRow = key.querySelector(".wk-row");
   const kb = key.getBoundingClientRect(), zb = document.getElementById("zoomctl").getBoundingClientRect();
   const hits = (a, b) => a.width && b.width && !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
-  return { visible: !key.hidden && kb.width > 0, role: key.getAttribute("role"), hasStatus: key.textContent.includes(status),
+  const caveats = Object.entries(WAY_TEXT).filter(([n]) => n !== "statusPrefix").filter(([, v]) => !key.textContent.includes(v)).map(([n]) => n);
+  return { caveatsMissing: caveats, visible: !key.hidden && kb.width > 0, role: key.getAttribute("role"), hasStatus: key.textContent.includes(status),
     statusFirst: !!(statusEl && firstRow && (statusEl.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING)),
     rowKeys: rows.map(r => r.k), rows, proposedOutside,
     hintDisplay: getComputedStyle(document.getElementById("hint")).display,
@@ -391,6 +400,7 @@ for (const cfg of CONFIGS) {
     ok(cfg.name, `${tag} key is shown, as a labelled region`, K.visible && K.role === "region", `visible ${K.visible}, role ${K.role}`);
     ok(cfg.name, `${tag} key states the status verbatim (from the page's own data)`, K.hasStatus);
     ok(cfg.name, `${tag} key states the status BEFORE any way row`, K.statusFirst);
+    ok(cfg.name, `${tag} key states every caveat`, K.caveatsMissing.length === 0, `missing: [${K.caveatsMissing}]`);
     ok(cfg.name, `${tag} key: one row per shown way, in order`, JSON.stringify(K.rowKeys) === JSON.stringify(keys), `rows [${K.rowKeys}]`);
     for (const r of K.rows) {
       const L = `[${r.k}]`;
@@ -399,6 +409,8 @@ for (const cfg of CONFIGS) {
       ok(cfg.name, `${L} key row notes a stub exactly when drawn as one`, r.stubNote === r.isStub, `note ${r.stubNote}, stub ${r.isStub}`);
       ok(cfg.name, `${L} key row names exactly the blocks drawn as bridges`, JSON.stringify(r.pinchIds) === JSON.stringify(r.bridgeIds), `named [${r.pinchIds}] bridged [${r.bridgeIds}]`);
       ok(cfg.name, `${L} remove button names the theme`, r.xName.includes(r.label), `"${r.xName}"`);
+      ok(cfg.name, `${L} shared-block notes match the block lists`, r.sharedOK);
+      ok(cfg.name, `${L} no unitless distances in the key`, r.noDistance);
     }
     ok(cfg.name, `${tag} "proposed" appears only inside the status string`, K.proposedOutside === 0, `${K.proposedOutside} stray`);
     ok(cfg.name, `${tag} the hint yields to the key`, K.hintDisplay === "none", `hint display ${K.hintDisplay}`);
