@@ -1,0 +1,81 @@
+{
+ "note": "Templates for the issue-#2 reply that asks PaulDz about the proposed way types. Every figure is a {placeholder} filled from data/themes.json and data/way-types.json by scripts/draft_issue2.mjs, which refuses to write the draft if a template contains a digit outside a placeholder or if an assert is false. Placeholders: {k.field} for label, verses, greek, blocks, chapters, refs, type, gloss, band; {plural:k.field:word}; {plural:shared:a,b:word}; {pinches:k}; {an:k.type} (a/an); {sketch:road} / {sketch-rest:road} (from the legacy themeRoads at sketchCommit, against this question's ways); {status}; {issue}.",
+ "issue": 2,
+ "intro": "**The theme ways are drawn. Four questions, one link each.** Every figure below is computed from your lists, and so is every line on the map. The way *types* are our proposal, awaiting your ruling; the key on every view says so. Each link opens the city with those ways drawn and a key that says how each one was banded.",
+ "questions": [
+  {
+   "title": "Same width, very different reach",
+   "ways": [
+    "signs",
+    "belief-eternal-life"
+   ],
+   "template": "Both band as {an:signs.type} **{signs.type}** ({signs.verses} and {belief-eternal-life.verses} verses), but {signs.label} touches {plural:signs.blocks:block} and {belief-eternal-life.label} {plural:belief-eternal-life.blocks:block}. Is \"widest\" the right reading for both — or should reach count as well as text?{pinches:signs}",
+   "asserts": [
+    {
+     "widest": "signs"
+    },
+    {
+     "widest": "belief-eternal-life"
+    },
+    {
+     "gt": [
+      "belief-eternal-life.blocks",
+      "signs.blocks"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "John {love-for-cosmos.refs}",
+   "ways": [
+    "love-for-cosmos",
+    "born-again"
+   ],
+   "template": "It is {plural:love-for-cosmos.verses:verse}, so it bands as the narrowest type: {an:love-for-cosmos.type} **{love-for-cosmos.type}** ({love-for-cosmos.gloss}). Is that right, or does it deserve more? If more, a stated rule would keep the city derivable.",
+   "asserts": [
+    {
+     "narrowest": "love-for-cosmos"
+    }
+   ]
+  },
+  {
+   "title": "Your sketch's two roads",
+   "ways": [
+    "witness-testimony",
+    "light-vs-darkness"
+   ],
+   "template": "They are retired in favour of your issue-#{issue} lists. Of the \"Light & Witness\" road's stops, {sketch:light} fall in two of your themes of different types: {witness-testimony.label}, {an:witness-testimony.type} **{witness-testimony.type}** of {plural:witness-testimony.blocks:block}, and {light-vs-darkness.label}, {an:light-vs-darkness.type} **{light-vs-darkness.type}** of {plural:light-vs-darkness.blocks:block}{sketch-rest:light}. Object if the sketch roads should stay.",
+   "asserts": [
+    {
+     "ne": [
+      "witness-testimony.way",
+      "light-vs-darkness.way"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Tied on verse count",
+   "ways": [
+    "rest-sustenance",
+    "spiritual-empowerment"
+   ],
+   "template": "{rest-sustenance.label} and {spiritual-empowerment.label} are tied on verse count ({plural:rest-sustenance.verses:verse} each) and both band as {an:rest-sustenance.type} **{rest-sustenance.type}**, but they share only {plural:shared:rest-sustenance,spiritual-empowerment:block}. Two ways, or one?",
+   "asserts": [
+    {
+     "eq": [
+      "rest-sustenance.verses",
+      "spiritual-empowerment.verses"
+     ]
+    },
+    {
+     "eq": [
+      "rest-sustenance.way",
+      "spiritual-empowerment.way"
+     ]
+    }
+   ]
+  }
+ ],
+ "sketchCommit": "ce4b9e1"
+}

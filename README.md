@@ -19,6 +19,21 @@ Interactive elements: pan/zoom, hover tooltips, click any building for a detail 
 (including chiasm ladders for the Upper Room and Praetorium plazas), and toggles for
 the **"I AM" landmarks** and **chiasm bridges** linking A↔A′ pairs.
 
+### Theme ways
+
+PaulDz's 34 theological themes (issue #2) can be drawn as **theme ways** on the city map:
+each joins the blocks its verses touch, in verse order, drawn as one of his six Roman street
+types — *via, vicus, clivus, semita, angiportus, ambitus*. Pick up to four in the **Index**
+view, or name them in the link:
+
+    index.html?ways=signs,belief-eternal-life
+
+A link is the whole review: the key shows each way's rule, its counts and its caveats. The
+verses and blocks are PaulDz's lists; each way's *type* is derived from its verse count by the
+bands in [`data/way-types.json`](data/way-types.json), whose `status` field says whether he has
+confirmed them. Lines between blocks are schematic, a way never cuts the city wall, and a way
+too wide for a gap between blocks it is not on passes over them as a disclosed bridge.
+
 ## Structure encoded in the map
 
 - **Districts (Y=1):** Prologue (1:1–51) · Book of Signs (2–12) · Book of Glory (13–20) · Harbor/Epilogue (21)

@@ -9,7 +9,7 @@
    error, and it must go red. A harness that cannot say no proves nothing. */
 import { chromium } from "playwright";
 import { resolve, join, dirname } from "node:path";
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { app2dPlan, wayScale } from "./plan_slice.mjs";
 
@@ -57,6 +57,10 @@ const pinched = WT.map(t => ({ t, n: PLAN.wayPinches(PLAN.wayGeometry(t, hwOf(t)
 if (pinched.length && !fixtureKeys.includes(pinched[0].t.key)) fixtureKeys.push(pinched[0].t.key);
 const FIXTURES = [];
 for (let i = 0; i < fixtureKeys.length; i += 4) FIXTURES.push(fixtureKeys.slice(i, i + 4));
+// …and the exact views the issue-#2 draft sends PaulDz, read from the draft (never restated)
+const DRAFT = join(ROOT, "docs/issue2-draft.md");
+const draftLinks = existsSync(DRAFT) ? [...readFileSync(DRAFT, "utf8").matchAll(/\?ways=([a-z0-9,-]+)/g)].map(m => m[1].split(",")) : [];
+for (const keys of draftLinks) if (!FIXTURES.some(f => f.join() === keys.join())) FIXTURES.push(keys);
 
 const url = (/^https?:/.test(target) ? target : "file://" + resolve(target));
 /* Runs IN THE PAGE. Measures the rendered theme ways; every expected value is computed from the
