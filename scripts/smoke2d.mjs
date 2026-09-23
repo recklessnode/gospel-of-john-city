@@ -161,8 +161,15 @@ function measureWays(keys) {
     if (Math.hypot(list[i].x - list[j].x, list[i].y - list[j].y) < Math.min(list[i].d, list[j].d) - 0.5) badgeClash.push(id);
   }
   const badgesOverLabels = before(document.querySelector("#map .layer-labels"), document.querySelector("#map .layer-way-badges"));
+  // a dimmed block must recede: lower contrast on the page than every block that is on a way
+  let dimMax = 0, litMin = Infinity;
+  for (const e of hoods) {
+    if (e.dataset.hood === "annex") continue;                 // its own 0.55 opacity is its meaning
+    const r = ratio(col(getComputedStyle(e).fill), page);
+    if (e.classList.contains("dimmed")) dimMax = Math.max(dimMax, r); else litMin = Math.min(litMin, r);
+  }
   probeEl.remove();
-  return { badgePairs, badgeClash, badgesOverLabels, ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
+  return { dimMax, litMin, badgePairs, badgeClash, badgesOverLabels, ways, dimmed: dimmed.length, expectDim: hoods.filter(e => !union.has(e.dataset.hood)).length, opChanged, orderOK,
     widths, ascending: widths.every((v, i) => !i || widths[i - 1] <= v), ptOpp, ptBad, ptHood };
 }
 
@@ -362,6 +369,8 @@ for (const cfg of CONFIGS) {
     }
     ok(cfg.name, `${tag} dims exactly the blocks on no shown way`, M.dimmed === M.expectDim, `${M.dimmed} dimmed, ${M.expectDim} expected`);
     ok(cfg.name, `${tag} dimming never changes opacity`, M.opChanged === 0, `${M.opChanged} changed`);
+    ok(cfg.name, `${tag} dimmed blocks recede below every block on a way`, M.dimMax < M.litMin,
+      `dimmed ≤ ${M.dimMax.toFixed(2)}:1, lit ≥ ${M.litMin.toFixed(2)}:1 on the page`);
     ok(cfg.name, `${tag} layer order: ways under wall/Way/blocks; bridges and badges over blocks`, M.orderOK);
     ok(cfg.name, `${tag} ways painted narrowest first`, M.ascending, `widths ${M.widths.join(",")}`);
     ok(cfg.name, `${tag} no two badges on one block overlap on screen`, M.badgeClash.length === 0,

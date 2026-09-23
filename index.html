@@ -152,10 +152,12 @@
                     text-anchor: middle; dominant-baseline: central; }
   .hood { stroke: var(--surface-1); stroke-width: 2; cursor: pointer; transition: filter .12s; }
   .hood:hover { filter: brightness(1.12); }
-  /* blocks on no shown way: desaturated, never faded — opacity would change what the
-     annex (0.55) and every contrast measurement mean */
-  .hood.dimmed { filter: saturate(.15); }
-  .hood.dimmed:hover { filter: saturate(.15) brightness(1.12); }
+  /* blocks on no shown way: one flat grey, lighter than any block that IS on one. A saturate()
+     filter kept each hue's luminance, so dimmed Passion blocks became the darkest discs on the
+     map and pulled the eye to what the question was not about. A token, not a filter, so the
+     contrast gate can check it; still no opacity (the annex's 0.55 keeps its meaning). */
+  .hood.dimmed { fill: var(--baseline); filter: none; }
+  .hood.dimmed:hover { filter: brightness(1.08); }
   .hood.selected { stroke: var(--ink-1); stroke-width: 2.5; }
   .hood-ring { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-dasharray: 3 3; pointer-events: none; }
   .center-ring { fill: none; stroke: var(--ink-2); stroke-width: 1.2; pointer-events: none; }
@@ -388,7 +390,7 @@
     <button data-view="index">Index</button>
   </div>
   <div class="spacer"></div>
-  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/4e8f539" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-22 21:32Z · 4e8f539</a>
+  <a class="build" href="https://github.com/recklessnode/gospel-of-john-city/commit/ed2b668" target="_blank" rel="noopener" title="the commit this page was built from">build 2026-09-23 18:35Z · ed2b668</a>
   <a class="iconbtn" href="city3d.html" style="text-decoration:none">3D City ⇗</a>
   <button class="iconbtn" id="themebtn" title="Toggle light/dark">◐</button>
 </header>
