@@ -119,7 +119,7 @@ function measureWays(keys) {
     const subNote = [...document.querySelectorAll("#waykey .wk-floor")].some(e => e.textContent.includes("still thinner"));
     return { k, type: t.way, typeDrawn: [...g.classList].find(c => c.startsWith("way-")).slice(4), sw, want, wantDrawn, u1px, cap,
       onScreen: sw / u1px, subNote,
-      bbw: bb.width, bbh: bb.height, con, badges: document.querySelectorAll(`#map .way-badge[data-way="${k}"]`).length,
+      bbw: bb.width, bbh: bb.height, len: outer.getTotalLength(), con, badges: document.querySelectorAll(`#map .way-badge[data-way="${k}"]`).length,
       blocks: t.blocks.length, stub, crossed: crossed.sort(), bridges: bridges.sort(), badgeOnBridge, badgeContrast, usesRoadToken };
   });
   const hoods = [...document.querySelectorAll("#map .hood[data-hood]")];
@@ -342,7 +342,8 @@ for (const cfg of CONFIGS) {
         `${w.sw.toFixed(3)} vs ${w.wantDrawn.toFixed(3)} (plan ${w.want.toFixed(3)}, 1px = ${w.u1px.toFixed(3)}, cap +${w.cap})`);
       ok(cfg.name, `${L} at least a screen pixel wide, or the key says why not`, w.onScreen >= 0.999 || w.subNote,   // 0.1%: stroke-width is written at 3 decimals, --u1px at 4
         `${w.onScreen.toFixed(2)}px on screen`);
-      ok(cfg.name, `${L} has geometry`, w.bbw > 0 && w.bbh > 0, `bbox ${w.bbw.toFixed(1)}×${w.bbh.toFixed(1)}`);
+      // length, not bbox area: a straight stub (e.g. a vertical dash) has a zero-width bbox
+      ok(cfg.name, `${L} has geometry`, w.len > 0, `length ${w.len.toFixed(1)}, bbox ${w.bbw.toFixed(1)}×${w.bbh.toFixed(1)}`);
       for (const [gname, c] of Object.entries(w.con)) {
         ok(cfg.name, `${L} contrast on ${gname} ≥ the Way's own casing`, c.way >= c.floor - 1e-6, `${c.way.toFixed(2)} vs floor ${c.floor.toFixed(2)}`);
         ok(cfg.name, `${L} the Johannine Way out-contrasts it on ${gname}`, c.jw > c.loudest, `JW ${c.jw.toFixed(2)} vs loudest layer ${c.loudest.toFixed(2)}`);

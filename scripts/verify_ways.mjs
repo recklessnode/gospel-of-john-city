@@ -90,9 +90,15 @@ for (const t of tops) {
   if (stops.length === 1) {
     const g = P.wayGeometry(t, hw), s = g.stub;
     if (g.crossings.length) fail(`${t.key}: its stub touches non-member block(s) ${g.crossings.map(c => c.id).join(", ")}`);
-    if (g.crossings.clearMin < ROUND_TOL) fail(`${t.key}: stub clearance ${g.crossings.clearMin.toFixed(3)} < ${ROUND_TOL} — rounding the drawn arc could cross`);
+    if (g.crossings.clearMin < ROUND_TOL) fail(`${t.key}: stub clearance ${g.crossings.clearMin.toFixed(3)} < ${ROUND_TOL} — rounding the drawn stub could cross`);
+    // the Johannine Way paints over the ways: a stub under it would be hidden
+    if (s.wayClear < R.MARGIN) fail(`${t.key}: stub within ${s.wayClear.toFixed(2)} of the Johannine Way — it would be painted over`);
+    // outside every ring the block can carry (I AM ring r+3.5, chiasm rings to r+9.6)
+    const ringGap = s.R - hw - stops[0].r;
+    if (ringGap < 9.6) fail(`${t.key}: stub ${ringGap.toFixed(2)} beyond the rim — inside the block's rings`);
     stubs.push({ key: t.key, type: t.way, block: stops[0].id, width: (2 * hw).toFixed(2), R: s.R.toFixed(2),
-      L: s.L.toFixed(1), capBinds: s.capBinds, nearest: s.nearest, overlaps: g.crossings.length, clear: g.crossings.clearMin.toFixed(2) });
+      L: s.L.toFixed(1), capBinds: s.capBinds, bearing: Math.round(s.bearing * 180 / Math.PI), wayClear: s.wayClear.toFixed(1),
+      overlaps: g.crossings.length, clear: g.crossings.clearMin.toFixed(2) });
     continue;
   }
   const naive = P.wayCrossings(P.wayRaw(stops).pts, obs, hw);
@@ -135,7 +141,7 @@ for (const r of rows)
   console.log(`  ${r.key.padEnd(28)} ${r.type.padEnd(10)} ${String(r.blocks).padStart(2)} blocks  naive ${String(r.naive).padStart(2)} → ${r.residual}` +
     `  clear ≥ ${r.clear === Infinity ? "∞" : r.clear.toFixed(2)}${r.pinches.length ? "  pinches: " + r.pinches.join("; ") : ""}`);
 for (const s of stubs)
-  console.log(`  ${s.key.padEnd(28)} ${s.type.padEnd(10)} stub on ${s.block}: width ${s.width}, R ${s.R}, L ${s.L}${s.capBinds ? " (cap binds)" : ""}, toward ${s.nearest}, overlaps ${s.overlaps}, clear ≥ ${s.clear}`);
+  console.log(`  ${s.key.padEnd(28)} ${s.type.padEnd(10)} stub on ${s.block}: width ${s.width}, R ${s.R}, L ${s.L}${s.capBinds ? " (cap binds)" : ""}, bearing ${s.bearing}°, Way ≥ ${s.wayClear}, overlaps ${s.overlaps}, clear ≥ ${s.clear}`);
 console.log(`\n  pinchable by stroke width (min hood edge gap ${minGap.toFixed(2)}):`);
 for (const p of pinchTable)
   console.log(`    ${p.type.padEnd(10)} stroke ${p.stroke.padStart(5)}  corridor ${p.corridor.padStart(5)}  ${p.pinchable ? `PINCHABLE — ${p.narrower} hood pairs narrower than the stroke` : "always fits"}`);

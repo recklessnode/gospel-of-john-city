@@ -229,7 +229,8 @@ const WAY_ROUTE = {
   MARGIN: 1.5,      // clearance beyond the stroke edge a pushed sample must keep
   ROUND_TOL: 0.01,  // the drawn path is rounded to 2 decimals (≤ 0.0071 u); keep this much clear
   NORMAL_DEG: 30,   // radial push within this angle of the tangent → push along the normal
-  STUB_PAD: 0.6, STUB_FRAC: 0.55, STUB_CAP: 34,   // single-block themes (see wayStub)
+  STUB_RING: 10.5,  // stubs sit outside every ring a block can carry (chiasm rings reach r + 9.6)
+  STUB_FRAC: 0.55, STUB_CAP: 34,                  // single-block themes (see wayStub)
 };
 
 function wayStops(theme) {
@@ -376,21 +377,39 @@ function wayFloorCap(geom) {
   return 2 * Math.max(0, (c === Infinity ? 1e9 : c) - WAY_ROUTE.ROUND_TOL);
 }
 
-/* A single-block theme has no route: it is drawn as a short arc hugging its block, centred
-   on the bearing to the nearest neighbouring block. Its position and length are OURS, not
-   data, and the key says so. */
+/* A single-block theme has no route: it is drawn as a short straight dash beside its block.
+   Earlier it was an arc hugging the rim, which read as the block's outline, an I AM ring or a
+   district bound (the legend's own symbols). Now it sits outside every ring, on the bearing —
+   of 24, away from the badge column on the west rim — that keeps it clearest of other blocks
+   and of the Johannine Way (which paints over the ways, so a stub under it would be hidden).
+   Its position and length are OURS, not data, and the key says so. */
+let WAY_SPINE = null;   // the Johannine Way, sampled once: blocks never move after layout
 function wayStub(h, hw) {
   const R = WAY_ROUTE, others = HOODS.concat(JOHN.annex ? [JOHN.annex] : []).filter(o => o !== h);
-  let near = null, best = Infinity;
-  for (const o of others) {
-    const g = Math.hypot(o.x - h.x, o.y - h.y) - o.r - h.r;
-    if (g < best) { best = g; near = o; }
+  if (!WAY_SPINE) WAY_SPINE = catmullSample(WAYPTS, 16);
+  const rad = h.r + R.STUB_RING + hw, want = R.STUB_FRAC * 2 * Math.PI * h.r, L = Math.min(want, R.STUB_CAP);
+  const dash = th => {
+    const cx = h.x + rad * Math.cos(th), cy = h.y + rad * Math.sin(th), tx = -Math.sin(th), ty = Math.cos(th), pts = [];
+    for (let k = 0; k <= 24; k++) { const u = -L / 2 + L * k / 24; pts.push([cx + tx * u, cy + ty * u]); }
+    return pts;
+  };
+  const clearance = pts => {
+    let blocks = Infinity, way = Infinity;
+    for (const p of pts) {
+      for (const o of others) blocks = Math.min(blocks, Math.hypot(p[0] - o.x, p[1] - o.y) - o.r - hw);
+      for (const q of WAY_SPINE) way = Math.min(way, Math.hypot(p[0] - q[0], p[1] - q[1]) - ROAD_HALF - hw);
+    }
+    return { blocks, way };
+  };
+  let best = null;
+  for (let k = 0; k < 24; k++) {
+    const th = k * Math.PI / 12, off = Math.abs(((th - Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI);
+    if (off < Math.PI / 3) continue;                       // the badge column lives on the west rim
+    const pts = dash(th), c = clearance(pts), score = Math.min(c.blocks, c.way - R.MARGIN);
+    if (!best || score > best.score + 1e-9) best = { th, pts, c, score };
   }
-  const rad = h.r + hw + R.STUB_PAD, want = R.STUB_FRAC * 2 * Math.PI * h.r, L = Math.min(want, R.STUB_CAP);
-  const mid = Math.atan2(near.y - h.y, near.x - h.x), half = L / rad / 2;
-  const pts = [];
-  for (let k = 0; k <= 24; k++) { const a = mid - half + 2 * half * k / 24; pts.push([h.x + rad * Math.cos(a), h.y + rad * Math.sin(a)]); }
-  return { cx: h.x, cy: h.y, R: rad, a0: mid - half, a1: mid + half, L, capBinds: want > R.STUB_CAP, nearest: near.id, pts };
+  return { cx: h.x, cy: h.y, R: rad, bearing: best.th, L, capBinds: want > R.STUB_CAP, pts: best.pts,
+           wayClear: best.c.way, blockClear: best.c.blocks };
 }
 
 // every figure the map shows about a way is computed here, once, from the data
