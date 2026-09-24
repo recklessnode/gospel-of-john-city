@@ -887,3 +887,23 @@ star on 7:37-38, to raise with Ronald as its own issue.
 **Before the draft is posted, the work must be live**: its links point at GitHub Pages, which does not
 have any of this until it is pushed. Order: Ronald approves → push → origin/main == main by ref → wait for
 Pages → fetch one ?ways= link live and match its build stamp → only then post.
+
+**Published 2026-09-23 (Ronald approved).** Pushed 2af2bf7; verified by ref equality (local main,
+origin/main and the GitHub API all 2af2bf7), not by reading the push output. Waited for Pages to report
+the build as `built` at that commit, matched the live build stamp to the local one, then opened all four
+draft links on the live site at 1440 and 400 px: 8 of 8 views draw exactly their ways, with the key and
+the status up — so the links were real before anything pointed at them.
+
+Then two issues for PaulDz, as Ronald asked:
+- **#4** — the four questions, one link each (the generated `docs/issue2-draft.md`, headed "Follow-up to
+  #2"). A standalone issue rather than another comment deep in #2's thread: placement gets an ask read.
+- **#5** — the I AM star on 7:37–38, which has no ἐγώ εἰμι and is not in his list. Figures computed from
+  the data: 9 stars on 8 blocks; his list touches 12; 5 of his blocks have no star (four unpredicated
+  I AMs, and 9:5). Asked whether the stars should follow his list exactly. Nothing changes until he says.
+
+**Neither could be assigned to him.** GitHub only lets a repository's collaborators be assigned, and the
+only collaborator is recklessnode; `gh issue edit --add-assignee` printed the issue URL as if it had
+worked, and the assignee list stayed empty — checked, not assumed. Making him assignable would mean adding
+him as a collaborator, which on a personal repo grants write access; that was not done unasked. He is not
+subscribed to new issues and cross-references do not notify, so each issue got a one-line @LuapDz
+comment — the part of "assign to Paul" that could be delivered without changing anyone's permissions.
