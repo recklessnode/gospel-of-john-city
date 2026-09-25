@@ -907,3 +907,11 @@ worked, and the assignee list stayed empty — checked, not assumed. Making him 
 him as a collaborator, which on a personal repo grants write access; that was not done unasked. He is not
 subscribed to new issues and cross-references do not notify, so each issue got a one-line @LuapDz
 comment — the part of "assign to Paul" that could be delivered without changing anyone's permissions.
+
+**PaulDz invited as a collaborator (2026-09-25, Ronald's instruction).** Invitation 334695340 to LuapDz
+(account id 284365726, confirmed to be the author of his comments on #2 before sending). The permission is
+**write** — a personal repository has only the one collaborator role, so he will be able to push to
+`main`. The invitation is **pending until he accepts**; until then GitHub still refuses to assign him
+(`repos/…/assignees/LuapDz` → 404), so #4 and #5 stay unassigned for now. Once he accepts, that check
+returns 204 and both issues can be assigned — then verify with `gh issue view N --json assignees`, since
+`--add-assignee` reports success even when it silently drops the user.
